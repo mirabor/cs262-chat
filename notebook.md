@@ -12,3 +12,9 @@ json_protocol/client.py
 - chose tkinter after researching common Python GUIs
 - set up json client methods init and send request so that we stick with one request-response cycle at a time
 - TODO: build UI (haven't used tkinter before, we'll see)
+
+setup.py
+- set up setup for installation
+
+tests/test_json.py
+- started writing some tests for creating an account, more operations to follow
