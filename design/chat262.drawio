@@ -135,7 +135,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="LYAtznhsn2EmkLh9nQvE" name="Page-2">
-    <mxGraphModel dx="1844" dy="-115" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2385" dy="293" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -151,6 +151,12 @@
         </mxCell>
         <mxCell id="vwTSbg8hBlY4zXMfc_h0-3" value="&lt;div&gt;Landing Page&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;username [ .... ]&lt;/div&gt;&lt;div&gt;password [ .... ]&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Login&lt;/div&gt;&lt;div&gt;Sign up&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="64" y="1550" width="240" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="vwTSbg8hBlY4zXMfc_h0-28" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="vwTSbg8hBlY4zXMfc_h0-4" target="vwTSbg8hBlY4zXMfc_h0-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="vwTSbg8hBlY4zXMfc_h0-29" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" edge="1" parent="1" source="vwTSbg8hBlY4zXMfc_h0-4" target="vwTSbg8hBlY4zXMfc_h0-7">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="vwTSbg8hBlY4zXMfc_h0-4" value="&lt;div&gt;&amp;lt;= Back&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; &lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;username [ .... ]&lt;/div&gt;&lt;div&gt;Nickname [ .... ]&lt;/div&gt;&lt;div&gt;password [ .... ]&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Sign Up&lt;/div&gt;" style="whiteSpace=wrap;html=1;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="510" y="1550" width="240" height="170" as="geometry" />
@@ -221,6 +227,12 @@
         </mxCell>
         <mxCell id="vwTSbg8hBlY4zXMfc_h0-24" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=13;" vertex="1" parent="1">
           <mxGeometry x="-99" y="2169.5" width="39" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="vwTSbg8hBlY4zXMfc_h0-25" value="&lt;div&gt;Landing Page&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;⚠️Wrong password or username; Please try again&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;username [ .... ]&lt;/div&gt;&lt;div&gt;password [ .... ]&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Login&lt;/div&gt;&lt;div&gt;Sign up&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="-302" y="1482" width="253" height="203" as="geometry" />
+        </mxCell>
+        <mxCell id="vwTSbg8hBlY4zXMfc_h0-26" value="&lt;blockquote&gt;&lt;div align=&quot;left&quot;&gt;&amp;lt;= Back&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; &lt;br&gt;&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;username [ Sam ___ ]&amp;nbsp;  ⚠️ username already taken&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;Nickname [ Sam M ]&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;password [ ]&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;Sign Up&lt;/div&gt;&lt;/blockquote&gt;" style="whiteSpace=wrap;html=1;fontSize=13;align=left;" vertex="1" parent="1">
+          <mxGeometry x="788" y="1488" width="381" height="171" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
