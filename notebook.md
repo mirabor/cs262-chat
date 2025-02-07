@@ -18,3 +18,11 @@ setup.py
 
 tests/test_json.py
 - started writing some tests for creating an account, more operations to follow
+
+2-7-2025, afternoon:
+
+tkinter — assume that people will have a Mac to use our project (lol)
+
+json protocol: each request from the client is a json obj with an "operation" field for the action and other relevant fields; the server processes this, does the action, and sends back a JSON response with a "status" and "message"
+
+#5 seems like a specification on the frontend side, 5 at a time on frontend instead of all at once using a queue, the server actually has all the messages, but the UI can show limited messages
