@@ -64,3 +64,13 @@ User -> Signup vs. Sign-in
 example: if you have 1 user who sends you 10 msgs, and your msg limit is 10, you only see your conversation with that one user
 
 we query the number of messages we want from the table and we group them into conversations on the client side
+
+ask "are you sure?" before deleting an account
+
+question: if you have a message that's not delivered, can you delete that message?
+question: can receivers delete a sender's message?
+
+when you open a chat, client gets all messages you had? no, we should do that it loads a preset number of messages and there's a button to get more messages
+
+we should test with madeup data to make sure the frontend client able to navigate, then we can figure out how to fetch that info from the server
+
