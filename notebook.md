@@ -74,3 +74,21 @@ when you open a chat, client gets all messages you had? no, we should do that it
 
 we should test with madeup data to make sure the frontend client able to navigate, then we can figure out how to fetch that info from the server
 
+if username not registered or password is wrong, take user to error page
+
+sign up: another page if username is already taken
+
+we need to show the number of unread messages
+we have read, unread, delivered, sent
+we are showing the total number of unread messages; does this include the messages that are sent but not delivered (due to the user's mesage cap)?
+design choice: total # of unreads is the unread messages that have been sent
+
+does the server know that the recipient is logged in or not? 
+surely it must, because it needs to know whether the recipient is logged in in order to decide whether to store the messages or deliver immediately
+
+store the list of logged in users in a table so that we can check if a person is online? so that we can indicate whether they are logged in or not
+
+deleting messages or a set of messages — selectable in tkinter?
+need new page
+
+we also need a page that lists all the users and is iterable to see all of them
