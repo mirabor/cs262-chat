@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QFrame,
     QSizePolicy,
+    QCheckBox
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QFont, QPalette, QColor
@@ -83,6 +84,10 @@ class MessageWidget(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 5, 10, 5)
 
+        self.checkbox = QCheckBox()
+        self.checkbox.setStyleSheet("QCheckBox { color: white; }")
+        layout.addWidget(self.checkbox)
+
         if not is_sender:
             layout.addStretch()
 
@@ -100,6 +105,9 @@ class MessageWidget(QFrame):
         )
         msg_label.setWordWrap(True)
         layout.addWidget(msg_label)
+
+        if is_sender:
+            layout.addStretch()
 
         if is_sender:
             layout.addStretch()
@@ -223,6 +231,7 @@ class ChatApp(QMainWindow):
         scroll_area.setWidget(scroll_content)
         layout.addWidget(scroll_area)
 
+    
     def show_chat_page(self, chat_id):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -250,7 +259,7 @@ class ChatApp(QMainWindow):
         scroll_area.setStyleSheet("QScrollArea { border: none; }")
 
         scroll_content = QWidget()
-        messages_layout = QVBoxLayout(scroll_content)
+        self.messages_layout = QVBoxLayout(scroll_content)  # Initialize self.messages_layout here
 
         # Mark messages as read
         for message in self.chats[chat_id]["messages"]:
@@ -258,13 +267,17 @@ class ChatApp(QMainWindow):
                 message["read"] = True
         self.save_data()
 
+        # Initialize self.message_widgets as an empty list
+        self.message_widgets = []
+
         # Display messages
         for message in self.chats[chat_id]["messages"]:
             is_sender = message["sender"] == self.current_user
             msg_widget = MessageWidget(message["content"], is_sender)
-            messages_layout.addWidget(msg_widget)
+            self.message_widgets.append(msg_widget)  # Add message widget to the list
+            self.messages_layout.addWidget(msg_widget)  # Add message widget to the layout
 
-        messages_layout.addStretch()
+        self.messages_layout.addStretch()
         scroll_area.setWidget(scroll_content)
         layout.addWidget(scroll_area)
 
@@ -277,6 +290,32 @@ class ChatApp(QMainWindow):
         )
         input_layout.addWidget(self.message_input)
         layout.addLayout(input_layout)
+
+        # Delete button
+        delete_btn = DarkPushButton("Delete Selected Messages")
+        delete_btn.clicked.connect(lambda: self.delete_selected_messages(chat_id))
+        layout.addWidget(delete_btn)
+
+    def delete_selected_messages(self, chat_id):
+        messages_to_delete = []
+        for i, msg_widget in enumerate(self.message_widgets):
+            if msg_widget.checkbox.isChecked():
+                # Check if the current user is the sender of the message
+                if self.chats[chat_id]["messages"][i]["sender"] == self.current_user:
+                    messages_to_delete.append(i)
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Cannot Delete",
+                        "You can only delete messages that you sent.",
+                    )
+
+        # Remove messages in reverse order to avoid index issues
+        for i in sorted(messages_to_delete, reverse=True):
+            del self.chats[chat_id]["messages"][i]
+
+        self.save_data()
+        self.show_chat_page(chat_id)  # Refresh the chat page
 
     def send_message(self, chat_id, content):
         if content.strip():
