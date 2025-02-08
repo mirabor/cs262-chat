@@ -281,6 +281,11 @@ class ChatApp(QMainWindow):
         header_layout.addStretch()
         layout.addLayout(header_layout)
 
+        # Delete button
+        delete_btn = DarkPushButton("Delete Selected Messages")
+        delete_btn.clicked.connect(lambda: self.delete_selected_messages(chat_id))
+        layout.addWidget(delete_btn)
+
         # Messages area
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -318,11 +323,6 @@ class ChatApp(QMainWindow):
         )
         input_layout.addWidget(self.message_input)
         layout.addLayout(input_layout)
-
-        # Delete button
-        delete_btn = DarkPushButton("Delete Selected Messages")
-        delete_btn.clicked.connect(lambda: self.delete_selected_messages(chat_id))
-        layout.addWidget(delete_btn)
 
     def delete_selected_messages(self, chat_id):
         messages_to_delete = []
