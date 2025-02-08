@@ -121,3 +121,6 @@ nvm actually... we don't need to hash password on the database side
 finally debugged pytests for all features
 fixed backend functions, code review complete
 now to work on making diff parts talking to each other
+
+making ui fixes, fixing crashes when deleting
+removing delete button from other pages besides homepage/within chats
