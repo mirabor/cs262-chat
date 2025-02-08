@@ -88,9 +88,6 @@ class MessageWidget(QFrame):
         self.checkbox.setStyleSheet("QCheckBox { color: white; }")
         layout.addWidget(self.checkbox)
 
-        if not is_sender:
-            layout.addStretch()
-
         msg_label = QLabel(message)
         msg_label.setStyleSheet(
             """
@@ -104,14 +101,13 @@ class MessageWidget(QFrame):
         """
         )
         msg_label.setWordWrap(True)
-        layout.addWidget(msg_label)
 
         if is_sender:
             layout.addStretch()
-
-        if is_sender:
+            layout.addWidget(msg_label)
+        else:
+            layout.addWidget(msg_label)
             layout.addStretch()
-
 
 class ChatApp(QMainWindow):
     def __init__(self):
