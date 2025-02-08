@@ -37,3 +37,5 @@ class JsonServer:
                 self.users[username] = password
                 return {'status': 'success', 'message': 'Account created'}
         # TODO: add otber operations here
+
+    

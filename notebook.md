@@ -94,3 +94,10 @@ need new page
 we also need a page that lists all the users and is iterable to see all of them
 
 using tkinter: issues with installing it via just pip. If python installed via homebrew, we need to install tkinter via `brew install python-tk@3.13` which is kinda platform specification. Maybe we should look into other libraries that makes it easy for cross platform
+
+# TODO:
+- search for users
+- delete messages/select messages for deletion
+- display total number of unread messages, including undelivered
+- log out of account 
+- delete account
