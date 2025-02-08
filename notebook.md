@@ -101,3 +101,9 @@ using tkinter: issues with installing it via just pip. If python installed via h
 - display total number of unread messages, including undelivered
 - log out of account 
 - delete account
+- button for adding more messages
+- arrow keys or reload for fetching more messages
+
+design decision: number of unread messages will be capped by the number of deliverable messages that the user specifies in settings
+bc intuitively, it doesn't make sense to mark an undelivered message as unread
+that way client doesn't have to worry about messages that are not received
