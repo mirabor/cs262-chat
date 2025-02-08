@@ -1,7 +1,7 @@
 import sqlite3
 import pytest
 from datetime import datetime
-from src.client.database import initialize_database, signup, login, delete_user, get_chats, update_view_limit, get_all_users
+from src.server.database import initialize_database, signup, login, delete_user, get_chats, update_view_limit, get_all_users
 
 @pytest.fixture(scope="function", autouse=True)
 def db():
@@ -9,6 +9,10 @@ def db():
     conn = sqlite3.connect(":memory:")
     initialize_database(conn)
     yield conn
+    conn.rollback()  # Roll back any remaining transactions
+    conn.execute("DROP TABLE IF EXISTS users")
+    conn.execute("DROP TABLE IF EXISTS userconfig")
+    conn.execute("DROP TABLE IF EXISTS messages")
     conn.close()
 
 def test_initialize_database(db):
@@ -33,7 +37,7 @@ def test_signup(db):
     response = signup(input_data, db)
     assert response["success"] is True
 
-def test_login(db, conn = None):
+def test_login(db):
     """Test the login function."""
     signup({
         "username": "test_user",
@@ -119,17 +123,17 @@ def test_login(db, conn = None):
 
 def test_get_all_users(db):
     """Test the get_all_users function."""
-    # signup({
-    #     "username": "user1",
-    #     "nickname": "User One",
-    #     "password": "password123"
-    # }, db)
+    signup({
+        "username": "user1",
+        "nickname": "User One",
+        "password": "password123"
+    }, db)
 
-    # signup({
-    #     "username": "user2",
-    #     "nickname": "User Two",
-    #     "password": "password123"
-    # }, db)
+    signup({
+        "username": "user2",
+        "nickname": "User Two",
+        "password": "password123"
+    }, db)
 
     response = get_all_users(db)
     assert response["success"] is True

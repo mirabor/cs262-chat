@@ -112,3 +112,7 @@ that way client doesn't have to worry about messages that are not received
 dividing up communication + fixing backend stuff
 sqlite for persistent store
 adding bcrypt for hashing password instead of storing as plain text
+
+code review: splitting up the database management into account manager for cleaner code, more modular
+ensuring backend works for signup and login
+nvm actually... we don't need to hash password on the database side
