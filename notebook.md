@@ -101,3 +101,5 @@ using tkinter: issues with installing it via just pip. If python installed via h
 - display total number of unread messages, including undelivered
 - log out of account 
 - delete account
+- button for adding more messages
+- arrow keys or reload for fetching more messages
