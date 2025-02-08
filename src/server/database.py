@@ -1,6 +1,7 @@
 import sqlite3
 import bcrypt
 from datetime import datetime
+from utils import hash_password, verify_password
 
 DATABASE_FILE = "chat_app.db"
 
@@ -55,16 +56,6 @@ def initialize_database(conn=None):
     conn.commit()
     if close_conn:
         conn.close()
-
-def hash_password(password):
-    """Hash a password for secure storage."""
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed
-
-def verify_password(plain_password, hashed_password):
-    """Verify a plain password against the hashed one."""
-    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password)
 
 def signup(input_data, conn=None):
     """Sign up a new user."""
