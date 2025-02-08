@@ -119,7 +119,7 @@ def signup(input_data, conn=None):
         if close_conn:
             conn.close()
 
-def login(login_data):
+def login(login_data, conn=None):
     """Log in a user and retrieve additional info (nickname and view limit)."""
     try:
         username = login_data.get("username")
@@ -168,7 +168,7 @@ def login(login_data):
     except Exception as e:
         return {"success": False, "error_message": f"An error occurred: {str(e)}"}
 
-def delete_user(user_id):
+def delete_user(user_id, conn=None):
     """Delete a user and all associated data."""
     try:
         conn = sqlite3.connect(DATABASE_FILE)
@@ -190,7 +190,7 @@ def delete_user(user_id):
 
 # ==================== Chat Management Functions ====================
 
-def get_chats(user_id):
+def get_chats(user_id, conn = None):
     """Get all chats involving a user, sorted by most recent."""
     try:
         conn = sqlite3.connect(DATABASE_FILE)
