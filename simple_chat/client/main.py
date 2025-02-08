@@ -57,6 +57,10 @@ class ChatWidget(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 5, 10, 5)
 
+        self.checkbox = QCheckBox()
+        self.checkbox.setStyleSheet("QCheckBox { color: white; }")
+        layout.addWidget(self.checkbox)
+
         username_label = QLabel(username)
         username_label.setStyleSheet("font-size: 18px; color: white;")
         layout.addWidget(username_label)
@@ -182,8 +186,36 @@ class ChatApp(QMainWindow):
         settings_btn.clicked.connect(self.show_settings_page)
         nav_layout.addWidget(settings_btn)
 
+        delete_chat_btn = DarkPushButton("Delete Chat(s)")
+        delete_chat_btn.clicked.connect(self.delete_selected_chats)
+        nav_layout.addWidget(delete_chat_btn)
+
         nav_layout.addStretch()
         container.addLayout(nav_layout)
+
+    def delete_selected_chats(self):
+        chats_to_delete = []
+
+        # Check the checkboxes of the displayed chat widgets
+        for chat_id, chat_widget in self.chat_widgets.items():
+            if chat_widget.checkbox.isChecked():
+                chats_to_delete.append(chat_id)
+
+        if chats_to_delete:
+            confirm = QMessageBox.question(
+                self,
+                "Confirm Deletion",
+                "Are you sure you want to delete the selected chat(s)?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if confirm == QMessageBox.StandardButton.Yes:
+                for chat_id in chats_to_delete:
+                    del self.chats[chat_id]
+                self.save_data()
+                QMessageBox.information(self, "Success", "Selected chat(s) deleted successfully")
+                self.show_home_page()
+        else:
+            QMessageBox.information(self, "No Selection", "No chats selected for deletion.")
 
     def show_home_page(self):
         central_widget = QWidget()
@@ -197,34 +229,33 @@ class ChatApp(QMainWindow):
         welcome_label.setStyleSheet("font-size: 24px; margin-bottom: 20px;")
         layout.addWidget(welcome_label)
 
-        # Chat list with unread counts
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet("QScrollArea { border: none; }")
 
         scroll_content = QWidget()
-        scroll_layout = QVBoxLayout(scroll_content)
+        self.scroll_layout = QVBoxLayout(scroll_content)
+
+        # Initialize a dictionary to keep track of chat widgets
+        self.chat_widgets = {}
 
         for chat_id, chat_data in self.chats.items():
             if self.current_user in chat_data["participants"]:
-                other_user = [
-                    p for p in chat_data["participants"] if p != self.current_user
-                ][0]
+                other_user = [p for p in chat_data["participants"] if p != self.current_user][0]
 
                 unread_count = sum(
-                    1
-                    for msg in chat_data["messages"]
-                    if msg.get("sender") != self.current_user
-                    and not msg.get("read", False)
+                    1 for msg in chat_data["messages"]
+                    if msg.get("sender") != self.current_user and not msg.get("read", False)
                 )
 
                 chat_widget = ChatWidget(other_user, unread_count)
-                chat_widget.mousePressEvent = (
-                    lambda e, cid=chat_id: self.show_chat_page(cid)
-                )
-                scroll_layout.addWidget(chat_widget)
+                chat_widget.mousePressEvent = lambda e, cid=chat_id: self.show_chat_page(cid)
+                self.scroll_layout.addWidget(chat_widget)
 
-        scroll_layout.addStretch()
+                # Store the widget in the dictionary
+                self.chat_widgets[chat_id] = chat_widget
+
+        self.scroll_layout.addStretch()
         scroll_area.setWidget(scroll_content)
         layout.addWidget(scroll_area)
 
