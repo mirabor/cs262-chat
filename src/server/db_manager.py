@@ -10,7 +10,7 @@ class DBManager:
     def _get_connection(self):
         return sqlite3.connect(self.db_file)
 
-    def initialize_database(self):
+    def initialize_database(self, conn = None):
         """Initialize the database and create necessary tables."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
