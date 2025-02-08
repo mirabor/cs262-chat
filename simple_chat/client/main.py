@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QFont, QPalette, QColor
+from fnmatch import fnmatch
 
 
 class DarkPushButton(QPushButton):
@@ -429,6 +430,9 @@ class ChatApp(QMainWindow):
         QMessageBox.information(self, "Success", "Account created successfully")
         self.show_login_page()
 
+   
+        from fnmatch import fnmatch  # Add this import at the top of the file
+
     def show_users_page(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -441,22 +445,87 @@ class ChatApp(QMainWindow):
         title.setStyleSheet("font-size: 24px;")
         layout.addWidget(title)
 
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("QScrollArea { border: none; }")
+        # Search bar
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search users...")
+        self.search_input.textChanged.connect(self.update_users_display)
+        layout.addWidget(self.search_input)
 
-        scroll_content = QWidget()
-        scroll_layout = QVBoxLayout(scroll_content)
+        # Scroll area for users
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("QScrollArea { border: none; }")
 
-        for username in self.users:
-            if username != self.current_user:
-                user_widget = ChatWidget(username)
-                user_widget.mousePressEvent = lambda e, u=username: self.start_chat(u)
-                scroll_layout.addWidget(user_widget)
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.scroll_area.setWidget(self.scroll_content)
+        layout.addWidget(self.scroll_area)
 
-        scroll_layout.addStretch()
-        scroll_area.setWidget(scroll_content)
-        layout.addWidget(scroll_area)
+        # Pagination controls
+        pagination_layout = QHBoxLayout()
+        self.prev_btn = DarkPushButton("Previous")
+        self.prev_btn.clicked.connect(self.show_previous_users)
+        pagination_layout.addWidget(self.prev_btn)
+
+        self.next_btn = DarkPushButton("Next")
+        self.next_btn.clicked.connect(self.show_next_users)
+        pagination_layout.addWidget(self.next_btn)
+
+        layout.addLayout(pagination_layout)
+
+        # Initialize pagination variables
+        self.current_page = 0
+        self.users_per_page = 10  # Number of users to display per page
+        self.filtered_users = []  # List of users matching the search pattern
+
+        # Update the display
+        self.update_users_display()
+
+    def update_users_display(self):
+        # Clear the current display
+        for i in reversed(range(self.scroll_layout.count())):
+            item = self.scroll_layout.itemAt(i)
+            widget = item.widget()
+            if widget:
+                widget.setParent(None)
+            else:
+                self.scroll_layout.removeItem(item)
+
+        # Get the search pattern
+        search_pattern = self.search_input.text().strip()
+
+        # Filter users based on the search pattern
+        self.filtered_users = [
+            username for username in self.users
+            if username != self.current_user and fnmatch(username, f"*{search_pattern}*")
+        ]
+
+        # Calculate the subset of users to display
+        start_index = self.current_page * self.users_per_page
+        end_index = start_index + self.users_per_page
+        users_to_display = self.filtered_users[start_index:end_index]
+
+        # Display the users
+        for username in users_to_display:
+            user_widget = ChatWidget(username)
+            user_widget.mousePressEvent = lambda e, u=username: self.start_chat(u)
+            self.scroll_layout.addWidget(user_widget)
+
+        self.scroll_layout.addStretch()
+
+        # Update pagination button states
+        self.prev_btn.setEnabled(self.current_page > 0)
+        self.next_btn.setEnabled(end_index < len(self.filtered_users))
+
+    def show_previous_users(self):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.update_users_display()
+
+    def show_next_users(self):
+        if (self.current_page + 1) * self.users_per_page < len(self.filtered_users):
+            self.current_page += 1
+            self.update_users_display()
 
     def show_settings_page(self):
         central_widget = QWidget()
