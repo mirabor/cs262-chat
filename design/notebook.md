@@ -108,4 +108,7 @@ design decision: number of unread messages will be capped by the number of deliv
 bc intuitively, it doesn't make sense to mark an undelivered message as unread
 that way client doesn't have to worry about messages that are not received
 
-2-7-2025, evening:
+2-8-2025, morning/afternoon:
+dividing up communication + fixing backend stuff
+sqlite for persistent store
+adding bcrypt for hashing password instead of storing as plain text
