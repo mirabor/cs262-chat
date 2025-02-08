@@ -8,6 +8,7 @@ class DBManager:
         self.db_file = db_file
 
     def _get_connection(self):
+        
         return sqlite3.connect(self.db_file)
 
     def initialize_database(self, conn = None):

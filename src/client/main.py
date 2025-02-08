@@ -42,7 +42,7 @@ class DarkPushButton(QPushButton):
 
 
 class ChatWidget(QFrame):
-    def __init__(self, username, unread_count=0, parent=None):
+    def __init__(self, username, unread_count=0, show_checkbox = False, parent=None):
         super().__init__(parent)
         self.setStyleSheet(
             """
@@ -57,9 +57,11 @@ class ChatWidget(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 5, 10, 5)
 
-        self.checkbox = QCheckBox()
-        self.checkbox.setStyleSheet("QCheckBox { color: white; }")
-        layout.addWidget(self.checkbox)
+        # Add checkbox only if show_checkbox is True
+        if show_checkbox:
+            self.checkbox = QCheckBox()
+            self.checkbox.setStyleSheet("QCheckBox { color: white; }")
+            layout.addWidget(self.checkbox)
 
         username_label = QLabel(username)
         username_label.setStyleSheet("font-size: 18px; color: white;")
@@ -162,7 +164,7 @@ class ChatApp(QMainWindow):
         with open("chats.json", "w") as f:
             json.dump(self.chats, f)
 
-    def create_navigation(self, container):
+    def create_navigation(self, container, show_delete=False):
         nav_layout = QHBoxLayout()
         nav_layout.setSpacing(20)
 
@@ -186,14 +188,20 @@ class ChatApp(QMainWindow):
         settings_btn.clicked.connect(self.show_settings_page)
         nav_layout.addWidget(settings_btn)
 
-        delete_chat_btn = DarkPushButton("Delete Chat(s)")
-        delete_chat_btn.clicked.connect(self.delete_selected_chats)
-        nav_layout.addWidget(delete_chat_btn)
+        # Add the "Delete Selected Chat(s)" button only if show_delete is True
+        if show_delete:
+            delete_chat_btn = DarkPushButton("Delete Chat(s)")
+            delete_chat_btn.clicked.connect(self.delete_selected_chats)
+            nav_layout.addWidget(delete_chat_btn)
 
         nav_layout.addStretch()
         container.addLayout(nav_layout)
 
     def delete_selected_chats(self):
+        if not hasattr(self, 'chat_widgets') or not self.chat_widgets:
+            QMessageBox.information(self, "No Selection", "No chats available to delete.")
+            return
+        
         chats_to_delete = []
 
         # Check the checkboxes of the displayed chat widgets
@@ -201,6 +209,11 @@ class ChatApp(QMainWindow):
             if chat_widget.checkbox.isChecked():
                 chats_to_delete.append(chat_id)
 
+    # If no chats are selected, show a message and return
+        if not chats_to_delete:
+            QMessageBox.information(self, "No Selection", "No chats selected for deletion.")
+            return
+    
         if chats_to_delete:
             confirm = QMessageBox.question(
                 self,
@@ -223,7 +236,7 @@ class ChatApp(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        self.create_navigation(layout)
+        self.create_navigation(layout, show_delete = True)
 
         welcome_label = QLabel(f"Welcome, {self.current_user}")
         welcome_label.setStyleSheet("font-size: 24px; margin-bottom: 20px;")
@@ -248,7 +261,7 @@ class ChatApp(QMainWindow):
                     if msg.get("sender") != self.current_user and not msg.get("read", False)
                 )
 
-                chat_widget = ChatWidget(other_user, unread_count)
+                chat_widget = ChatWidget(other_user, unread_count, show_checkbox = True)
                 chat_widget.mousePressEvent = lambda e, cid=chat_id: self.show_chat_page(cid)
                 self.scroll_layout.addWidget(chat_widget)
 
@@ -461,8 +474,6 @@ class ChatApp(QMainWindow):
         QMessageBox.information(self, "Success", "Account created successfully")
         self.show_login_page()
 
-   
-        from fnmatch import fnmatch  # Add this import at the top of the file
 
     def show_users_page(self):
         central_widget = QWidget()
@@ -470,7 +481,7 @@ class ChatApp(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        self.create_navigation(layout)
+        self.create_navigation(layout, show_delete=False)
 
         title = QLabel("Users")
         title.setStyleSheet("font-size: 24px;")
@@ -564,7 +575,7 @@ class ChatApp(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        self.create_navigation(layout)
+        self.create_navigation(layout, show_delete= False)
 
         title = QLabel("Settings")
         title.setStyleSheet("font-size: 24px;")
