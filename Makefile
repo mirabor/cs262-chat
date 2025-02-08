@@ -19,10 +19,8 @@ run-client: # Run the main chat client
 	@cd src/client && source ../../.venv/bin/activate && python main.py
 
 test: # Run all tests
-	@echo "Running protocol tests..."
-	@cd src/protocol && $(VENV)/pytest --cov=. --cov-report term-missing --cov-fail-under=80
-	@echo "Running client tests..."
-	@cd src/client && $(VENV)/pytest
+	@echo "Running all tests..."
+	@$(VENV)/pytest tests/ --cov=src --cov-report term-missing --cov-fail-under=80
 
 
 # Development Tools
