@@ -116,3 +116,11 @@ adding bcrypt for hashing password instead of storing as plain text
 code review: splitting up the database management into account manager for cleaner code, more modular
 ensuring backend works for signup and login
 nvm actually... we don't need to hash password on the database side
+
+2-8-25, evening:
+finally debugged pytests for all features
+fixed backend functions, code review complete
+now to work on making diff parts talking to each other
+
+making ui fixes, fixing crashes when deleting
+removing delete button from other pages besides homepage/within chats
