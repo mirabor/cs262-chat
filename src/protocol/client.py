@@ -16,8 +16,12 @@ class Client:
     def connect(self):
         """Establish connection with server"""
         try:
+            print(f"Attempting to connect to {self.host}:{self.port}...")
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(10)  # 10 second timeout
+            print(f"Socket created, attempting connection...")
             self.socket.connect((self.host, self.port))
+            print("Connection established!")
 
             # Send client identification
             self.send_message(
@@ -91,10 +95,26 @@ class Client:
 
 
 if __name__ == "__main__":
-    # Get client ID from command line argument if provided
+    # Get client ID and server address from command line arguments if provided
     client_id = sys.argv[1] if len(sys.argv) > 1 else None
+    server_addr = sys.argv[2] if len(sys.argv) > 2 else "localhost"
+    print(f"Starting client with ID: {client_id}")
+    print(f"Attempting to resolve and connect to server: {server_addr}")
+    
+    try:
+        # Try to resolve the hostname to IP
+        import socket
+        server_info = socket.getaddrinfo(server_addr, 5555, socket.AF_INET, socket.SOCK_STREAM)
+        if server_info:
+            server_ip = server_info[0][4][0]  # Get the first resolved IP
+            print(f"Resolved {server_addr} to IP: {server_ip}")
+        else:
+            server_ip = server_addr
+    except Exception as e:
+        print(f"Warning: Could not resolve hostname: {e}")
+        server_ip = server_addr
 
     # Create and start client
-    client = Client(client_id=client_id)
+    client = Client(host=server_ip, client_id=client_id)
     if client.connect():
         client.start_messaging()

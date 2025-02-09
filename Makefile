@@ -44,12 +44,17 @@ report-issues: # Report code health issues
 run-protocol-server: # Run the protocol test server
 	@cd src/protocol && source ../../.venv/bin/activate && python server.py
 
-run-protocol-client: # Run the protocol test client (optional: specify CLIENT_ID=your_id)
-	@cd src/protocol && source ../../.venv/bin/activate && python client.py $(CLIENT_ID)
+run-protocol-client: # Run the protocol test client (usage: make run-protocol-client CLIENT_ID=your_id SERVER_IP=x.x.x.x)
+	@cd src/protocol && source ../../.venv/bin/activate && python client.py $(CLIENT_ID) $(SERVER_IP)
 
 
 # Utility
 # -----------------------------
+
+show-ip: # Show the server's IP address
+	@echo "Server IP Addresses:"
+	@echo "----------------"
+	@ifconfig | grep "inet " | grep -v 127.0.0.1
 
 venv: # Create virtual environment if it doesn't exist
 	@test -d .venv || python3 -m venv .venv;
@@ -87,4 +92,4 @@ help: # Show available make targets
 # PHONY Targets
 # -----------------------------
 
-.PHONY: help install test style run-server run-client run-protocol-server run-protocol-client clean venv
+.PHONY: help install test style run-server run-client run-protocol-server run-protocol-client clean venv show-ip

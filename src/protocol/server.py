@@ -31,6 +31,18 @@ class Server:
             self.server_socket.listen(self.max_clients)
             print(f"Server started on {self.host}:{self.port}")
             print(f"Maximum clients supported: {self.max_clients}")
+            
+            # Print all available interfaces
+            import socket
+            hostname = socket.gethostname()
+            print(f"\nServer hostname: {hostname}")
+            print("\nAvailable interfaces:")
+            print("-" * 20)
+            interfaces = socket.getaddrinfo(hostname, None)
+            for info in interfaces:
+                addr = info[4][0]
+                if not addr.startswith('fe80'): # Skip link-local addresses
+                    print(f"Interface: {addr}")
 
             while True:
                 client_socket, address = self.server_socket.accept()
