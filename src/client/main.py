@@ -20,8 +20,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QFont, QPalette, QColor
 from fnmatch import fnmatch
-
-
+from utils import hash_password, verify_password
 class DarkPushButton(QPushButton):
     def __init__(self, text="", parent=None):
         super().__init__(text, parent)
@@ -407,23 +406,35 @@ class ChatApp(QMainWindow):
         layout.addStretch()
 
     def login(self, username, password):
-        
-    #     login_data = {
-    #     "username": username,
-    #     "password": password
-    # }
-    #     response = self.api_client.post("/auth/login", json=login_data)
-    #     if response.status_code == 200:
-    #         self.current_user = response.json()
-    #         self.show_home_page()
-    #     else:
-    #         QMessageBox.critical(self, "Error", "Invalid username or password")
-
-        if username in self.users and self.users[username]["password"] == password:
-            self.current_user = username
-            self.show_home_page()
+        if username in self.users:
+            stored_password = self.users[username]["password"]  # Stored as a string in JSON
+            print(f"Stored password for {username}: {stored_password}") 
+            if verify_password(password, stored_password):
+                self.current_user = username
+                self.show_home_page()
+            else:
+                QMessageBox.critical(self, "Error", "Invalid username or password")
         else:
             QMessageBox.critical(self, "Error", "Invalid username or password")
+
+    def signup(self, username, nickname, password):
+        if not username or not nickname or not password:
+            QMessageBox.critical(self, "Error", "All fields are required")
+            return
+
+        if username in self.users:
+            QMessageBox.critical(self, "Error", "Username already taken")
+            return
+
+        hashed_password = hash_password(password)  # Hash the password
+        self.users[username] = {
+            "nickname": nickname,
+            "password": hashed_password,  # Ensure this is the hashed password
+            "message_limit": 6,
+        }
+        self.save_data()
+        QMessageBox.information(self, "Success", "Account created successfully")
+        self.show_login_page()
 
     def show_signup_page(self):
         central_widget = QWidget()
@@ -467,25 +478,6 @@ class ChatApp(QMainWindow):
         layout.addWidget(back_btn)
 
         layout.addStretch()
-
-    def signup(self, username, nickname, password):
-        if not username or not nickname or not password:
-            QMessageBox.critical(self, "Error", "All fields are required")
-            return
-
-        if username in self.users:
-            QMessageBox.critical(self, "Error", "Username already taken")
-            return
-
-        self.users[username] = {
-            "nickname": nickname,
-            "password": password,
-            "message_limit": 6,
-        }
-        self.save_data()
-        QMessageBox.information(self, "Success", "Account created successfully")
-        self.show_login_page()
-
 
     def show_users_page(self):
         central_widget = QWidget()
