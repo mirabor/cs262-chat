@@ -1,0 +1,7 @@
+network:
+  host: "0.0.0.0"
+  port: 5555
+  protocol: "json"
+  max_clients: 10
+  buffer_size: 1024
+  messages_dir: "client_messages"
