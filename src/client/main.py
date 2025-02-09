@@ -236,7 +236,7 @@ class ChatApp(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        self.create_navigation(layout, show_delete = True)
+        self.create_navigation(layout, show_delete = False)
 
         welcome_label = QLabel(f"Welcome, {self.current_user}")
         welcome_label.setStyleSheet("font-size: 24px; margin-bottom: 20px;")
@@ -261,7 +261,7 @@ class ChatApp(QMainWindow):
                     if msg.get("sender") != self.current_user and not msg.get("read", False)
                 )
 
-                chat_widget = ChatWidget(other_user, unread_count, show_checkbox = True)
+                chat_widget = ChatWidget(other_user, unread_count, show_checkbox = False)
                 chat_widget.mousePressEvent = lambda e, cid=chat_id: self.show_chat_page(cid)
                 self.scroll_layout.addWidget(chat_widget)
 
@@ -407,6 +407,18 @@ class ChatApp(QMainWindow):
         layout.addStretch()
 
     def login(self, username, password):
+        
+    #     login_data = {
+    #     "username": username,
+    #     "password": password
+    # }
+    #     response = self.api_client.post("/auth/login", json=login_data)
+    #     if response.status_code == 200:
+    #         self.current_user = response.json()
+    #         self.show_home_page()
+    #     else:
+    #         QMessageBox.critical(self, "Error", "Invalid username or password")
+
         if username in self.users and self.users[username]["password"] == password:
             self.current_user = username
             self.show_home_page()
