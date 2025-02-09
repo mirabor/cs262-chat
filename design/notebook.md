@@ -131,3 +131,5 @@ now to work on making diff parts talking to each other
 
 making ui fixes, fixing crashes when deleting
 removing delete button from other pages besides homepage/within chats
+
+need to refactor frontend so they're working with dictionaries of the same type/structure as the backend (database.py), we need the dictionaries to have the same structure and then we can worry about how to transmit them
