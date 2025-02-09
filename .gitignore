@@ -1,2 +1,39 @@
-*/__pycache__
-*/chat_app.db
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.env
+.venv
+env/
+venv/
+.coverage
+*.coverage
+
+# Database
+*.db
+chat_app.db
+
+# Local configuration
+network_config.yaml
+*.yaml
+
+# Logs and backups
+*.log
+backups/
+logs/
+
+# JSON data files
+*.json
+src/client/chats.json
+src/client/users.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
