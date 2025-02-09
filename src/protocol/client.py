@@ -99,7 +99,19 @@ if __name__ == "__main__":
     client_id = sys.argv[1] if len(sys.argv) > 1 else None
     server_addr = sys.argv[2] if len(sys.argv) > 2 else "localhost"
     print(f"Starting client with ID: {client_id}")
-    print(f"Attempting to resolve and connect to server: {server_addr}")
+    
+    # Show client network information
+    hostname = socket.gethostname()
+    print(f"\nClient hostname: {hostname}")
+    print("Client network interfaces:")
+    print("-" * 20)
+    interfaces = socket.getaddrinfo(hostname, None)
+    for info in interfaces:
+        addr = info[4][0]
+        if not addr.startswith('fe80'):  # Skip link-local addresses
+            print(f"Interface: {addr}")
+    
+    print(f"\nAttempting to resolve and connect to server: {server_addr}")
     
     try:
         # Try to resolve the hostname to IP
