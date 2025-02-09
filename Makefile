@@ -42,6 +42,9 @@ report-issues: # Report code health issues
 # -----------------------------
 
 run-protocol-server: # Run the protocol test server
+	@echo "Checking for existing server instances..."
+	@lsof -i :5555 -t | xargs kill 2>/dev/null || true
+	@echo "Starting server..."
 	@cd src/protocol && source ../../.venv/bin/activate && python server.py
 
 run-protocol-client: # Run the protocol test client (usage: make run-protocol-client CLIENT_ID=your_id SERVER_IP=x.x.x.x)
