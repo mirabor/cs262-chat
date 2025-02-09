@@ -3,20 +3,24 @@
 2-3-2025, late night:
 
 json_protocol/server.py
+
 - chose threading for concurrency. each client connection gets a separate thread to prevent blocking while allowing the server to handle multiple requests.
 - read length of incoming JSON, read data, process, send back response
 - using threading.Lock for thread-safety to prevent race conditions when creating accounts
-- TODO: extend the _process method for other operations besides creating an account
+- TODO: extend the \_process method for other operations besides creating an account
 
 json_protocol/client.py
+
 - chose tkinter after researching common Python GUIs
 - set up json client methods init and send request so that we stick with one request-response cycle at a time
 - TODO: build UI (haven't used tkinter before, we'll see)
 
 setup.py
+
 - set up setup for installation
 
 tests/test_json.py
+
 - started writing some tests for creating an account, more operations to follow
 
 2-7-2025, afternoon:
@@ -30,6 +34,7 @@ json protocol: each request from the client is a json obj with an "operation" fi
 we think queue/stack for displaying messages gets handled on server side, not client side
 
 put message handler on client side, server side, or in between?
+
 - put messagehandler on client side
 - put messagetable on server side
 
@@ -51,11 +56,12 @@ AccountManager: Create, Delete, Lookup
 
 Auth: Login, Sign up
 
-Then on client side: 
+Then on client side:
 MessageHandler: Load, send
 
-*in order to differentiate if you know people with two same nicknames, always display the username with it
-____
+\*in order to differentiate if you know people with two same nicknames, always display the username with it
+
+---
 
 Sequence of User Journey:
 Client:
@@ -83,7 +89,7 @@ we have read, unread, delivered, sent
 we are showing the total number of unread messages; does this include the messages that are sent but not delivered (due to the user's mesage cap)?
 design choice: total # of unreads is the unread messages that have been sent
 
-does the server know that the recipient is logged in or not? 
+does the server know that the recipient is logged in or not?
 surely it must, because it needs to know whether the recipient is logged in in order to decide whether to store the messages or deliver immediately
 
 store the list of logged in users in a table so that we can check if a person is online? so that we can indicate whether they are logged in or not
@@ -96,10 +102,11 @@ we also need a page that lists all the users and is iterable to see all of them
 using tkinter: issues with installing it via just pip. If python installed via homebrew, we need to install tkinter via `brew install python-tk@3.13` which is kinda platform specification. Maybe we should look into other libraries that makes it easy for cross platform
 
 # TODO:
+
 - search for users
 - delete messages/select messages for deletion
 - display total number of unread messages, including undelivered (NVM)
-- log out of account 
+- log out of account
 - delete account
 - button for adding more messages
 - arrow keys or reload for fetching more messages
