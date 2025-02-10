@@ -57,9 +57,13 @@ class MessageWidget(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 5, 10, 5)
 
-        self.checkbox = QCheckBox()
-        self.checkbox.setStyleSheet("QCheckBox { color: white; }")
-        layout.addWidget(self.checkbox)
+        # Only show checkbox for messages sent by the current user
+        if is_sender:
+            self.checkbox = QCheckBox()
+            self.checkbox.setStyleSheet("QCheckBox { color: white; }")
+            layout.addWidget(self.checkbox)
+        else:
+            self.checkbox = None
 
         msg_label = QLabel(message)
         msg_label.setStyleSheet(
