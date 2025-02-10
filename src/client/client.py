@@ -1,30 +1,40 @@
 import socket
-import json
 import sys
-import threading
 import time
+
+from protocol.config_manager import ConfigManager
+from protocol.protocol_factory import ProtocolFactory
 
 
 class Client:
-    def __init__(self, host="localhost", port=5555, client_id=None):
-        self.host = host
-        self.port = port
+    def __init__(self, server_addr="localhost", client_id=None):
+        # Load configuration
+        self.config_manager = ConfigManager()
+        self.config = self.config_manager.network
+        self.server_addr = server_addr
         self.client_id = client_id or f"client_{int(time.time())}"
+
+        # Get protocol from factory
+        self.protocol = ProtocolFactory.get_protocol(self.config.protocol)
+
         self.socket = None
         self.connected = False
 
     def connect(self):
-        """Establish connection with server"""
         try:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((self.host, self.port))
+            # Get local network information
+            self.config_manager.get_network_info()
+            
+            # Create and connect socket using config manager
+            self.socket = self.config_manager.create_client_socket(self.server_addr)
+            if not self.socket:
+                return False
 
             # Send client identification
             self.send_message(
                 {"client_id": self.client_id, "message": "connection_request"}
             )
 
-            # Receive connection confirmation
             response = self.receive_message()
             if response.get("status") == "connected":
                 self.connected = True
@@ -41,7 +51,8 @@ class Client:
     def send_message(self, message_dict):
         """Send message to server"""
         try:
-            self.socket.send(json.dumps(message_dict).encode())
+            data_bytes = self.protocol.serialize(message_dict)
+            self.socket.send(data_bytes)
         except Exception as e:
             print(f"Error sending message: {e}")
             self.connected = False
@@ -49,8 +60,8 @@ class Client:
     def receive_message(self):
         """Receive message from server"""
         try:
-            data = self.socket.recv(1024).decode()
-            return json.loads(data)
+            data_bytes = self.socket.recv(1024)
+            return self.protocol.deserialize(data_bytes)
         except Exception as e:
             print(f"Error receiving message: {e}")
             self.connected = False
@@ -91,10 +102,12 @@ class Client:
 
 
 if __name__ == "__main__":
-    # Get client ID from command line argument if provided
+    # Get client ID and server address from command line arguments if provided
     client_id = sys.argv[1] if len(sys.argv) > 1 else None
+    server_addr = sys.argv[2] if len(sys.argv) > 2 else "localhost"
+    print(f"Starting client with ID: {client_id}")
 
     # Create and start client
-    client = Client(client_id=client_id)
+    client = Client(server_addr=server_addr, client_id=client_id)
     if client.connect():
         client.start_messaging()

@@ -5,3 +5,6 @@ network:
   max_clients: 10
   buffer_size: 1024
   messages_dir: "client_messages"
+  connection_timeout: 10
+  retry_attempts: 3
+  retry_delay: 2
