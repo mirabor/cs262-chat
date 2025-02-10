@@ -2,8 +2,8 @@ import socket
 import sys
 import time
 
-from config_manager import ConfigManager
-from protocol_factory import ProtocolFactory
+from protocol.config_manager import ConfigManager
+from protocol.protocol_factory import ProtocolFactory
 
 
 class Client:
