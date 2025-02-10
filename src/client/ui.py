@@ -6,8 +6,15 @@ from PyQt6.QtWidgets import (
 )
 
 from logic import ChatAppLogic
-from components import DarkPushButton
-from pages import HomePage, ChatPage, LoginPage, UsersPage, SignupPage, SettingsPage
+from components.buttons import DarkPushButton
+from pages import (
+    HomePage,
+    ChatPage,
+    LoginPage,
+    UsersPage,
+    SignupPage,
+    SettingsPage,
+)
 
 
 class ChatAppUI(QMainWindow):
@@ -96,19 +103,6 @@ class ChatAppUI(QMainWindow):
     def show_settings_page(self):
         settings_page = SettingsPage(self)
         self.setCentralWidget(settings_page)
-
-    def show_delete_confirmation(self):
-        reply = QMessageBox.question(
-            self,
-            "Confirm Deletion",
-            "Are you sure you want to delete your account?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-
-        if reply == QMessageBox.StandardButton.Yes:
-            self.logic.delete_account(self.current_user)
-            self.current_user = None
-            self.show_login_page()
 
     def login(self, username, password):
         if self.logic.login(username, password):  # Call business logic

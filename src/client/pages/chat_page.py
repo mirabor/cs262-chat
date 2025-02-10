@@ -58,19 +58,28 @@ class ChatPage(QWidget):
         layout.addWidget(delete_btn)
 
         # Messages area
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("QScrollArea { border: none; }")
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("QScrollArea { border: none; }")
 
         scroll_content = QWidget()
         self.messages_layout = QVBoxLayout(scroll_content)
+        
+        # Add spacer at the top to push messages to bottom
+        self.messages_layout.addStretch(1)
 
         # Mark messages as read and display them
         self._display_messages()
 
-        self.messages_layout.addStretch()
-        scroll_area.setWidget(scroll_content)
-        layout.addWidget(scroll_area)
+        self.scroll_area.setWidget(scroll_content)
+        layout.addWidget(self.scroll_area)
+        
+        # Scroll to bottom after a short delay to ensure layout is updated
+        self.scroll_area.verticalScrollBar().rangeChanged.connect(
+            lambda: self.scroll_area.verticalScrollBar().setValue(
+                self.scroll_area.verticalScrollBar().maximum()
+            )
+        )
 
         # Input area
         input_layout = QHBoxLayout()
@@ -145,3 +154,8 @@ class ChatPage(QWidget):
             msg_widget = MessageWidget(content, True)
             self.message_widgets.append(msg_widget)
             self.messages_layout.addWidget(msg_widget)
+            
+            # Scroll to bottom
+            self.scroll_area.verticalScrollBar().setValue(
+                self.scroll_area.verticalScrollBar().maximum()
+            )
