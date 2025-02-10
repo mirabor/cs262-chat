@@ -7,4 +7,11 @@ from .home_page import HomePage
 from .users_page import UsersPage
 from .chat_page import ChatPage
 
-__all__ = ['LoginPage', 'SignupPage', 'SettingsPage', 'HomePage', 'UsersPage', 'ChatPage']
+__all__ = [
+    "LoginPage",
+    "SignupPage",
+    "SettingsPage",
+    "HomePage",
+    "UsersPage",
+    "ChatPage",
+]

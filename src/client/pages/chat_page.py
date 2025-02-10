@@ -118,9 +118,13 @@ class ChatPage(QWidget):
 
         if reply == QMessageBox.StandardButton.Yes:
             # Delete messages from logic
-            self.main_window.logic.delete_messages(
+            success, message = self.main_window.logic.delete_messages(
                 self.chat_id, messages_to_delete, self.main_window.current_user
             )
+
+            if not success:
+                QMessageBox.critical(self, "Error", message)
+                return
 
             # Delete message widgets
             for i in sorted(messages_to_delete, reverse=True):
@@ -131,7 +135,10 @@ class ChatPage(QWidget):
         """Send a new message."""
         content = self.message_input.text().strip()
         if content:
-            self.main_window.send_message(self.chat_id, content)
+            # Send message through logic
+            self.main_window.logic.send_message(
+                self.chat_id, self.main_window.current_user, content
+            )
             self.message_input.clear()
 
             # Create and display new message widget

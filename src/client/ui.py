@@ -1,16 +1,13 @@
 from PyQt6.QtWidgets import (
     QMainWindow,
-    QWidget,
-    QVBoxLayout,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QMessageBox,
-    QScrollArea,
 )
-from PyQt6.QtCore import Qt
+
 from logic import ChatAppLogic
-from components import DarkPushButton, ChatWidget, MessageWidget
+from components import DarkPushButton
+from pages import HomePage, ChatPage, LoginPage, UsersPage, SignupPage, SettingsPage
 
 
 class ChatAppUI(QMainWindow):
@@ -77,32 +74,26 @@ class ChatAppUI(QMainWindow):
         container.addLayout(nav_layout)
 
     def show_home_page(self):
-        from pages.home_page import HomePage
         home_page = HomePage(self)
         self.setCentralWidget(home_page)
 
     def show_chat_page(self, chat_id):
-        from pages.chat_page import ChatPage
         chat_page = ChatPage(self, chat_id)
         self.setCentralWidget(chat_page)
 
     def show_login_page(self):
-        from pages.login_page import LoginPage
         login_page = LoginPage(self)
         self.setCentralWidget(login_page)
 
     def show_users_page(self):
-        from pages.users_page import UsersPage
         users_page = UsersPage(self)
         self.setCentralWidget(users_page)
 
     def show_signup_page(self):
-        from pages.signup_page import SignupPage
         signup_page = SignupPage(self)
         self.setCentralWidget(signup_page)
 
     def show_settings_page(self):
-        from pages.settings_page import SettingsPage
         settings_page = SettingsPage(self)
         self.setCentralWidget(settings_page)
 
@@ -118,35 +109,6 @@ class ChatAppUI(QMainWindow):
             self.logic.delete_account(self.current_user)
             self.current_user = None
             self.show_login_page()
-
-    def delete_selected_messages(self, chat_id):
-        messages_to_delete = [
-            i
-            for i, msg_widget in enumerate(self.message_widgets)
-            if msg_widget.checkbox.isChecked()
-        ]
-
-        if not messages_to_delete:
-            QMessageBox.warning(
-                self, "No Selection", "No messages selected for deletion."
-            )
-            return
-
-        success, message = self.logic.delete_messages(
-            chat_id, messages_to_delete, self.current_user
-        )
-
-        if not success:
-            QMessageBox.critical(self, "Error: ", message)
-
-        self.show_chat_page(chat_id)  # Refresh the chat page
-
-    def send_message(self, chat_id, content):
-        if content.strip():
-            self.logic.send_message(
-                chat_id, self.current_user, content
-            )  # Call business logic
-            self.show_chat_page(chat_id)
 
     def login(self, username, password):
         if self.logic.login(username, password):  # Call business logic
@@ -178,7 +140,7 @@ class ChatAppUI(QMainWindow):
         if not self.current_user:
             QMessageBox.critical(self, "Error", "Please login first")
             return
-        chat_id = self.logic.start_chat(self.current_user, other_user)  # Call business logic
+        chat_id = self.logic.start_chat(
+            self.current_user, other_user
+        )  # Call business logic
         self.show_chat_page(chat_id)
-
-
