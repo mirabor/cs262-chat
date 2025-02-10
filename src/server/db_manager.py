@@ -126,7 +126,11 @@ class DBManager:
             if not user:
                 return {"success": False, "error_message": "Invalid username or password."}
 
-            user_id, db_username, db_nickname, password = user
+            user_id, db_username, db_nickname, db_password = user
+            
+            # Check if password matches
+            if password != db_password:
+                return {"success": False, "error_message": "Invalid username or password."}
 
             # Fetch the message view limit
             cursor.execute(
