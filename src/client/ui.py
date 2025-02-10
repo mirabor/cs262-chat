@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 
-from .logic import ChatAppLogic
+from .newclient import Client
 from .components.buttons import DarkPushButton
 from .pages import (
     HomePage,
@@ -43,8 +43,8 @@ class ChatAppUI(QMainWindow):
         )
 
         self.current_user = None
-        self.logic = ChatAppLogic()  # Instantiate ChatAppLogic
-        self.logic.load_data()  # Load data from logic class
+        self.logic = Client()  # Instantiate ChatAppLogic
+        # self.logic.load_data()  # Load data from logic class
         self.show_login_page()  # Show UI page, not from logic
 
     def create_navigation(self, container, show_delete=False):

@@ -28,6 +28,7 @@ class Client:
             # Create and connect socket using config manager
             self.socket = self.config_manager.create_client_socket(self.server_addr)
             if not self.socket:
+                print("Failed to create socket.")
                 return False
 
             # Send client identification
@@ -66,32 +67,6 @@ class Client:
             print(f"Error receiving message: {e}")
             self.connected = False
             return {}
-
-    def start_messaging(self):
-        """Start messaging loop"""
-        if not self.connected:
-            print("Not connected to server")
-            return
-
-        print("Start typing messages (type 'quit' to exit):")
-        try:
-            while True:
-                message = input(f"{self.client_id}> ")
-                if message.lower() == "quit":
-                    break
-
-                self.send_message({"client_id": self.client_id, "message": message})
-
-                response = self.receive_message()
-                if response.get("status") == "received":
-                    print("Message delivered")
-                else:
-                    print(f"Message delivery failed: {response.get('message')}")
-
-        except Exception as e:
-            print(f"Error in messaging: {e}")
-        finally:
-            self.disconnect()
 
     def disconnect(self):
         """Disconnect from server"""

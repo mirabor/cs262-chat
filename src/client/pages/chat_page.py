@@ -1,5 +1,3 @@
-"""Chat page component for the chat application."""
-
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -41,11 +39,7 @@ class ChatPage(QWidget):
         header_layout.addWidget(back_btn)
 
         # Get other user's name
-        other_user = next(
-            p
-            for p in self.main_window.logic.chats[self.chat_id]["participants"]
-            if p != self.main_window.current_user
-        )
+        other_user = self.main_window.logic.get_other_user_in_chat(self.chat_id, self.main_window.current_user)
         chat_label = QLabel(f"Chat with {other_user}")
         chat_label.setStyleSheet("font-size: 24px;")
         header_layout.addWidget(chat_label, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -68,7 +62,7 @@ class ChatPage(QWidget):
         # Add spacer at the top to push messages to bottom
         self.messages_layout.addStretch(1)
 
-        # Mark messages as read and display them
+        # Display messages
         self._display_messages()
 
         self.scroll_area.setWidget(scroll_content)
@@ -90,15 +84,15 @@ class ChatPage(QWidget):
         layout.addLayout(input_layout)
 
     def _display_messages(self):
-        """Display messages and mark them as read."""
-        # Mark messages as read
-        for message in self.main_window.logic.chats[self.chat_id]["messages"]:
-            if message["sender"] != self.main_window.current_user:
-                message["read"] = True
-        self.main_window.logic.save_data()
+        """Display messages in the chat."""
+        # Fetch messages from logic
+        messages, error = self.main_window.logic.get_messages(self.chat_id)
+        if error:
+            QMessageBox.critical(self, "Error", f"Failed to fetch messages: {error}")
+            return
 
         # Display messages
-        for message in self.main_window.logic.chats[self.chat_id]["messages"]:
+        for message in messages:
             is_sender = message["sender"] == self.main_window.current_user
             msg_widget = MessageWidget(message["content"], is_sender)
             self.message_widgets.append(msg_widget)
@@ -106,6 +100,7 @@ class ChatPage(QWidget):
 
     def _delete_selected_messages(self):
         """Delete selected messages."""
+        # Get indices of selected messages
         messages_to_delete = [
             i
             for i, msg_widget in enumerate(self.message_widgets)
@@ -118,6 +113,7 @@ class ChatPage(QWidget):
             )
             return
 
+        # Confirm deletion
         reply = QMessageBox.question(
             self,
             "Confirm Deletion",
@@ -126,31 +122,37 @@ class ChatPage(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            # Delete messages from logic
-            success, message = self.main_window.logic.delete_messages(
+            # Delete messages using logic
+            success, error = self.main_window.logic.delete_messages(
                 self.chat_id, messages_to_delete, self.main_window.current_user
             )
 
             if not success:
-                QMessageBox.critical(self, "Error", message)
+                QMessageBox.critical(self, "Error", error)
                 return
 
-            # Delete message widgets
+            # Remove message widgets from UI
             for i in sorted(messages_to_delete, reverse=True):
                 widget = self.message_widgets.pop(i)
                 widget.setParent(None)
 
-    def _send_message(self):
+    def _send_chat_message(self):
         """Send a new message."""
         content = self.message_input.text().strip()
         if content:
-            # Send message through logic
-            self.main_window.logic.send_message(
+            # Send message using logic
+            success, error = self.main_window.logic.send__chat_message(
                 self.chat_id, self.main_window.current_user, content
             )
+
+            if not success:
+                QMessageBox.critical(self, "Error", f"Failed to send message: {error}")
+                return
+
+            # Clear input field
             self.message_input.clear()
 
-            # Create and display new message widget
+            # Display the new message in the UI
             msg_widget = MessageWidget(content, True)
             self.message_widgets.append(msg_widget)
             self.messages_layout.addWidget(msg_widget)

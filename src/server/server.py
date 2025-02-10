@@ -5,6 +5,10 @@ from datetime import datetime
 
 from protocol.config_manager import ConfigManager
 from protocol.protocol_factory import ProtocolFactory
+from api import (
+    signup, login, delete_user, get_chats, get_all_users, update_view_limit,
+    save_settings, start_chat, get_user_message_limit, delete_chats, delete_messages, get_messages, get_other_user_in_chat, send_chat_message, get_users_to_display
+)
 
 
 class Server:
@@ -91,14 +95,13 @@ class Server:
                 if not data:
                     break
 
-                message_data = self.protocol.deserialize(data)
-                self.store_message(client_id, message_data.get("message", ""))
+                # Deserialize the incoming data
+                request = self.protocol.deserialize(data)
 
-                # Send acknowledgment
-                response = {
-                    "status": "received",
-                    "message": "Message stored successfully",
-                }
+                # Handle the request and get the response
+                response = self.handle_request(request)
+
+                # Send the response back to the client
                 client_socket.send(self.protocol.serialize(response))
 
         except Exception as e:
@@ -109,6 +112,52 @@ class Server:
                     self.active_clients.pop(client_id, None)
             client_socket.close()
             print(f"Client {client_id} disconnected")
+
+    def handle_request(self, request):
+        """Handle incoming requests and return a response"""
+        action = request.get("action")
+
+        if action == "send_message":
+            # Store the message
+            self.store_message(request.get("client_id"), request.get("message", ""))
+            response = {
+                "status": "received",
+                "message": "Message stored successfully",
+            }
+        elif action == "signup":
+            response = signup(request)
+        elif action == "login":
+            response = login(request)
+        elif action == "delete_user":
+            response = delete_user(request.get("username"))
+        elif action == "get_chats":
+            response = get_chats(request.get("user_id"))
+        elif action == "get_all_users":
+            response = get_all_users(request.get("exclude_username"))
+        elif action == "update_view_limit":
+            response = update_view_limit(request.get("username"), request.get("new_limit"))
+        elif action == "save_settings":
+            response = save_settings(request.get("username"), request.get("message_limit"))
+        elif action == "start_chat":
+            response = start_chat(request.get("current_user"), request.get("other_user"))
+        elif action == "get_user_message_limit":
+            response = get_user_message_limit(request.get("username"))
+        elif action == "delete_chats":
+            response = delete_chats(request.get("chat_ids"))
+        elif action == "delete_messages":
+            response = delete_messages(request.get("chat_id"), request.get("message_indices"), request.get("current_user"))
+        elif action == "get_other_user_in_chat":
+            response = get_other_user_in_chat(request.get("chat_id"), request.get("current_user"))
+        elif action == "get_messages":
+            response = get_messages(request.get("chat_id"))
+        elif action == "send_chat_message":
+            response = send_chat_message(request.get("chat_id"), request.get("sender"), request.get("content"))
+        elif action == "get_users_to_display":
+            response = get_users_to_display(request.get("current_user"), request.get("search_pattern"), request.get("current_page"), request.get("users_per_page"))
+        else:
+            response = {"success": False, "error_message": "Invalid action"}
+
+        return response
 
     def store_message(self, client_id, message):
         """Store client message in their designated file"""

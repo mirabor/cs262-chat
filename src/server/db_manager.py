@@ -215,6 +215,7 @@ class DBManager:
             return {"success": True, "users": users, "error_message": ""}
 
     def update_view_limit(self, username, new_limit):
+
         """Update the message view limit for a user."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -230,3 +231,167 @@ class DBManager:
 
             conn.commit()
             return {"success": True, "error_message": ""}
+        
+    def start_chat(self, current_user, other_user):
+        """Create a new chat between two users."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Generate a unique chat ID
+            chat_id = f"{min(current_user, other_user)}_{max(current_user, other_user)}"
+
+            # Check if the chat already exists
+            cursor.execute(
+                """
+                SELECT id FROM messages
+                WHERE (sender_id = ? AND receiver_id = ?)
+                OR (sender_id = ? AND receiver_id = ?)
+                LIMIT 1
+                """,
+                (current_user, other_user, other_user, current_user)
+            )
+            if cursor.fetchone():
+                return {"success": True, "chat_id": chat_id, "error_message": ""}
+
+            # Insert a new message to create the chat
+            cursor.execute(
+                """
+                INSERT INTO messages (sender_id, receiver_id, content, timestamp)
+                VALUES (?, ?, ?, ?)
+                """,
+                (current_user, other_user, "Chat started", datetime.now().isoformat())
+            )
+
+            conn.commit()
+            return {"success": True, "chat_id": chat_id, "error_message": ""}
+
+    def get_user_message_limit(self, username):
+        """Retrieve the message view limit for a user."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT msg_view_limit FROM userconfig WHERE username = ?",
+                (username,)
+            )
+            view_limit_row = cursor.fetchone()
+            view_limit = view_limit_row[0] if view_limit_row else 6  # Default to 6 if not set
+
+            return {"success": True, "message_limit": view_limit, "error_message": ""}
+
+    def delete_chats(self, chat_ids):
+        """Delete one or more chats."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            for chat_id in chat_ids:
+                # Delete all messages in the chat
+                cursor.execute(
+                    "DELETE FROM messages WHERE id IN (SELECT id FROM messages WHERE sender_id = ? OR receiver_id = ?)",
+                    (chat_id.split("_")[0], chat_id.split("_")[1])
+                )
+
+            conn.commit()
+            return {"success": True, "error_message": ""}
+
+    def delete_messages(self, chat_id, message_indices, current_user):
+        """Delete specific messages from a chat."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Fetch all messages in the chat
+            cursor.execute(
+                """
+                SELECT id FROM messages
+                WHERE (sender_id = ? AND receiver_id = ?)
+                OR (sender_id = ? AND receiver_id = ?)
+                ORDER BY timestamp
+                """,
+                (chat_id.split("_")[0], chat_id.split("_")[1], chat_id.split("_")[1], chat_id.split("_")[0])
+            )
+            messages = cursor.fetchall()
+
+            # Delete the specified messages
+            for i in message_indices:
+                if i < len(messages):
+                    cursor.execute(
+                        "DELETE FROM messages WHERE id = ?",
+                        (messages[i][0],)
+                    )
+
+            conn.commit()
+            return {"success": True, "error_message": ""}
+
+    def get_messages(self, chat_id):
+        """Retrieve messages for a specific chat."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT * FROM messages
+                WHERE (sender_id = ? AND receiver_id = ?)
+                OR (sender_id = ? AND receiver_id = ?)
+                ORDER BY timestamp
+                """,
+                (chat_id.split("_")[0], chat_id.split("_")[1], chat_id.split("_")[1], chat_id.split("_")[0])
+            )
+            messages = cursor.fetchall()
+
+            return {"success": True, "messages": messages, "error_message": ""}
+
+    def get_other_user_in_chat(self, chat_id, current_user):
+        """Get the other participant in a chat."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT sender_id, receiver_id FROM messages
+                WHERE (sender_id = ? AND receiver_id = ?)
+                OR (sender_id = ? AND receiver_id = ?)
+                LIMIT 1
+                """,
+                (chat_id.split("_")[0], chat_id.split("_")[1], chat_id.split("_")[1], chat_id.split("_")[0])
+            )
+            participants = cursor.fetchone()
+
+            if participants:
+                return participants[0] if participants[1] == current_user else participants[1]
+            else:
+                return "Unknown User"
+
+    def send_chat_message(self, chat_id, sender, content):
+        """Send a message in a chat."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                INSERT INTO messages (sender_id, receiver_id, content, timestamp)
+                VALUES (?, ?, ?, ?)
+                """,
+                (sender, chat_id.split("_")[1] if sender == chat_id.split("_")[0] else chat_id.split("_")[0], content, datetime.now().isoformat())
+            )
+
+            conn.commit()
+            return {"success": True, "error_message": ""}
+
+    def get_users_to_display(self, search_pattern="", page=1, users_per_page=10):
+        """Retrieve a list of users with optional filtering and pagination."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if search_pattern:
+                cursor.execute(
+                    "SELECT username FROM users WHERE username LIKE ? LIMIT ? OFFSET ?",
+                    (f"%{search_pattern}%", users_per_page, (page - 1) * users_per_page)
+                )
+            else:
+                cursor.execute(
+                    "SELECT username FROM users LIMIT ? OFFSET ?",
+                    (users_per_page, (page - 1) * users_per_page)
+                )
+
+            users = [row[0] for row in cursor.fetchall()]
+            return {"success": True, "users": users, "error_message": ""}
