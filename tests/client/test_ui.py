@@ -3,7 +3,8 @@ from unittest.mock import MagicMock, patch
 from PyQt6.QtWidgets import QApplication, QLabel
 import sys
 import os
-from src.client.ui import ChatAppUI, ChatWidget, MessageWidget
+from src.client.ui import ChatAppUI
+from src.client.components import ChatWidget, MessageWidget
 
 # Set Qt to use minimal platform plugin to avoid opening windows during tests
 os.environ['QT_QPA_PLATFORM'] = 'minimal'
