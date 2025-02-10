@@ -119,36 +119,3 @@ class ChatAppLogic:
             self.current_user = None
             return True, "Account deleted successfully"
         return False, "No user logged in"
-
-    def start_chat(self, current_user, other_user):
-        chat_id = f"{min(current_user, other_user)}_{max(current_user, other_user)}"
-        if chat_id not in self.chats:
-            self.chats[chat_id] = {
-                "participants": [current_user, other_user],
-                "messages": [],
-            }
-            self.save_data()
-        return chat_id
-
-    def send_message(self, chat_id, current_user, content):
-        if content.strip():
-            self.chats[chat_id]["messages"].append(
-                {
-                    "sender": current_user,
-                    "content": content,
-                    "timestamp": datetime.now().isoformat(),
-                    "read": False,
-                }
-            )
-            self.save_data()
-            return True, "Message sent"
-        return False, "Message content is empty"
-        if not chat_ids:
-            return False, "No chats selected"
-
-        for chat_id in chat_ids:
-            if chat_id in self.chats:
-                del self.chats[chat_id]
-
-        self.save_data()
-        return True, "Selected chats deleted"
