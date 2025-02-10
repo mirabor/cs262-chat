@@ -105,12 +105,15 @@ class ChatAppUI(QMainWindow):
         self.setCentralWidget(settings_page)
 
     def login(self, username, password):
-        if self.logic.login(username, password):  # Call business logic
-            # TODO: have the current user set in the logic, not in the UI
-            self.current_user = username
-            self.show_home_page()
-        else:
-            QMessageBox.critical(self, "Error", "Invalid username or password")
+        try:
+            if self.logic.login(username, password):  # Call business logic
+                # TODO: have the current user set in the logic, not in the UI
+                self.current_user = username
+                self.show_home_page()
+            else:
+                QMessageBox.critical(self, "Error", "Invalid username or password")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     def signup(self, username, nickname, password):
         if self.logic.signup(username, nickname, password):  # Call business logic
