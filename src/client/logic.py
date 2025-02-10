@@ -113,14 +113,21 @@ class ChatAppLogic:
     
     def get_chats(self, user_id):
         """Request chat history for a user."""
-        Client.send_message({
+        self.client.send_message({
             "action": "get_chats",
             "user_id": user_id
         })
-        response = Client.receive_message()
-        return response.get("chats", []), response.get("error_message", "")
-    
-
+        response = self.client.receive_message()
+        if response.get("success"):
+            # Convert the chats dictionary to a list of chat objects
+            chats = [
+                {"chat_id": chat_id, **chat_data}
+                for chat_id, chat_data in response.get("chats", {}).items()
+            ]
+            return chats, response.get("error_message", "")
+        else:
+            return [], response.get("error_message", "Failed to fetch chats")
+        
     def get_other_user_in_chat(self, chat_id, current_user):
         """Get the other user in the chat."""
         Client.send_message({
@@ -148,3 +155,19 @@ class ChatAppLogic:
         response = Client.receive_message()
         return response.get("chats", []), response.get("error_message", "")
     
+    def get_unread_message_count(self, chat_id, current_user):
+        """Count unread messages in a chat for a specific user."""
+        chats, error = self.client.get_chats(current_user)
+        if error:
+            return 0, error
+
+        for chat in chats.values():
+            if chat["chat_id"] == chat_id:
+                unread_count = sum(
+                    1
+                    for msg in chat["messages"]
+                    if msg["sender"] != current_user and not msg["read"]
+                )
+                return unread_count, None
+
+        return 0, "Chat not found"

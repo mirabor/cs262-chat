@@ -16,6 +16,7 @@ from .pages import (
     SettingsPage,
 )
 
+from .logic import ChatAppLogic
 
 class ChatAppUI(QMainWindow):
     def __init__(self):
@@ -43,8 +44,7 @@ class ChatAppUI(QMainWindow):
         )
 
         self.current_user = None
-        self.logic = Client()  # Instantiate ChatAppLogic
-        # self.logic.load_data()  # Load data from logic class
+        self.logic = ChatAppLogic()  # Instantiate ChatAppLogic
         self.show_login_page()  # Show UI page, not from logic
 
     def create_navigation(self, container, show_delete=False):

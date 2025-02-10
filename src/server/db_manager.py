@@ -277,8 +277,8 @@ class DBManager:
             view_limit_row = cursor.fetchone()
             view_limit = view_limit_row[0] if view_limit_row else 6  # Default to 6 if not set
 
-            return {"success": True, "message_limit": view_limit, "error_message": ""}
-
+            return str(view_limit)  # Return the message limit as a string
+        
     def delete_chats(self, chat_ids):
         """Delete one or more chats."""
         with self._get_connection() as conn:

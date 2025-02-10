@@ -96,12 +96,16 @@ class UsersPage(QWidget):
 
         # Get users to display
         search_pattern = self.search_input.text().strip()
-        users_to_display = self.main_window.logic.get_users_to_display(
+        users_to_display, error = self.main_window.logic.get_users_to_display(
             self.main_window.current_user,
             search_pattern,
             self.current_page,
             self.users_per_page,
         )
+
+        if error:
+            print(f"Error fetching users: {error}")
+            return
 
         # Display users or "no users" message
         if not users_to_display:

@@ -5,7 +5,6 @@ import time
 from protocol.config_manager import ConfigManager
 from protocol.protocol_factory import ProtocolFactory
 
-
 class Client:
     def __init__(self, server_addr="localhost", client_id=None):
         # Load configuration
