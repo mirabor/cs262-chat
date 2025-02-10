@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
 )
 from PyQt6.QtCore import Qt
-from logic import ChatAppLogic
+from src.client.logic import ChatAppLogic
 
 
 class DarkPushButton(QPushButton):

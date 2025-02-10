@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from utils import hash_password, verify_password
+from src.client.utils import hash_password, verify_password
 from fnmatch import fnmatch
 
 
