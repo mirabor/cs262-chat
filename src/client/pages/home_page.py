@@ -1,7 +1,7 @@
 """Home page component for the chat application."""
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea
-from components import ChatWidget
+from ..components import ChatWidget
 
 
 class HomePage(QWidget):
@@ -9,7 +9,7 @@ class HomePage(QWidget):
 
     def __init__(self, parent=None):
         """Initialize the home page.
-        
+
         Args:
             parent: The parent widget (ChatAppUI)
         """
@@ -55,16 +55,14 @@ class HomePage(QWidget):
             if current_user in chat_data["participants"]:
                 # Get the other participant in the chat
                 other_user = next(
-                    p for p in chat_data["participants"] 
-                    if p != current_user
+                    p for p in chat_data["participants"] if p != current_user
                 )
 
                 # Count unread messages
                 unread_count = sum(
                     1
                     for msg in chat_data["messages"]
-                    if msg.get("sender") != current_user
-                    and not msg.get("read", False)
+                    if msg.get("sender") != current_user and not msg.get("read", False)
                 )
 
                 # Create chat widget

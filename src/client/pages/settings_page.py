@@ -1,7 +1,7 @@
 """Settings page component for the chat application."""
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QMessageBox
-from components import DarkPushButton
+from ..components import DarkPushButton
 
 
 class SettingsPage(QWidget):
@@ -9,7 +9,7 @@ class SettingsPage(QWidget):
 
     def __init__(self, parent=None):
         """Initialize the settings page.
-        
+
         Args:
             parent: The parent widget (ChatAppUI)
         """

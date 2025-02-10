@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit
 from PyQt6.QtCore import Qt
-from components import DarkPushButton
+from ..components import DarkPushButton
 
 
 class SignupPage(QWidget):
@@ -10,7 +10,7 @@ class SignupPage(QWidget):
 
     def __init__(self, parent=None):
         """Initialize the signup page.
-        
+
         Args:
             parent: The parent widget (ChatAppUI)
         """
@@ -65,5 +65,5 @@ class SignupPage(QWidget):
         self.main_window.signup(
             self.username_input.text(),
             self.nickname_input.text(),
-            self.password_input.text()
+            self.password_input.text(),
         )

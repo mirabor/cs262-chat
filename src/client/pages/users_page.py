@@ -1,7 +1,14 @@
 """Users page component for the chat application."""
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QScrollArea
-from components import DarkPushButton, ChatWidget
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QScrollArea,
+)
+from ..components import DarkPushButton, ChatWidget
 
 
 class UsersPage(QWidget):
@@ -9,7 +16,7 @@ class UsersPage(QWidget):
 
     def __init__(self, parent=None):
         """Initialize the users page.
-        
+
         Args:
             parent: The parent widget (ChatAppUI)
         """
@@ -93,7 +100,7 @@ class UsersPage(QWidget):
             self.main_window.current_user,
             search_pattern,
             self.current_page,
-            self.users_per_page
+            self.users_per_page,
         )
 
         # Display users or "no users" message

@@ -5,9 +5,9 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 
-from logic import ChatAppLogic
-from components.buttons import DarkPushButton
-from pages import (
+from .logic import ChatAppLogic
+from .components.buttons import DarkPushButton
+from .pages import (
     HomePage,
     ChatPage,
     LoginPage,

@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 from PyQt6.QtCore import Qt
-from components import DarkPushButton, MessageWidget
+from ..components import DarkPushButton, MessageWidget
 
 
 class ChatPage(QWidget):
@@ -64,7 +64,7 @@ class ChatPage(QWidget):
 
         scroll_content = QWidget()
         self.messages_layout = QVBoxLayout(scroll_content)
-        
+
         # Add spacer at the top to push messages to bottom
         self.messages_layout.addStretch(1)
 
@@ -73,7 +73,7 @@ class ChatPage(QWidget):
 
         self.scroll_area.setWidget(scroll_content)
         layout.addWidget(self.scroll_area)
-        
+
         # Scroll to bottom after a short delay to ensure layout is updated
         self.scroll_area.verticalScrollBar().rangeChanged.connect(
             lambda: self.scroll_area.verticalScrollBar().setValue(
@@ -154,7 +154,7 @@ class ChatPage(QWidget):
             msg_widget = MessageWidget(content, True)
             self.message_widgets.append(msg_widget)
             self.messages_layout.addWidget(msg_widget)
-            
+
             # Scroll to bottom
             self.scroll_area.verticalScrollBar().setValue(
                 self.scroll_area.verticalScrollBar().maximum()

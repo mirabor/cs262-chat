@@ -1,17 +1,17 @@
 import unittest
-from unittest.mock import patch, MagicMock
-from datetime import datetime
+from unittest.mock import patch
 from src.client.logic import ChatAppLogic
+
 
 class TestChatAppLogic(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         # Mock the file operations to avoid actual file I/O during tests
-        self.patcher = patch('builtins.open', create=True)
+        self.patcher = patch("builtins.open", create=True)
         self.mock_open = self.patcher.start()
         # Mock empty data files
-        self.mock_open.return_value.__enter__.return_value.read.return_value = '{}'
-        
+        self.mock_open.return_value.__enter__.return_value.read.return_value = "{}"
+
         self.logic = ChatAppLogic()
         # Clear any existing data
         self.logic.users = {}
@@ -79,13 +79,15 @@ class TestChatAppLogic(unittest.TestCase):
         success, _ = self.logic.delete_messages(chat_id, [0, 2], "user1")
         self.assertTrue(success)
         self.assertEqual(len(self.logic.chats[chat_id]["messages"]), 1)
-        self.assertEqual(self.logic.chats[chat_id]["messages"][0]["content"], "Message 2")
+        self.assertEqual(
+            self.logic.chats[chat_id]["messages"][0]["content"], "Message 2"
+        )
 
     def test_delete_unauthorized_messages(self):
         """Test that users can't delete other users' messages."""
         chat_id = self.logic.start_chat("user1", "user2")
         self.logic.send_message(chat_id, "user2", "Message 1")
-        
+
         # Try to delete message from another user
         success, message = self.logic.delete_messages(chat_id, [0], "user1")
         self.assertFalse(success)
@@ -124,10 +126,11 @@ class TestChatAppLogic(unittest.TestCase):
 
         # Delete account
         self.logic.delete_account("user1")
-        
+
         # Verify user and their chats are removed
         self.assertNotIn("user1", self.logic.users)
         self.assertNotIn(chat_id, self.logic.chats)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
