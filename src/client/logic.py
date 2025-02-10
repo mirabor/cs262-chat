@@ -4,6 +4,7 @@ from datetime import datetime
 from utils import hash_password, verify_password
 from fnmatch import fnmatch
 
+
 class ChatAppLogic:
     def __init__(self):
         self.current_user = None
@@ -21,7 +22,8 @@ class ChatAppLogic:
             if self.chats[chat_id]["messages"][i]["sender"] == current_user:
                 del self.chats[chat_id]["messages"][i]
             else:
-                unauthorized_attempt = True  # Mark if unauthorized deletion was attempted
+                # Mark if unauthorized deletion was attempted
+                unauthorized_attempt = True
 
         self.save_data()
 
@@ -30,21 +32,24 @@ class ChatAppLogic:
         return True, "Messages deleted successfully."
 
     def send_message(self, chat_id, sender, content):
-        self.chats[chat_id]["messages"].append({
-            "sender": sender,
-            "content": content,
-            "timestamp": datetime.now().isoformat(),
-            "read": False,
-        })
+        self.chats[chat_id]["messages"].append(
+            {
+                "sender": sender,
+                "content": content,
+                "timestamp": datetime.now().isoformat(),
+                "read": False,
+            }
+        )
         self.save_data()
 
     def login(self, username, password):
         if username in self.users:
             stored_password = self.users[username]["password"]
             if verify_password(password, stored_password):
+                self.current_user = username
                 return True
         return False
-    
+
     def signup(self, username, nickname, password):
         if not username or not nickname or not password:
             return False
@@ -58,7 +63,7 @@ class ChatAppLogic:
         }
         self.save_data()
         return True
-    
+
     def save_settings(self, username, message_limit):
         if username in self.users:
             self.users[username]["message_limit"] = message_limit
@@ -74,17 +79,22 @@ class ChatAppLogic:
             self.save_data()
         return chat_id
 
-    def get_users_to_display(self, current_user, search_pattern, current_page, users_per_page):
+    def get_users_to_display(
+        self, current_user, search_pattern, current_page, users_per_page
+    ):
         # If search pattern is empty, return all users except the current user
         if not search_pattern:
-            self.filtered_users = [username for username in self.users if username != current_user]
+            self.filtered_users = [
+                username for username in self.users if username != current_user
+            ]
         else:
             # Filter users based on the search pattern
             self.filtered_users = [
-                username for username in self.users
+                username
+                for username in self.users
                 if username != current_user and fnmatch(username, f"*{search_pattern}*")
             ]
-        
+
         # Calculate the subset of users to display
         start_index = current_page * users_per_page
         end_index = start_index + users_per_page
@@ -109,13 +119,17 @@ class ChatAppLogic:
         with open("chats.json", "w") as f:
             json.dump(self.chats, f)
 
-    def delete_account(self):
-        if self.current_user:
-            del self.users[self.current_user]
-            for chat_id in list(self.chats.keys()):
-                if self.current_user in self.chats[chat_id]["participants"]:
-                    del self.chats[chat_id]
-            self.save_data()
-            self.current_user = None
-            return True, "Account deleted successfully"
-        return False, "No user logged in"
+    def delete_account(self, current_user):
+        del self.users[current_user]
+
+        # Remove user from all chats
+
+        # NOTE: (DOCS) This means, users who interacted with with curr user
+        # will lose all chats/messages
+        for chat_id in list(self.chats.keys()):
+            if current_user in self.chats[chat_id]["participants"]:
+                del self.chats[chat_id]
+        self.save_data()
+
+    def get_user_message_limit(self, current_user):
+        return str(self.users[current_user].get("message_limit", ""))

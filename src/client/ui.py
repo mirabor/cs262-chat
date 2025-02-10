@@ -1,7 +1,4 @@
-import sys
-from datetime import datetime
 from PyQt6.QtWidgets import (
-    QApplication,
     QMainWindow,
     QWidget,
     QVBoxLayout,
@@ -12,14 +9,11 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QFrame,
-    QSizePolicy,
-    QCheckBox
+    QCheckBox,
 )
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QFont, QPalette, QColor
-from fnmatch import fnmatch
-from utils import hash_password, verify_password
+from PyQt6.QtCore import Qt
 from logic import ChatAppLogic
+
 
 class DarkPushButton(QPushButton):
     def __init__(self, text="", parent=None):
@@ -39,8 +33,9 @@ class DarkPushButton(QPushButton):
         """
         )
 
+
 class ChatWidget(QFrame):
-    def __init__(self, username, unread_count=0, show_checkbox = False, parent=None):
+    def __init__(self, username, unread_count=0, show_checkbox=False, parent=None):
         super().__init__(parent)
         self.setStyleSheet(
             """
@@ -71,6 +66,7 @@ class ChatWidget(QFrame):
             unread_label = QLabel(f"[{unread_count} unreads]")
             unread_label.setStyleSheet("font-size: 16px; color: white;")
             layout.addWidget(unread_label)
+
 
 class MessageWidget(QFrame):
     def __init__(self, message, is_sender, parent=None):
@@ -113,6 +109,7 @@ class MessageWidget(QFrame):
             layout.addWidget(msg_label)
             layout.addStretch()
 
+
 class ChatAppUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -140,8 +137,8 @@ class ChatAppUI(QMainWindow):
 
         self.current_user = None
         self.logic = ChatAppLogic()  # Instantiate ChatAppLogic
-        self.logic.load_data()       # Load data from logic class
-        self.show_login_page()       # Show UI page, not from logic
+        self.logic.load_data()  # Load data from logic class
+        self.show_login_page()  # Show UI page, not from logic
 
     def create_navigation(self, container, show_delete=False):
         nav_layout = QHBoxLayout()
@@ -182,7 +179,7 @@ class ChatAppUI(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        self.create_navigation(layout, show_delete = False)
+        self.create_navigation(layout, show_delete=False)
 
         welcome_label = QLabel(f"Welcome, {self.current_user}")
         welcome_label.setStyleSheet("font-size: 24px; margin-bottom: 20px;")
@@ -198,17 +195,25 @@ class ChatAppUI(QMainWindow):
         # Initialize a dictionary to keep track of chat widgets
         self.chat_widgets = {}
 
+        # TODO: revisit to see if this is necessary... ui shouldn't be doing
+        # the logic below; refactor later, if time is on our side lol
         for chat_id, chat_data in self.logic.chats.items():
             if self.current_user in chat_data["participants"]:
-                other_user = [p for p in chat_data["participants"] if p != self.current_user][0]
+                other_user = [
+                    p for p in chat_data["participants"] if p != self.current_user
+                ][0]
 
                 unread_count = sum(
-                    1 for msg in chat_data["messages"]
-                    if msg.get("sender") != self.current_user and not msg.get("read", False)
+                    1
+                    for msg in chat_data["messages"]
+                    if msg.get("sender") != self.current_user
+                    and not msg.get("read", False)
                 )
 
-                chat_widget = ChatWidget(other_user, unread_count, show_checkbox = False)
-                chat_widget.mousePressEvent = lambda e, cid=chat_id: self.show_chat_page(cid)
+                chat_widget = ChatWidget(other_user, unread_count, show_checkbox=False)
+                chat_widget.mousePressEvent = (
+                    lambda e, cid=chat_id: self.show_chat_page(cid)
+                )
                 self.scroll_layout.addWidget(chat_widget)
 
                 # Store the widget in the dictionary
@@ -230,8 +235,14 @@ class ChatAppUI(QMainWindow):
         back_btn.clicked.connect(self.show_home_page)
         header_layout.addWidget(back_btn)
 
+        # TODO: similar logic is in show_home_page TODO above; refactor
+        # to use smth like self.logic._get_other_user(chat_id, self.current_user)
+        # also, might be better to have self.current_user in logic class since
+        # is all uses of it involve logic.
         other_user = [
-            p for p in self.logic.chats[chat_id]["participants"] if p != self.current_user
+            p
+            for p in self.logic.chats[chat_id]["participants"]
+            if p != self.current_user
         ][0]
         chat_label = QLabel(f"Chat with {other_user}")
         chat_label.setStyleSheet("font-size: 24px;")
@@ -250,8 +261,11 @@ class ChatAppUI(QMainWindow):
         scroll_area.setStyleSheet("QScrollArea { border: none; }")
 
         scroll_content = QWidget()
-        self.messages_layout = QVBoxLayout(scroll_content)  # Initialize self.messages_layout here
+        self.messages_layout = QVBoxLayout(
+            scroll_content
+        )  # Initialize self.messages_layout here
 
+        # TODO: move the below logic to logic class
         # Mark messages as read
         for message in self.logic.chats[chat_id]["messages"]:
             if message["sender"] != self.current_user:
@@ -266,7 +280,9 @@ class ChatAppUI(QMainWindow):
             is_sender = message["sender"] == self.current_user
             msg_widget = MessageWidget(message["content"], is_sender)
             self.message_widgets.append(msg_widget)  # Add message widget to the list
-            self.messages_layout.addWidget(msg_widget)  # Add message widget to the layout
+            self.messages_layout.addWidget(
+                msg_widget
+            )  # Add message widget to the layout
 
         self.messages_layout.addStretch()
         scroll_area.setWidget(scroll_content)
@@ -363,7 +379,7 @@ class ChatAppUI(QMainWindow):
 
         # Update the display
         self.update_users_display()
-   
+
     def show_signup_page(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -406,14 +422,14 @@ class ChatAppUI(QMainWindow):
         layout.addWidget(back_btn)
 
         layout.addStretch()
-    
+
     def show_settings_page(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        self.create_navigation(layout, show_delete= False)
+        self.create_navigation(layout, show_delete=False)
 
         title = QLabel("Settings")
         title.setStyleSheet("font-size: 24px;")
@@ -423,9 +439,7 @@ class ChatAppUI(QMainWindow):
         limit_label = QLabel("Message view limit:")
         layout.addWidget(limit_label)
         self.limit_input = QLineEdit()
-        self.limit_input.setText(
-            str(self.logic.users[self.current_user].get("message_limit", ""))
-        )
+        self.limit_input.setText(self.logic.get_user_message_limit(self.current_user))
         layout.addWidget(self.limit_input)
 
         save_btn = DarkPushButton("Save")
@@ -437,7 +451,7 @@ class ChatAppUI(QMainWindow):
         layout.addWidget(delete_btn)
 
         layout.addStretch()
-    
+
     def show_delete_confirmation(self):
         reply = QMessageBox.question(
             self,
@@ -447,12 +461,7 @@ class ChatAppUI(QMainWindow):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            del self.logic.users[self.current_user]
-            # Remove user from all chats
-            for chat_id in list(self.logic.chats.keys()):
-                if self.current_user in self.logic.chats[chat_id]["participants"]:
-                    del self.logic.chats[chat_id]
-            self.logic.save_data()
+            self.logic.delete_account(self.current_user)
             self.current_user = None
             self.show_login_page()
 
@@ -466,55 +475,40 @@ class ChatAppUI(QMainWindow):
             self.current_page += 1
             self.update_users_display()
 
-########### THESE ARE THE PARTS WHERE UI AND LOGIC ARE SPLIT   
-
-    def delete_selected_chats(self):
-        if not hasattr(self, 'chat_widgets') or not self.chat_widgets:
-            QMessageBox.information(self, "No Selection", "No chats available to delete.")
-            return
-    
-        chats_to_delete = [chat_id for chat_id, chat_widget in self.chat_widgets.items() if chat_widget.checkbox.isChecked()]
-
-        if not chats_to_delete:
-            QMessageBox.information(self, "No Selection", "No chats selected for deletion.")
-            return
-
-        confirm = QMessageBox.question(
-            self,
-            "Confirm Deletion",
-            "Are you sure you want to delete the selected chat(s)?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if confirm == QMessageBox.StandardButton.Yes:
-            self.logic.delete_chats(chats_to_delete)  # Call business logic
-            QMessageBox.information(self, "Success", "Selected chat(s) deleted successfully")
-            self.show_home_page()
-
- 
+    ########### THESE ARE THE PARTS WHERE UI AND LOGIC ARE SPLIT
     def delete_selected_messages(self, chat_id):
-        messages_to_delete = [i for i, msg_widget in enumerate(self.message_widgets) if msg_widget.checkbox.isChecked()]
+        messages_to_delete = [
+            i
+            for i, msg_widget in enumerate(self.message_widgets)
+            if msg_widget.checkbox.isChecked()
+        ]
 
         if not messages_to_delete:
-            QMessageBox.warning(self, "No Selection", "No messages selected for deletion.")
+            QMessageBox.warning(
+                self, "No Selection", "No messages selected for deletion."
+            )
             return
 
-        success, message = self.logic.delete_messages(chat_id, messages_to_delete, self.current_user)
+        success, message = self.logic.delete_messages(
+            chat_id, messages_to_delete, self.current_user
+        )
 
-        if success:
-            QMessageBox.information(self, "Success", message)
-        else:
-            QMessageBox.critical(self, "Error", message)
+        if not success:
+            QMessageBox.critical(self, "Error: ", message)
 
         self.show_chat_page(chat_id)  # Refresh the chat page
 
     def send_message(self, chat_id, content):
         if content.strip():
-            self.logic.send_message(chat_id, self.current_user, content)  # Call business logic
+            self.logic.send_message(
+                chat_id, self.current_user, content
+            )  # Call business logic
             self.message_input.clear()
             self.show_chat_page(chat_id)
 
     def login(self, username, password):
         if self.logic.login(username, password):  # Call business logic
+            # TODO: have the current user set in the logic, not in the UI
             self.current_user = username
             self.show_home_page()
         else:
@@ -525,12 +519,14 @@ class ChatAppUI(QMainWindow):
             QMessageBox.information(self, "Success", "Account created successfully")
             self.show_login_page()
         else:
-            QMessageBox.critical(self, "Error", "Username already taken or invalid input")
+            QMessageBox.critical(
+                self, "Error", "Username already taken or invalid input"
+            )
 
     def save_settings(self, message_limit):
         try:
             limit = int(message_limit)
-            self.logic.save_settings(self.current_user, limit)  # Call business logic
+            self.logic.save_settings(self.current_user, limit)
             QMessageBox.information(self, "Success", "Settings saved")
             self.show_home_page()
         except ValueError:
@@ -576,29 +572,6 @@ class ChatAppUI(QMainWindow):
         # Update pagination button states (UI task)
         self.prev_btn.setEnabled(self.current_page > 0)
         self.next_btn.setEnabled(
-            (self.current_page + 1) * self.users_per_page < len(self.logic.filtered_users)
+            (self.current_page + 1) * self.users_per_page
+            < len(self.logic.filtered_users)
         )
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = ChatAppUI()
-    window.show()
-    sys.exit(app.exec())
-    def on_login_clicked(self):
-        username = self.username_input.text()
-        password = self.password_input.text()
-        # This will be handled by the logic layer
-        pass
-
-    def on_signup_clicked(self):
-        username = self.username_input.text()
-        nickname = self.nickname_input.text()
-        password = self.password_input.text()
-        # This will be handled by the logic layer
-        pass
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = ChatAppUI()
-    window.show()
-    sys.exit(app.exec())
