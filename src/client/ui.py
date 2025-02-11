@@ -113,18 +113,21 @@ class ChatAppUI(QMainWindow):
                 self.current_user = username
                 self.show_home_page()
             else:
-                QMessageBox.critical(self, "Error", "Invalid username or password")
+                QMessageBox.critical(self, "Invalid login", error_message)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     def signup(self, username, nickname, password):
-        if self.logic.signup(username, nickname, password):  # Call business logic
-            QMessageBox.information(self, "Success", "Account created successfully")
-            self.show_login_page()
-        else:
-            QMessageBox.critical(
-                self, "Error", "Username already taken or invalid input"
-            )
+        try:
+            success, error_message = self.logic.signup(username, nickname, password)
+        # TODO: unpack tuple and get status, error_message then proceed based on success
+            if success:
+                QMessageBox.information(self, "Success", "Account created successfully")
+                self.show_login_page()
+            else:
+                QMessageBox.critical(self, "Username already taken or invalid input", error_message)
+        except Exception as e:
+                QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     def save_settings(self, message_limit):
         try:
