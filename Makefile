@@ -12,16 +12,16 @@ default: help
 install: venv # Install all project dependencies
 	@$(VENV)/pip3 install -U -r requirements.txt;
 
-run-server: # Run the chat server
+server: # Run the chat server
 	@echo "Checking for existing server instances..."
 	@lsof -i :5555 -t | xargs kill 2>/dev/null || true
 	@echo "Starting server..."
 	@source .venv/bin/activate && PYTHONPATH=src python src/server/server.py
 
-run-client: # Run the chat client (usage: make run-client CLIENT_ID=your_id SERVER_IP=x.x.x.x)
+client: # Run the chat client (usage: make client CLIENT_ID=your_id SERVER_IP=x.x.x.x)
 	@source .venv/bin/activate && PYTHONPATH=src python src/client/client.py $(CLIENT_ID) $(SERVER_IP)
 
-run-client-gui: # Run the GUI chat client
+client-gui: # Run the GUI chat client
 	@cd src/client && PYTHONPATH=src python main.py
 
 test: # Run all tests
@@ -66,9 +66,9 @@ help: # Show available make targets
 	@echo "Chat System Make Targets\n"
 	@echo "Core Commands:\n--------------"
 	@echo "\033[1;32minstall\033[00m: Install all project dependencies"
-	@echo "\033[1;32mrun-server\033[00m: Run the chat server"
-	@echo "\033[1;32mrun-client\033[00m: Run the chat client"
-	@echo "\033[1;32mrun-client-gui\033[00m: Run the GUI chat client"
+	@echo "\033[1;32mserver\033[00m: Run the chat server"
+	@echo "\033[1;32mclient\033[00m: Run the chat client"
+	@echo "\033[1;32mclient-gui\033[00m: Run the GUI chat client"
 	@echo "\033[1;32mtest\033[00m: Run all tests"
 	@echo "\n"
 	@echo "Development Tools:\n------------------"
@@ -86,4 +86,4 @@ help: # Show available make targets
 # PHONY Targets
 # -----------------------------
 
-.PHONY: help install test style run-server run-client run-client-gui clean venv show-ip
+.PHONY: help install test style server client client-gui clean venv show-ip
