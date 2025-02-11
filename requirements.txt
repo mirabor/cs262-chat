@@ -1,5 +1,4 @@
 pyyaml>=6.0.1
-pytest>=7.4.0
-pytest-cov>=4.1.0
 PyQt6
 bcrypt
+sqlite3
