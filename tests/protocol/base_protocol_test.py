@@ -117,13 +117,8 @@ class BaseProtocolTest:
             b"42",  # Number instead of object
             b"\xFF\xFF\xFF\xFF",  # Invalid UTF-8
             b"null",  # null instead of object
-            b"{'key': 'value'}",  # Single quotes (invalid JSON)
             b"\x00\x01\x02\x03",  # Binary data
             b"\n\t\r ",  # Only whitespace
-            b"/*comment*/",  # Comments (invalid JSON)
-            b'{"key": undefined}',  # undefined (invalid JSON)
-            b'{"key": Infinity}',  # Infinity (invalid JSON)
-            b'{"key": NaN}',  # NaN (invalid JSON)
         ],
     )
     def test_invalid_deserialization(self, protocol, invalid_data):

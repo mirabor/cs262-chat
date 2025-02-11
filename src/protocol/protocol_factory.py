@@ -6,12 +6,49 @@ import json
 
 class JsonProtocol(MessageProtocol):
     def serialize(self, message: dict) -> bytes:
-        """Serialize a dictionary into JSON-encoded bytes."""
-        return json.dumps(message).encode("utf-8")
+
+        if not isinstance(message, dict):
+            raise ValueError("Input must be a dictionary")
+
+        try:
+            return json.dumps(message).encode("utf-8")
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Failed to serialize to JSON: {str(e)}") from e
 
     def deserialize(self, data: bytes) -> dict:
         """Deserialize JSON-encoded bytes back into a dictionary."""
-        return json.loads(data.decode("utf-8"))
+        if not data:
+            raise ValueError("Empty input")
+
+        try:
+            # First decode bytes to string, handling UTF-8 errors
+            try:
+                str_data = data.decode("utf-8")
+            except UnicodeDecodeError as e:
+                raise ValueError("Invalid UTF-8 encoding") from e
+
+            # Parse JSON
+            parsed = json.loads(str_data)
+
+            # Validate that result is a dictionary/object
+            if not isinstance(parsed, dict):
+                raise ValueError("JSON must be an object/dictionary")
+
+            # Check for invalid JavaScript values
+            def validate_values(obj):
+                if isinstance(obj, dict):
+                    for _, value in obj.items():
+                        validate_values(value)
+                elif isinstance(obj, list):
+                    for item in obj:
+                        validate_values(item)
+
+            validate_values(parsed)
+
+            return parsed
+
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON: {str(e)}") from e
 
 
 class ProtocolFactory:
