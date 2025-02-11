@@ -110,24 +110,36 @@ class DBManager:
         username = login_data.get("username")
         password = login_data.get("password")
 
+        print(f"Login data: {login_data}")
+        print("From db manager")
+        print(f"Username: {username}")
+        print(f"Password: {password}")
+
         if not username or not password:
+
             return {"success": False, "error_message": "Username and password are required."}
 
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
+            print('connected in db manager for password')
             # Fetch the user's password and nickname
-            cursor.execute(
-                "SELECT id, username, nickname, password FROM users WHERE username = ?",
-                (username,)
-            )
-            user = cursor.fetchone()
+            try:
+                cursor.execute(
+                    "SELECT id, username, nickname, password FROM users WHERE username = ?",
+                    (username,)
+                )
+                user = cursor.fetchone()
+            except:
+                return {"success": False, "error_message": "cursor issue Invalid username or password."}
 
             if not user:
+                print("User not found")
                 return {"success": False, "error_message": "Invalid username or password."}
 
             user_id, db_username, db_nickname, db_password = user
-            
+            print(f"Password: {password}")
+            print(f"db Password: {db_password}")
             # Check if password matches
             if password != db_password:
                 return {"success": False, "error_message": "Invalid username or password."}
@@ -147,6 +159,8 @@ class DBManager:
                 "nickname": db_nickname,
                 "view_limit": view_limit
             }
+        
+        return {"success": False, "error_message": "Invalid username or password."}
 
     def delete_user(self, user_id):
         """Delete a user and all associated data."""

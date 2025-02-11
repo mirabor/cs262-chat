@@ -2,10 +2,15 @@ import socket
 import threading
 import os
 from datetime import datetime
+import sys
 
 from protocol.config_manager import ConfigManager
 from protocol.protocol_factory import ProtocolFactory
-from api import (
+
+parent_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, parent_dir)
+
+from src.server.api import (
     signup, login, delete_user, get_chats, get_all_users, update_view_limit,
     save_settings, start_chat, get_user_message_limit, delete_chats, delete_messages, get_messages, get_other_user_in_chat, send_chat_message, get_users_to_display
 )
@@ -116,7 +121,7 @@ class Server:
     def handle_request(self, request):
         """Handle incoming requests and return a response"""
         action = request.get("action")
-
+        print(f"Action: {action}")
         if action == "send_message":
             # Store the message
             self.store_message(request.get("client_id"), request.get("message", ""))
@@ -127,7 +132,9 @@ class Server:
         elif action == "signup":
             response = signup(request)
         elif action == "login":
+            print("calling login api")
             response = login(request)
+            print("it worked")
         elif action == "delete_user":
             response = delete_user(request.get("username"))
         elif action == "get_chats":

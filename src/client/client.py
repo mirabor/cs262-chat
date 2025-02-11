@@ -2,8 +2,8 @@ import socket
 import sys
 import time
 
-from protocol.config_manager import ConfigManager
-from protocol.protocol_factory import ProtocolFactory
+from src.protocol.config_manager import ConfigManager
+from src.protocol.protocol_factory import ProtocolFactory
 
 class Client:
     def __init__(self, server_addr="localhost", client_id=None):
@@ -50,6 +50,7 @@ class Client:
 
     def send_message(self, message_dict):
         """Send message to server"""
+        print(f"send_message called with: {message_dict}")
         try:
             data_bytes = self.protocol.serialize(message_dict)
             self.socket.send(data_bytes)
@@ -75,13 +76,3 @@ class Client:
         print("Disconnected from server")
 
 
-if __name__ == "__main__":
-    # Get client ID and server address from command line arguments if provided
-    client_id = sys.argv[1] if len(sys.argv) > 1 else None
-    server_addr = sys.argv[2] if len(sys.argv) > 2 else "localhost"
-    print(f"Starting client with ID: {client_id}")
-
-    # Create and start client
-    client = Client(server_addr=server_addr, client_id=client_id)
-    if client.connect():
-        client.start_messaging()

@@ -19,9 +19,6 @@ run-server: # Run the chat server
 	@source .venv/bin/activate && PYTHONPATH=src python src/server/server.py
 
 run-client: # Run the chat client (usage: make run-client CLIENT_ID=your_id SERVER_IP=x.x.x.x)
-	@source .venv/bin/activate && PYTHONPATH=src python src/client/client.py $(CLIENT_ID) $(SERVER_IP)
-
-run-client-gui: # Run the GUI chat client
 	@cd src/client && PYTHONPATH=src python main.py
 
 test: # Run all tests

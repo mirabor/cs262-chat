@@ -83,6 +83,7 @@ class UsersPage(QWidget):
             self.current_page += 1
             self._update_users_display()
 
+
     def _update_users_display(self):
         """Update the users display based on search and pagination."""
         # Clear current display
@@ -106,6 +107,9 @@ class UsersPage(QWidget):
         if error:
             print(f"Error fetching users: {error}")
             return
+
+        # Store fetched users in filtered_users
+        self.main_window.logic.filtered_users = users_to_display
 
         # Display users or "no users" message
         if not users_to_display:

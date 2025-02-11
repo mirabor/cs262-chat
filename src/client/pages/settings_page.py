@@ -34,9 +34,15 @@ class SettingsPage(QWidget):
         limit_label = QLabel("Message view limit:")
         layout.addWidget(limit_label)
         self.limit_input = QLineEdit()
-        self.limit_input.setText(
-            self.main_window.logic.get_user_message_limit(self.main_window.current_user)
-        )
+        # Unpack the message limit and error message
+        message_limit, error_message = self.main_window.logic.get_user_message_limit(self.main_window.current_user)
+
+        # Check for errors before setting the text
+        if error_message:
+            QMessageBox.critical(self, "Error", f"Failed to fetch message limit: {error_message}")
+            self.limit_input.setText("")  # Default to an empty string if there's an error
+        else:
+            self.limit_input.setText(str(message_limit))  # Convert message_limit to string
         layout.addWidget(self.limit_input)
 
         # Save button
