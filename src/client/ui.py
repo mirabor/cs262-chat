@@ -120,7 +120,6 @@ class ChatAppUI(QMainWindow):
     def signup(self, username, nickname, password):
         try:
             success, error_message = self.logic.signup(username, nickname, password)
-        # TODO: unpack tuple and get status, error_message then proceed based on success
             if success:
                 QMessageBox.information(self, "Success", "Account created successfully")
                 self.show_login_page()
