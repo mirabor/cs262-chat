@@ -11,7 +11,7 @@ class JsonProtocol(MessageProtocol):
 
     def deserialize(self, data: bytes) -> dict:
         """Deserialize JSON-encoded bytes back into a dictionary."""
-        return json.loads(data.decode("utf-8"))c
+        return json.loads(data.decode("utf-8"))
 
 
 class ProtocolFactory:
