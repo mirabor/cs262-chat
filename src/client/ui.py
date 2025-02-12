@@ -72,10 +72,10 @@ class ChatAppUI(QMainWindow):
         nav_layout.addWidget(settings_btn)
 
         # Add the "Delete Selected Chat(s)" button only if show_delete is True
-        if show_delete:
-            delete_chat_btn = DarkPushButton("Delete Chat(s)")
-            delete_chat_btn.clicked.connect(self.delete_selected_chats)
-            nav_layout.addWidget(delete_chat_btn)
+        # if show_delete:
+        #     delete_chat_btn = DarkPushButton("Delete Chat(s)")
+        #     delete_chat_btn.clicked.connect(self.logic.delete_selected_chats)
+        #     nav_layout.addWidget(delete_chat_btn)
 
         nav_layout.addStretch()
         container.addLayout(nav_layout)
@@ -108,6 +108,7 @@ class ChatAppUI(QMainWindow):
         try:
             # if condition login returns a tuple, unpack and process
             success, error_message = self.logic.login(username, password)
+            
             if success:  # Call business logic
                 # TODO: have the current user set in the logic, not in the UI
                 self.current_user = username
@@ -132,6 +133,7 @@ class ChatAppUI(QMainWindow):
         try:
             limit = int(message_limit)
             self.logic.save_settings(self.current_user, limit)
+            
             QMessageBox.information(self, "Success", "Settings saved")
             self.show_home_page()
         except ValueError:

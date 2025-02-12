@@ -127,10 +127,11 @@ class ChatPage(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
+            
             success, error = self.main_window.logic.delete_messages(
                 self.chat_id, messages_to_delete, self.main_window.current_user
             )
-
+            
             if not success:
                 QMessageBox.critical(self, "Error", error)
                 return
@@ -145,11 +146,13 @@ class ChatPage(QWidget):
         if not content:
             return
 
-        success, error = self.main_window.logic.send_chat_message(
-            self.chat_id, self.main_window.current_user, content
-        )
+        print(f"Sending message: {content} from {self.main_window.current_user} with chat id {self.chat_id}")
 
+        success, error = self.main_window.logic.send_chat_message(self.chat_id, self.main_window.current_user, content)
+
+        print(f"Success value is: {success}, error value is: {error}")
         if not success:
+            print(f"Failed to send message: {error}")
             QMessageBox.critical(self, "Error", f"Failed to send message: {error}")
             return
 

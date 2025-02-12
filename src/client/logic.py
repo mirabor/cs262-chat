@@ -1,9 +1,8 @@
 import json
 import os
 from datetime import datetime
-from .utils import hash_password, verify_password
+from .utils import hash_password
 from fnmatch import fnmatch
-from src.client.client import Client
 
 class ChatAppLogic:
     def __init__(self, client):
@@ -77,6 +76,7 @@ class ChatAppLogic:
             "message_limit": message_limit
         })
         response = self.client.receive_message()
+        print("savings saved, response: ", response)
         return response.get("success"), response.get("error_message", "")
 
     def start_chat(self, current_user, other_user):
@@ -93,7 +93,8 @@ class ChatAppLogic:
         self, current_user, search_pattern, current_page, users_per_page
     ):
         self.client.send_message({
-    "action": "get_all_users",
+    "action": "get_users_to_display",
+    "current_user": current_user,
     "search_pattern": search_pattern,
     "page": current_page,
     "users_per_page": users_per_page
@@ -142,9 +143,11 @@ class ChatAppLogic:
         """Get the other user in the chat."""
         self.client.send_message({
             "action": "get_other_user_in_chat",
-            "chat_id": chat_id
+            "chat_id": chat_id,
+            "current_user": current_user
         })
         response = self.client.receive_message()
+        print(response)
         return response.get("user", []), response.get("error_message", "")
 
     def get_messages(self, chat_id):
@@ -159,22 +162,24 @@ class ChatAppLogic:
     def send_chat_message(self, chat_id, sender, content):
         """Send a message in a chat."""
         self.client.send_message({
-            "action": "send_chat_messages",
-            "chat_id": chat_id
+            "action": "send_chat_message",
+            "chat_id": chat_id,
+            "sender": sender,
+            "content": content
         })
         response = self.client.receive_message()
-        return response.get("chats", []), response.get("error_message", "")
+        return response.get("success", False), response.get("error_message", "")
     
     def get_unread_message_count(self, chat_id, current_user):
         """Count unread messages in a chat for a specific user."""
-        chats, error = self.client.get_chats(current_user)
+        chats, error = self.get_chats(current_user)
         if error:
             return 0, error
 
-        for chat in chats.values():
+        print(chats)
+        for chat in chats:
             if chat["chat_id"] == chat_id:
-                unread_count = sum(
-                    1
+                unread_count = sum(  1
                     for msg in chat["messages"]
                     if msg["sender"] != current_user and not msg["read"]
                 )

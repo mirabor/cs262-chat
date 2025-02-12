@@ -59,7 +59,21 @@ class SettingsPage(QWidget):
 
     def _handle_save(self):
         """Handle the save button click."""
-        self.main_window.save_settings(self.limit_input.text())
+        print(f"Saving settings for {self.main_window.current_user} offset: {self.limit_input.text()}")
+        success, error_message = self.main_window.logic.save_settings(self.main_window.current_user, self.limit_input.text())
+        if success:
+            # Refresh the UI to display the updated value
+            self.update_ui_with_current_settings()
+        else:
+            print(f"Error saving settings: {error_message}")
+
+    def update_ui_with_current_settings(self):
+        # Fetch the updated message limit and update the UI
+        message_limit, error_message = self.main_window.logic.get_user_message_limit(self.main_window.current_user)
+        if error_message:
+            print(f"Error fetching message limit: {error_message}")
+        else:
+            self.limit_input.setText(str(message_limit))
 
     def _show_delete_confirmation(self):
         """Show confirmation dialog for account deletion."""

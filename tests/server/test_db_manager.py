@@ -129,7 +129,7 @@ def test_get_all_users(db_manager, sample_users):
 
 def test_update_view_limit(db_manager, sample_users):
     """Test updating message view limit."""
-    result = db_manager.update_view_limit("user1", 10)
+    result = db_manager.save_settings("user1", 10)
     assert result["success"] is True
     
     # Verify the update
@@ -207,7 +207,7 @@ def test_delete_nonexistent_user(db_manager):
 
 def test_update_view_limit_invalid_user(db_manager):
     """Test updating view limit for non-existent user."""
-    result = db_manager.update_view_limit("nonexistent", 10)
+    result = db_manager.save_settings("nonexistent", 10)
     assert result["success"] is True  # SQLite UPDATE is idempotent when no rows match
 
 def test_get_all_users_empty_db(db_manager):

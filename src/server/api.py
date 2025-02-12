@@ -50,9 +50,9 @@ def delete_messages(chat_id, message_indices, current_user):
     """Delete messages."""
     return db_manager.delete_messages(chat_id, message_indices, current_user)
 
-def get_other_user_in_chat(chat_id):
+def get_other_user_in_chat(chat_id, current_user):
     """Get the other user in the chat."""
-    return db_manager.get_other_user_in_chat(chat_id)
+    return db_manager.get_other_user_in_chat(chat_id, current_user)
 
 def get_messages(chat_id):
     """Get messages for a chat."""
@@ -85,7 +85,8 @@ if __name__ == "__main__":
     print("Login Response:", login_response)
 
     # Update the message view limit
-    update_response = update_view_limit("test_user", 10)
+    # update_response = update_view_limit("test_user", 10)
+    update_response = save_settings("test_user", 10)
     print("Update View Limit Response:", update_response)
 
     # Get all users

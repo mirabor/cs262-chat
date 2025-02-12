@@ -1,6 +1,5 @@
 import sqlite3
 from datetime import datetime
-from src.client.utils import hash_password, verify_password
 
 DATABASE_FILE = "chat_app.db"
 
@@ -128,15 +127,16 @@ class DBManager:
                 (username,)
             )
             user = cursor.fetchone()
-
+            print(f"User: {user}")
             if not user:
                 return {"success": False, "error_message": "Invalid username or password."}
 
             user_id, db_username, db_nickname, db_password = user
-            print(f"Stored hashed password from login: {db_password}")
+            assert db_password == password
+            print(f"password and then Stored hashed password from login: {password, db_password}")
 
             # Verify the password
-            if not verify_password(password, db_password):
+            if password != db_password:
                 return {"success": False, "error_message": "Invalid username or password."}
 
             print("Password verification succeeded")
@@ -275,6 +275,8 @@ class DBManager:
 
     def get_user_message_limit(self, username):
         """Retrieve the message view limit for a user."""
+        print(f"Fetching message limit for {username}") 
+
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
@@ -284,8 +286,8 @@ class DBManager:
             )
             view_limit_row = cursor.fetchone()
             view_limit = view_limit_row[0] if view_limit_row else 6  # Default to 6 if not set
-
-            return str(view_limit)  # Return the message limit as a string
+            print(f"Fetched message limit: {view_limit}")  # Debug print
+            return {"message_limit": str(view_limit), "error_message": ""}
         
     def delete_chats(self, chat_ids):
         """Delete one or more chats."""
@@ -347,12 +349,14 @@ class DBManager:
             messages = cursor.fetchall()
 
             return {"success": True, "messages": messages, "error_message": ""}
-
+    
     def get_other_user_in_chat(self, chat_id, current_user):
         """Get the other participant in a chat."""
+        
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
+            print("now i'mma search for the other participant")
             cursor.execute(
                 """
                 SELECT sender_id, receiver_id FROM messages
@@ -363,17 +367,21 @@ class DBManager:
                 (chat_id.split("_")[0], chat_id.split("_")[1], chat_id.split("_")[1], chat_id.split("_")[0])
             )
             participants = cursor.fetchone()
-
+            print(f"{participants} are the participants)")
             if participants:
-                return participants[0] if participants[1] == current_user else participants[1]
+                other_user_id = participants[0] if participants[1] == current_user else participants[1]
+                print(f"other user id is {other_user_id}")
+                return {"user": other_user_id, "error_message": ""}
             else:
-                return "Unknown User"
+                print("no participants found")
+                return {"user": None, "error_message": "Unknown user in chat."}
 
     def send_chat_message(self, chat_id, sender, content):
         """Send a message in a chat."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-
+            print("i'm boutta insert a message trying to be sent")
+            print(f"Inserting message: sender={sender}, receiver={chat_id.split('_')[1] if sender == chat_id.split('_')[0] else chat_id.split('_')[0]}, content={content}")
             cursor.execute(
                 """
                 INSERT INTO messages (sender_id, receiver_id, content, timestamp)
@@ -381,11 +389,11 @@ class DBManager:
                 """,
                 (sender, chat_id.split("_")[1] if sender == chat_id.split("_")[0] else chat_id.split("_")[0], content, datetime.now().isoformat())
             )
-
             conn.commit()
+            print("yay i did it")
             return {"success": True, "error_message": ""}
 
-    def get_users_to_display(self, search_pattern="", page=1, users_per_page=10):
+    def get_users_to_display(self, current_user, search_pattern="", page=1, users_per_page=10):
         """Retrieve a list of users with optional filtering and pagination."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -403,3 +411,17 @@ class DBManager:
 
             users = [row[0] for row in cursor.fetchall()]
             return {"success": True, "users": users, "error_message": ""}
+        
+    def save_settings(self, username, message_limit):
+        """Save settings for a user. updating message limits"""
+        print(f"Saving settings for {username}: message_limit = {message_limit}")  # Debug print
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "UPDATE userconfig SET msg_view_limit = ? WHERE username = ?",
+                (message_limit, username)
+            )
+            conn.commit()
+            return {"success": True, "error_message": ""}
+        
