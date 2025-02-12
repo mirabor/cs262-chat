@@ -393,7 +393,8 @@ class DBManager:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             print("i'm boutta insert a message trying to be sent")
-            print(f"Inserting message: sender={sender}, receiver={chat_id.split('_')[1] if sender == chat_id.split('_')[0] else chat_id.split('_')[0]}, content={content}")
+            if isinstance(chat_id, list):
+                chat_id = chat_id[0]
 
             cursor.execute(
                 """

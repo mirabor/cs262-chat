@@ -57,32 +57,11 @@ class UsersPage(QWidget):
 
         # Pagination controls
         pagination_layout = QHBoxLayout()
-        self.prev_btn = DarkPushButton("Previous")
-        self.prev_btn.clicked.connect(self._show_previous_users)
-        pagination_layout.addWidget(self.prev_btn)
-
-        self.next_btn = DarkPushButton("Next")
-        self.next_btn.clicked.connect(self._show_next_users)
-        pagination_layout.addWidget(self.next_btn)
 
         layout.addLayout(pagination_layout)
 
         # Initialize display
         self._update_users_display()
-
-    def _show_previous_users(self):
-        """Show the previous page of users."""
-        if self.current_page > 0:
-            self.current_page -= 1
-            self._update_users_display()
-
-    def _show_next_users(self):
-        """Show the next page of users."""
-        if (self.current_page + 1) * self.users_per_page < len(self.main_window.logic.filtered_users):
-            self.current_page += 1
-            self._update_users_display()
-
-
     def _update_users_display(self):
         """Update the users display based on search and pagination."""
         # Clear current display
@@ -124,10 +103,3 @@ class UsersPage(QWidget):
                 self.scroll_layout.addWidget(user_widget)
 
         self.scroll_layout.addStretch()
-
-        # Update pagination buttons
-        self.prev_btn.setEnabled(self.current_page > 0)
-        self.next_btn.setEnabled(
-            (self.current_page + 1) * self.users_per_page
-            < len(self.main_window.logic.filtered_users)
-        )
