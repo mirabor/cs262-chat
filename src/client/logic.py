@@ -36,7 +36,7 @@ class ChatAppLogic:
 
     def login(self, username, password):
         if not username or not password:
-            return False
+            return False, "Username and password are required."
         print("i am about to send message to login")
 
         hashed_password = hash_password(password)
