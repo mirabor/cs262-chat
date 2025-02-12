@@ -1,7 +1,15 @@
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 
 
 class MessageProtocol(ABC):
+    """
+    Abstract base class for message protocols.
+
+    To be extended by JsonProtocol and our CustomProtocol classes
+    and define how messages are serialized and deserialized.
+    """
+
     @abstractmethod
     def serialize(self, message: dict) -> bytes:
         """
@@ -19,3 +27,28 @@ class MessageProtocol(ABC):
         :return: The deserialized message as a dictionary.
         """
         pass
+
+
+class MessageType(Enum):
+    # System messages
+    CONNECT = auto()
+    DISCONNECT = auto()
+    ERROR = auto()
+
+    # Auth messages
+    LOGIN_REQUEST = auto()
+    LOGIN_RESPONSE = auto()
+    SIGNUP_REQUEST = auto()
+    SIGNUP_RESPONSE = auto()
+
+    # Chat messages
+    CHAT_START = auto()
+    CHAT_MESSAGE = auto()
+    DELETE_MESSAGES = auto()
+    DELETE_CHAT = auto()
+
+    # User operations
+    GET_USERS = auto()
+    USER_LIST = auto()
+    UPDATE_SETTINGS = auto()
+    DELETE_ACCOUNT = auto()
