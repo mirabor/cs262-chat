@@ -92,6 +92,12 @@ class ChatAppLogic:
     def get_users_to_display(
         self, current_user, search_pattern, current_page, users_per_page
     ):
+        print(f"Sending request with page={current_page}, users_per_page={users_per_page}")
+        # if current_page is None:
+        #     current_page = 1  # Default to the first page
+        # if users_per_page is None:
+        #     users_per_page = 10
+
         self.client.send_message({
     "action": "get_users_to_display",
     "current_user": current_user,
@@ -157,7 +163,8 @@ class ChatAppLogic:
             "chat_id": chat_id
         })
         response = self.client.receive_message()
-        return response.get("chats", []), response.get("error_message", "")
+        print("response: is what we r getting and giving to display ", response)
+        return response.get("messages", []), response.get("error_message", "")
     
     def send_chat_message(self, chat_id, sender, content):
         """Send a message in a chat."""

@@ -61,7 +61,7 @@ class Client:
     def receive_message(self):
         """Receive message from server"""
         try:
-            data_bytes = self.socket.recv(1024)
+            data_bytes = self.socket.recv(2048)
             return self.protocol.deserialize(data_bytes)
         except Exception as e:
             print(f"Error receiving message: {e}")

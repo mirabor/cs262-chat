@@ -43,7 +43,7 @@ class ConfigManager:
                     "port": 5555,
                     "protocol": "json",
                     "max_clients": 10,
-                    "buffer_size": 1024,
+                    "buffer_size": 2048,
                     "messages_dir": "client_messages",
                     "connection_timeout": 10,
                     "retry_attempts": 3,

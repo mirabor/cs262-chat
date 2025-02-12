@@ -37,7 +37,7 @@ class ChatPage(QWidget):
 
         # Header
         header_layout = QHBoxLayout()
-        back_btn = DarkPushButton("Home")
+        back_btn = DarkPushButton("Chat")
         back_btn.clicked.connect(self.main_window.show_home_page)
         header_layout.addWidget(back_btn)
 
@@ -131,7 +131,7 @@ class ChatPage(QWidget):
             success, error = self.main_window.logic.delete_messages(
                 self.chat_id, messages_to_delete, self.main_window.current_user
             )
-            
+
             if not success:
                 QMessageBox.critical(self, "Error", error)
                 return

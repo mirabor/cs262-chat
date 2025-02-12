@@ -74,7 +74,7 @@ class Server:
         client_id = None
         try:
             # First message should be client identification
-            data = client_socket.recv(1024)
+            data = client_socket.recv(2048)
             client_data = self.protocol.deserialize(data)
             client_id = client_data.get("client_id")
 
@@ -96,7 +96,7 @@ class Server:
 
             # Handle client messages
             while True:
-                data = client_socket.recv(1024)
+                data = client_socket.recv(2048)
                 if not data:
                     break
 

@@ -59,6 +59,12 @@ class SettingsPage(QWidget):
 
     def _handle_save(self):
         """Handle the save button click."""
+        if not self.limit_input.text().isdigit():
+            QMessageBox.critical(self, "Error", "Message limit must be a number.")
+            return
+        if int(self.limit_input.text()) < 1:
+            QMessageBox.critical(self, "Error", "Message limit must be at least 1.")
+            return
         print(f"Saving settings for {self.main_window.current_user} offset: {self.limit_input.text()}")
         success, error_message = self.main_window.logic.save_settings(self.main_window.current_user, self.limit_input.text())
         if success:

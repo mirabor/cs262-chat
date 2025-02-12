@@ -127,13 +127,12 @@ class DBManager:
                 (username,)
             )
             user = cursor.fetchone()
-            print(f"User: {user}")
+            print(f"User details fetched: {user}")
             if not user:
                 return {"success": False, "error_message": "Invalid username or password."}
 
             user_id, db_username, db_nickname, db_password = user
-            assert db_password == password
-            print(f"password and then Stored hashed password from login: {password, db_password}")
+            print(f"input hashed password and stored hashed password from login: {password, db_password}")
 
             # Verify the password
             if password != db_password:
@@ -171,7 +170,7 @@ class DBManager:
             return {"success": True, "error_message": ""}
 
     def get_chats(self, user_id):
-        """Get all chats involving a user, sorted by most recent."""
+        """Get all chats involving a user, excluding the current user from chat participants, sorted by most recent."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
@@ -187,19 +186,29 @@ class DBManager:
 
             messages = cursor.fetchall()
 
-            # Organize messages into chats
+            # Organize messages into chats, excluding the current user from the participants list
             chats = {}
             for message in messages:
                 sender_id = message[1]
                 receiver_id = message[2]
+
+                if sender_id == user_id and receiver_id == user_id:
+                    continue
+
+                # Create a unique key for each chat
                 chat_key = f"{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
 
+                # Initialize chat if not already in the dictionary
                 if chat_key not in chats:
+                    # Identify the other participant
+                    other_user = receiver_id if sender_id == user_id else sender_id
+
                     chats[chat_key] = {
-                        "participants": [sender_id, receiver_id],
+                        "other_user": other_user,
                         "messages": []
                     }
 
+                # Append the message to the chat
                 chats[chat_key]["messages"].append({
                     "sender": sender_id,
                     "content": message[3],
@@ -208,7 +217,7 @@ class DBManager:
                 })
 
             return {"success": True, "chats": chats, "error_message": ""}
-
+    
     def get_all_users(self, exclude_username=None):
         """Get all users except the excluded one."""
         with self._get_connection() as conn:
@@ -289,25 +298,14 @@ class DBManager:
             print(f"Fetched message limit: {view_limit}")  # Debug print
             return {"message_limit": str(view_limit), "error_message": ""}
         
-    def delete_chats(self, chat_ids):
-        """Delete one or more chats."""
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-
-            for chat_id in chat_ids:
-                # Delete all messages in the chat
-                cursor.execute(
-                    "DELETE FROM messages WHERE id IN (SELECT id FROM messages WHERE sender_id = ? OR receiver_id = ?)",
-                    (chat_id.split("_")[0], chat_id.split("_")[1])
-                )
-
-            conn.commit()
-            return {"success": True, "error_message": ""}
 
     def delete_messages(self, chat_id, message_indices, current_user):
         """Delete specific messages from a chat."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
+
+            if isinstance(chat_id, list):
+                chat_id = chat_id[0]
 
             # Fetch all messages in the chat
             cursor.execute(
@@ -337,6 +335,8 @@ class DBManager:
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
+            if isinstance(chat_id, list):
+                chat_id = chat_id[0]
             cursor.execute(
                 """
                 SELECT * FROM messages
@@ -347,8 +347,20 @@ class DBManager:
                 (chat_id.split("_")[0], chat_id.split("_")[1], chat_id.split("_")[1], chat_id.split("_")[0])
             )
             messages = cursor.fetchall()
-
-            return {"success": True, "messages": messages, "error_message": ""}
+            
+            formatted_messages = [
+            {
+                "id": msg[0],
+                "sender": msg[1],
+                "receiver": msg[2],
+                "content": msg[3],
+                "timestamp": msg[4],
+                "read": msg[5]
+            }
+            for msg in messages
+        ]
+            print(f"yes, it worked, here are the messages {formatted_messages}")
+            return {"success": True, "messages": formatted_messages, "error_message": ""}
     
     def get_other_user_in_chat(self, chat_id, current_user):
         """Get the other participant in a chat."""
@@ -356,7 +368,9 @@ class DBManager:
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
-            print("now i'mma search for the other participant")
+            if isinstance(chat_id, list):
+                chat_id = chat_id[0]
+
             cursor.execute(
                 """
                 SELECT sender_id, receiver_id FROM messages
@@ -367,10 +381,8 @@ class DBManager:
                 (chat_id.split("_")[0], chat_id.split("_")[1], chat_id.split("_")[1], chat_id.split("_")[0])
             )
             participants = cursor.fetchone()
-            print(f"{participants} are the participants)")
             if participants:
                 other_user_id = participants[0] if participants[1] == current_user else participants[1]
-                print(f"other user id is {other_user_id}")
                 return {"user": other_user_id, "error_message": ""}
             else:
                 print("no participants found")
@@ -382,6 +394,7 @@ class DBManager:
             cursor = conn.cursor()
             print("i'm boutta insert a message trying to be sent")
             print(f"Inserting message: sender={sender}, receiver={chat_id.split('_')[1] if sender == chat_id.split('_')[0] else chat_id.split('_')[0]}, content={content}")
+
             cursor.execute(
                 """
                 INSERT INTO messages (sender_id, receiver_id, content, timestamp)
@@ -395,18 +408,31 @@ class DBManager:
 
     def get_users_to_display(self, current_user, search_pattern="", page=1, users_per_page=10):
         """Retrieve a list of users with optional filtering and pagination."""
+
+        # Ensure page and users_per_page are integers
+        page = page if page is not None else 1
+        users_per_page = users_per_page if users_per_page is not None else 10
+
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
             if search_pattern:
                 cursor.execute(
-                    "SELECT username FROM users WHERE username LIKE ? LIMIT ? OFFSET ?",
-                    (f"%{search_pattern}%", users_per_page, (page - 1) * users_per_page)
+                """
+                SELECT username FROM users 
+                WHERE username LIKE ? AND username != ? 
+                LIMIT ? OFFSET ?
+                """,
+                    (f"%{search_pattern}%", current_user, users_per_page, (page - 1) * users_per_page)
                 )
             else:
                 cursor.execute(
-                    "SELECT username FROM users LIMIT ? OFFSET ?",
-                    (users_per_page, (page - 1) * users_per_page)
+                    """
+                    SELECT username FROM users 
+                    WHERE username != ? 
+                    LIMIT ? OFFSET ?
+                    """,
+                    (current_user, users_per_page, (page - 1) * users_per_page)
                 )
 
             users = [row[0] for row in cursor.fetchall()]
