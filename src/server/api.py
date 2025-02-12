@@ -1,6 +1,7 @@
 from .db_manager import DBManager
 
 db_manager = DBManager()
+db_manager.initialize_database()
 
 def signup(input_data):
     """Sign up a new user. assume password encrypted"""
@@ -30,36 +31,38 @@ def update_view_limit(username, new_limit):
     """Update the message view limit for a user."""
     return db_manager.update_view_limit(username, new_limit)
 
-if __name__ == "__main__":
-    db_manager.initialize_database()
+def get_user_message_limit(username):
+    """Get the message limit for a user."""
+    return db_manager.get_user_message_limit(username)
 
-    # Sign up a new user
-    signup_response = signup({
-        "username": "test_user",
-        "nickname": "Test User",
-        "password": "password123"
-    })
-    print("Signup Response:", signup_response)
+def save_settings(username, message_limit):
+    """Save settings for a user."""
+    return db_manager.save_settings(username, message_limit)
 
-    # Log in the user
-    login_response = login({
-        "username": "test_user",
-        "password": "password123"
-    })
-    print("Login Response:", login_response)
+def start_chat(current_user, other_user):
+    """Start a new chat between two users."""
+    return db_manager.start_chat(current_user, other_user)
 
-    # Update the message view limit
-    update_response = update_view_limit("test_user", 10)
-    print("Update View Limit Response:", update_response)
+def delete_chats(chat_ids):
+    """Delete chats."""
+    return db_manager.delete_chats(chat_ids)
 
-    # Get all users
-    users_response = get_all_users()
-    print("All Users:", users_response)
+def delete_messages(chat_id, message_indices, current_user):
+    """Delete messages."""
+    return db_manager.delete_messages(chat_id, message_indices, current_user)
 
-    # Get chats for a user
-    chats_response = get_chats(1)
-    print("Chats for User 1:", chats_response)
+def get_other_user_in_chat(chat_id, current_user):
+    """Get the other user in the chat."""
+    return db_manager.get_other_user_in_chat(chat_id, current_user)
 
-    # Delete a user
-    delete_response = delete_user(1)
-    print("Delete User Response:", delete_response)
+def get_messages(chat_id):
+    """Get messages for a chat."""
+    return db_manager.get_messages(chat_id)
+
+def send_chat_message(chat_id, sender, content):
+    """Send a message in a chat."""
+    return db_manager.send_chat_message(chat_id, sender, content)
+
+def get_users_to_display(exclude_username, search_pattern, current_page, users_per_page):
+    """Get users to display."""
+    return db_manager.get_users_to_display(exclude_username, search_pattern, current_page, users_per_page)

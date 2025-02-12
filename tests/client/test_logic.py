@@ -14,8 +14,8 @@ class TestChatAppLogic(unittest.TestCase):
 
         self.logic = ChatAppLogic()
         # Clear any existing data
-        self.logic.users = {}
-        self.logic.chats = {}
+        # self.logic.users = {}
+        # self.logic.chats = {}
 
     def tearDown(self):
         """Clean up test fixtures after each test method."""

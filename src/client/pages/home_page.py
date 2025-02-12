@@ -1,5 +1,3 @@
-"""Home page component for the chat application."""
-
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea
 from ..components import ChatWidget
 
@@ -49,28 +47,37 @@ class HomePage(QWidget):
     def _display_chats(self):
         """Display user's chats in the scroll area."""
         current_user = self.main_window.current_user
-        logic = self.main_window.logic
 
-        for chat_id, chat_data in logic.chats.items():
-            if current_user in chat_data["participants"]:
-                # Get the other participant in the chat
-                other_user = next(
-                    p for p in chat_data["participants"] if p != current_user
-                )
+        # Fetch chats for the current user
+        print("now i'm gonna fetch chats data")
+        chats, error = self.main_window.logic.get_chats(current_user)
+        if error:
+            # Handle error (e.g., show a message to the user)
+            print(f"Error fetching chats: {error}")
+            return
 
-                # Count unread messages
-                unread_count = sum(
-                    1
-                    for msg in chat_data["messages"]
-                    if msg.get("sender") != current_user and not msg.get("read", False)
-                )
+        # Display each chat
+        for chat in chats:
+            chat_id = chat["chat_id"]
 
-                # Create chat widget
-                chat_widget = ChatWidget(other_user, unread_count, show_checkbox=False)
-                chat_widget.mousePressEvent = (
-                    lambda e, cid=chat_id: self.main_window.show_chat_page(cid)
-                )
-                self.scroll_layout.addWidget(chat_widget)
+            # Get the other participant in the chat
+            other_user, error = self.main_window.logic.get_other_user_in_chat(chat_id, current_user)
+            if error:
+                print(f"Error getting other user in chat {chat_id}: {error}")
+                continue  # Skip this chat if there's an error
 
-                # Store widget reference
-                self.chat_widgets[chat_id] = chat_widget
+            # Count unread messages
+            unread_count, error = self.main_window.logic.get_unread_message_count(chat_id, current_user)
+            if error:
+                print(f"Error counting unread messages in chat {chat_id}: {error}")
+                unread_count = 0  # Default to 0 if there's an error
+
+            # Create chat widget
+            chat_widget = ChatWidget(other_user, unread_count, show_checkbox=False)
+            chat_widget.mousePressEvent = (
+                lambda e, cid=chat_id: self.main_window.show_chat_page(cid)
+            )
+            self.scroll_layout.addWidget(chat_widget)
+
+            # Store widget reference
+            self.chat_widgets[chat_id] = chat_widget

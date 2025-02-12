@@ -1,5 +1,3 @@
-"""Chat page component for the chat application."""
-
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -34,18 +32,23 @@ class ChatPage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
 
+        # Navigation
+        self.main_window.create_navigation(layout, show_delete=True)
+
         # Header
         header_layout = QHBoxLayout()
-        back_btn = DarkPushButton("Home")
+        back_btn = DarkPushButton("Chat")
         back_btn.clicked.connect(self.main_window.show_home_page)
         header_layout.addWidget(back_btn)
 
         # Get other user's name
-        other_user = next(
-            p
-            for p in self.main_window.logic.chats[self.chat_id]["participants"]
-            if p != self.main_window.current_user
+        other_user, error = self.main_window.logic.get_other_user_in_chat(
+            self.chat_id, self.main_window.current_user
         )
+        if error:
+            QMessageBox.critical(self, "Error", f"Failed to load chat: {error}")
+            return
+
         chat_label = QLabel(f"Chat with {other_user}")
         chat_label.setStyleSheet("font-size: 24px;")
         header_layout.addWidget(chat_label, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -68,7 +71,7 @@ class ChatPage(QWidget):
         # Add spacer at the top to push messages to bottom
         self.messages_layout.addStretch(1)
 
-        # Mark messages as read and display them
+        # Display messages
         self._display_messages()
 
         self.scroll_area.setWidget(scroll_content)
@@ -85,20 +88,18 @@ class ChatPage(QWidget):
         input_layout = QHBoxLayout()
         self.message_input = QLineEdit()
         self.message_input.setPlaceholderText("Type your message here...")
-        self.message_input.returnPressed.connect(self._send_message)
+        self.message_input.returnPressed.connect(self._send_chat_message)  # Corrected
         input_layout.addWidget(self.message_input)
         layout.addLayout(input_layout)
 
     def _display_messages(self):
-        """Display messages and mark them as read."""
-        # Mark messages as read
-        for message in self.main_window.logic.chats[self.chat_id]["messages"]:
-            if message["sender"] != self.main_window.current_user:
-                message["read"] = True
-        self.main_window.logic.save_data()
+        """Display messages in the chat."""
+        messages, error = self.main_window.logic.get_messages(self.chat_id)
+        if error:
+            QMessageBox.critical(self, "Error", f"Failed to fetch messages: {error}")
+            return
 
-        # Display messages
-        for message in self.main_window.logic.chats[self.chat_id]["messages"]:
+        for message in messages:
             is_sender = message["sender"] == self.main_window.current_user
             msg_widget = MessageWidget(message["content"], is_sender)
             self.message_widgets.append(msg_widget)
@@ -126,36 +127,44 @@ class ChatPage(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            # Delete messages from logic
-            success, message = self.main_window.logic.delete_messages(
+            
+            success, error = self.main_window.logic.delete_messages(
                 self.chat_id, messages_to_delete, self.main_window.current_user
             )
 
             if not success:
-                QMessageBox.critical(self, "Error", message)
+                QMessageBox.critical(self, "Error", error)
                 return
 
-            # Delete message widgets
             for i in sorted(messages_to_delete, reverse=True):
                 widget = self.message_widgets.pop(i)
                 widget.setParent(None)
 
-    def _send_message(self):
+    def _send_chat_message(self):
         """Send a new message."""
         content = self.message_input.text().strip()
-        if content:
-            # Send message through logic
-            self.main_window.logic.send_message(
-                self.chat_id, self.main_window.current_user, content
-            )
-            self.message_input.clear()
+        if not content:
+            return
 
-            # Create and display new message widget
-            msg_widget = MessageWidget(content, True)
-            self.message_widgets.append(msg_widget)
-            self.messages_layout.addWidget(msg_widget)
+        print(f"Sending message: {content} from {self.main_window.current_user} with chat id {self.chat_id}")
 
-            # Scroll to bottom
-            self.scroll_area.verticalScrollBar().setValue(
-                self.scroll_area.verticalScrollBar().maximum()
-            )
+        success, error = self.main_window.logic.send_chat_message(self.chat_id, self.main_window.current_user, content)
+
+        print(f"Success value is: {success}, error value is: {error}")
+        if not success:
+            print(f"Failed to send message: {error}")
+            QMessageBox.critical(self, "Error", f"Failed to send message: {error}")
+            return
+
+        # Clear the input field after successful sending
+        self.message_input.clear()
+
+        # Display the new message in the UI
+        msg_widget = MessageWidget(content, True)
+        self.message_widgets.append(msg_widget)
+        self.messages_layout.addWidget(msg_widget)
+
+        # Scroll to bottom
+        self.scroll_area.verticalScrollBar().setValue(
+            self.scroll_area.verticalScrollBar().maximum()
+        )

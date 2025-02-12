@@ -34,9 +34,15 @@ class SettingsPage(QWidget):
         limit_label = QLabel("Message view limit:")
         layout.addWidget(limit_label)
         self.limit_input = QLineEdit()
-        self.limit_input.setText(
-            self.main_window.logic.get_user_message_limit(self.main_window.current_user)
-        )
+        # Unpack the message limit and error message
+        message_limit, error_message = self.main_window.logic.get_user_message_limit(self.main_window.current_user)
+
+        # Check for errors before setting the text
+        if error_message:
+            QMessageBox.critical(self, "Error", f"Failed to fetch message limit: {error_message}")
+            self.limit_input.setText("")  # Default to an empty string if there's an error
+        else:
+            self.limit_input.setText(str(message_limit))  # Convert message_limit to string
         layout.addWidget(self.limit_input)
 
         # Save button
@@ -53,7 +59,27 @@ class SettingsPage(QWidget):
 
     def _handle_save(self):
         """Handle the save button click."""
-        self.main_window.save_settings(self.limit_input.text())
+        if not self.limit_input.text().isdigit():
+            QMessageBox.critical(self, "Error", "Message limit must be a number.")
+            return
+        if int(self.limit_input.text()) < 1:
+            QMessageBox.critical(self, "Error", "Message limit must be at least 1.")
+            return
+        print(f"Saving settings for {self.main_window.current_user} offset: {self.limit_input.text()}")
+        success, error_message = self.main_window.logic.save_settings(self.main_window.current_user, self.limit_input.text())
+        if success:
+            # Refresh the UI to display the updated value
+            self.update_ui_with_current_settings()
+        else:
+            print(f"Error saving settings: {error_message}")
+
+    def update_ui_with_current_settings(self):
+        # Fetch the updated message limit and update the UI
+        message_limit, error_message = self.main_window.logic.get_user_message_limit(self.main_window.current_user)
+        if error_message:
+            print(f"Error fetching message limit: {error_message}")
+        else:
+            self.limit_input.setText(str(message_limit))
 
     def _show_delete_confirmation(self):
         """Show confirmation dialog for account deletion."""

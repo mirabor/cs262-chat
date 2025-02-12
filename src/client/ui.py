@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 
-from .logic import ChatAppLogic
+from .client import Client
 from .components.buttons import DarkPushButton
 from .pages import (
     HomePage,
@@ -16,9 +16,10 @@ from .pages import (
     SettingsPage,
 )
 
+from .logic import ChatAppLogic
 
 class ChatAppUI(QMainWindow):
-    def __init__(self):
+    def __init__(self, client):
         super().__init__()
         self.setWindowTitle("Chat Application")
         self.setGeometry(100, 100, 800, 600)
@@ -41,10 +42,9 @@ class ChatAppUI(QMainWindow):
             }
         """
         )
-
+    
         self.current_user = None
-        self.logic = ChatAppLogic()  # Instantiate ChatAppLogic
-        self.logic.load_data()  # Load data from logic class
+        self.logic = ChatAppLogic(client)  # Instantiate ChatAppLogic
         self.show_login_page()  # Show UI page, not from logic
 
     def create_navigation(self, container, show_delete=False):
@@ -72,10 +72,10 @@ class ChatAppUI(QMainWindow):
         nav_layout.addWidget(settings_btn)
 
         # Add the "Delete Selected Chat(s)" button only if show_delete is True
-        if show_delete:
-            delete_chat_btn = DarkPushButton("Delete Chat(s)")
-            delete_chat_btn.clicked.connect(self.delete_selected_chats)
-            nav_layout.addWidget(delete_chat_btn)
+        # if show_delete:
+        #     delete_chat_btn = DarkPushButton("Delete Chat(s)")
+        #     delete_chat_btn.clicked.connect(self.logic.delete_selected_chats)
+        #     nav_layout.addWidget(delete_chat_btn)
 
         nav_layout.addStretch()
         container.addLayout(nav_layout)
@@ -106,28 +106,37 @@ class ChatAppUI(QMainWindow):
 
     def login(self, username, password):
         try:
-            if self.logic.login(username, password):  # Call business logic
+            # if condition login returns a tuple, unpack and process
+            success, error_message = self.logic.login(username, password)
+            
+            if success:  # Call business logic
                 # TODO: have the current user set in the logic, not in the UI
                 self.current_user = username
                 self.show_home_page()
             else:
-                QMessageBox.critical(self, "Error", "Invalid username or password")
+                QMessageBox.critical(self, "Invalid login", error_message)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     def signup(self, username, nickname, password):
-        if self.logic.signup(username, nickname, password):  # Call business logic
-            QMessageBox.information(self, "Success", "Account created successfully")
-            self.show_login_page()
-        else:
-            QMessageBox.critical(
-                self, "Error", "Username already taken or invalid input"
-            )
+        try:
+            success, error_message = self.logic.signup(username, nickname, password)
+            if success:
+                QMessageBox.information(self, "Success", "Account created successfully")
+                self.show_login_page()
+            else:
+                QMessageBox.critical(self, "Username already taken or invalid input", error_message)
+        except Exception as e:
+                QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     def save_settings(self, message_limit):
+        if message_limit < 1:
+            QMessageBox.critical(self, "Error", "Message limit must be at least 1")
+            return
         try:
             limit = int(message_limit)
             self.logic.save_settings(self.current_user, limit)
+            
             QMessageBox.information(self, "Success", "Settings saved")
             self.show_home_page()
         except ValueError:
