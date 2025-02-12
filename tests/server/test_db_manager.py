@@ -156,6 +156,80 @@ def test_delete_user(db_manager, sample_users):
         cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
         assert cursor.fetchone() is None
 
+def test_mark_message_as_read(db_manager):
+    """Test marking a message as read."""
+    # Create two users
+    db_manager.add_user("user1", "User One", "password123")
+    db_manager.add_user("user2", "User Two", "password123")
+
+    with db_manager._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user1",))
+        user1_id = cursor.fetchone()[0]
+
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user2",))
+        user2_id = cursor.fetchone()[0]
+
+        # Add a test message
+        cursor.execute(
+            """
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user1_id, user2_id, "Hello, User Two!", datetime.now().isoformat())
+        )
+        conn.commit()
+
+    # Mark the message as read
+    result = db_manager.mark_message_as_read(user2_id, user1_id)
+    assert result["success"] is True
+
+    # Verify the message status
+    with db_manager._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT status FROM messages WHERE sender_id = ? AND receiver_id = ?", (user1_id, user2_id))
+        status = cursor.fetchone()[0]
+        assert status == "read"
+
+def test_mark_message_as_unread(db_manager):
+    """Test marking a message as unread."""
+    # Create two users
+    db_manager.add_user("user1", "User One", "password123")
+    db_manager.add_user("user2", "User Two", "password123")
+
+    with db_manager._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user1",))
+        user1_id = cursor.fetchone()[0]
+
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user2",))
+        user2_id = cursor.fetchone()[0]
+
+        # Add a test message
+        cursor.execute(
+            """
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user1_id, user2_id, "Hello, User Two!", datetime.now().isoformat())
+        )
+        conn.commit()
+
+    # Mark the message as read
+    result = db_manager.mark_message_as_read(user2_id, user1_id)
+    assert result["success"] is True
+
+    # Mark the message as unread
+    result = db_manager.mark_message_as_unread(user2_id, user1_id)
+    assert result["success"] is True
+
+    # Verify the message status
+    with db_manager._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT status FROM messages WHERE sender_id = ? AND receiver_id = ?", (user1_id, user2_id))
+        status = cursor.fetchone()[0]
+        assert status == "unread"
+
 # Edge Cases and Error Tests
 
 def test_add_user_duplicate(db_manager, sample_users):

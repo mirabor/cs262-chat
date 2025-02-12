@@ -1,136 +1,175 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock
 from src.client.logic import ChatAppLogic
-
 
 class TestChatAppLogic(unittest.TestCase):
     def setUp(self):
-        """Set up test fixtures before each test method."""
-        # Mock the file operations to avoid actual file I/O during tests
-        self.patcher = patch("builtins.open", create=True)
-        self.mock_open = self.patcher.start()
-        # Mock empty data files
-        self.mock_open.return_value.__enter__.return_value.read.return_value = "{}"
+        # Create a mock client object
+        self.mock_client = MagicMock()
+        self.chat_app_logic = ChatAppLogic(self.mock_client)
 
-        self.logic = ChatAppLogic()
-        # Clear any existing data
-        # self.logic.users = {}
-        # self.logic.chats = {}
-
-    def tearDown(self):
-        """Clean up test fixtures after each test method."""
-        self.patcher.stop()
-
-    def test_signup_success(self):
-        """Test successful user signup with valid credentials."""
-        result = self.logic.signup("testuser", "Test User", "password123")
-        self.assertTrue(result)
-        self.assertIn("testuser", self.logic.users)
-        self.assertEqual(self.logic.users["testuser"]["nickname"], "Test User")
-
-    def test_signup_duplicate_user(self):
-        """Test signup fails with duplicate username."""
-        self.logic.signup("testuser", "Test User", "password123")
-        result = self.logic.signup("testuser", "Another User", "password456")
-        self.assertFalse(result)
-
-    def test_signup_invalid_input(self):
-        """Test signup fails with invalid input."""
-        result = self.logic.signup("", "", "")
-        self.assertFalse(result)
-
-    def test_login_success(self):
-        """Test successful login with valid credentials."""
-        self.logic.signup("testuser", "Test User", "password123")
-        result = self.logic.login("testuser", "password123")
-        self.assertTrue(result)
-
-    def test_login_invalid_credentials(self):
-        """Test login fails with invalid credentials."""
-        self.logic.signup("testuser", "Test User", "password123")
-        result = self.logic.login("testuser", "wrongpassword")
-        self.assertFalse(result)
-
-    def test_start_chat(self):
-        """Test starting a new chat between users."""
-        chat_id = self.logic.start_chat("user1", "user2")
-        expected_chat_id = "user1_user2" if "user1" < "user2" else "user2_user1"
-        self.assertEqual(chat_id, expected_chat_id)
-        self.assertIn(chat_id, self.logic.chats)
-        self.assertEqual(self.logic.chats[chat_id]["participants"], ["user1", "user2"])
-
-    def test_send_message(self):
-        """Test sending a message in a chat."""
-        chat_id = self.logic.start_chat("user1", "user2")
-        self.logic.send_message(chat_id, "user1", "Hello!")
-        messages = self.logic.chats[chat_id]["messages"]
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0]["content"], "Hello!")
-        self.assertEqual(messages[0]["sender"], "user1")
+    def test_delete_chats(self):
+        # Mock the client's receive_message method to return a success response
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
+        
+        # Call the delete_chats method
+        success, error_message = self.chat_app_logic.delete_chats([1, 2, 3])
+        
+        # Assert that the method returned the expected values
+        self.assertTrue(success)
+        self.assertEqual(error_message, "")
 
     def test_delete_messages(self):
-        """Test deleting messages from a chat."""
-        chat_id = self.logic.start_chat("user1", "user2")
-        self.logic.send_message(chat_id, "user1", "Message 1")
-        self.logic.send_message(chat_id, "user2", "Message 2")
-        self.logic.send_message(chat_id, "user1", "Message 3")
-
-        # Try to delete messages
-        success, _ = self.logic.delete_messages(chat_id, [0, 2], "user1")
+        # Mock the client's receive_message method to return a success response
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
+        
+        # Call the delete_messages method
+        success, error_message = self.chat_app_logic.delete_messages(1, [0, 1], "user1")
+        
+        # Assert that the method returned the expected values
         self.assertTrue(success)
-        self.assertEqual(len(self.logic.chats[chat_id]["messages"]), 1)
-        self.assertEqual(
-            self.logic.chats[chat_id]["messages"][0]["content"], "Message 2"
-        )
+        self.assertEqual(error_message, "")
 
-    def test_delete_unauthorized_messages(self):
-        """Test that users can't delete other users' messages."""
-        chat_id = self.logic.start_chat("user1", "user2")
-        self.logic.send_message(chat_id, "user2", "Message 1")
+    def test_login(self):
+        # Mock the client's receive_message method to return a success response
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
+        
+        # Call the login method
+        success, error_message = self.chat_app_logic.login("user1", "password123")
+        
+        # Assert that the method returned the expected values
+        self.assertTrue(success)
+        self.assertEqual(error_message, "")
 
-        # Try to delete message from another user
-        success, message = self.logic.delete_messages(chat_id, [0], "user1")
-        self.assertFalse(success)
-        self.assertEqual(len(self.logic.chats[chat_id]["messages"]), 1)
-
-    def test_get_users_to_display(self):
-        """Test filtering and pagination of user list."""
-        # Add test users
-        test_users = ["alice", "bob", "charlie", "david"]
-        for user in test_users:
-            self.logic.signup(user, user.capitalize(), "password")
-
-        # Test without search pattern
-        users = self.logic.get_users_to_display("alice", "", 0, 2)
-        self.assertEqual(len(users), 2)  # Should return 2 users due to pagination
-        self.assertNotIn("alice", users)  # Should not include current user
-
-        # Test with search pattern
-        users = self.logic.get_users_to_display("alice", "b", 0, 10)
-        self.assertEqual(len(users), 1)
-        self.assertEqual(users[0], "bob")
+    def test_signup(self):
+        # Mock the client's receive_message method to return a success response
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
+        
+        # Call the signup method
+        success, error_message = self.chat_app_logic.signup("user1", "nickname1", "password123")
+        
+        # Assert that the method returned the expected values
+        self.assertTrue(success)
+        self.assertEqual(error_message, "")
 
     def test_save_settings(self):
-        """Test saving user settings."""
-        self.logic.signup("testuser", "Test User", "password123")
-        self.logic.save_settings("testuser", 10)
-        self.assertEqual(self.logic.users["testuser"]["message_limit"], 10)
+        # Mock the client's receive_message method to return a success response
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
+        
+        # Call the save_settings method
+        success, error_message = self.chat_app_logic.save_settings("user1", 100)
+        
+        # Assert that the method returned the expected values
+        self.assertTrue(success)
+        self.assertEqual(error_message, "")
+
+    def test_start_chat(self):
+        # Mock the client's receive_message method to return a success response
+        self.mock_client.receive_message.return_value = {"chat_id": 1, "error_message": ""}
+        
+        # Call the start_chat method
+        chat_id, error_message = self.chat_app_logic.start_chat("user1", "user2")
+        
+        # Assert that the method returned the expected values
+        self.assertEqual(chat_id, 1)
+        self.assertEqual(error_message, "")
+
+    def test_get_users_to_display(self):
+        # Mock the client's receive_message method to return a list of users
+        self.mock_client.receive_message.return_value = {"users": ["user1", "user2"], "error_message": ""}
+        
+        # Call the get_users_to_display method
+        users, error_message = self.chat_app_logic.get_users_to_display("user1", "*", 1, 10)
+        
+        # Assert that the method returned the expected values
+        self.assertEqual(users, ["user1", "user2"])
+        self.assertEqual(error_message, "")
 
     def test_delete_account(self):
-        """Test account deletion and its effects on chats."""
-        # Create users and chat
-        self.logic.signup("user1", "User One", "password1")
-        self.logic.signup("user2", "User Two", "password2")
-        chat_id = self.logic.start_chat("user1", "user2")
-        self.logic.send_message(chat_id, "user1", "Hello")
+        # Mock the client's receive_message method to return a success response
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
+        
+        # Call the delete_account method
+        success, error_message = self.chat_app_logic.delete_account("user1")
+        
+        # Assert that the method returned the expected values
+        self.assertTrue(success)
+        self.assertEqual(error_message, "")
 
-        # Delete account
-        self.logic.delete_account("user1")
+    def test_get_user_message_limit(self):
+        # Mock the client's receive_message method to return a message limit
+        self.mock_client.receive_message.return_value = {"message_limit": 100, "error_message": ""}
+        
+        # Call the get_user_message_limit method
+        message_limit, error_message = self.chat_app_logic.get_user_message_limit("user1")
+        
+        # Assert that the method returned the expected values
+        self.assertEqual(message_limit, 100)
+        self.assertEqual(error_message, "")
 
-        # Verify user and their chats are removed
-        self.assertNotIn("user1", self.logic.users)
-        self.assertNotIn(chat_id, self.logic.chats)
+    def test_get_chats(self):
+        # Mock the client's receive_message method to return a list of chats
+        self.mock_client.receive_message.return_value = {
+            "success": True,
+            "chats": {
+                "1": {"messages": [], "other_user": "user2"},
+                "2": {"messages": [], "other_user": "user3"}
+            },
+            "error_message": ""
+        }
+        
+        # Call the get_chats method
+        chats, error_message = self.chat_app_logic.get_chats("user1")
+        
+        # Assert that the method returned the expected values
+        self.assertEqual(len(chats), 2)
+        self.assertEqual(error_message, "")
 
+    def test_get_other_user_in_chat(self):
+        # Mock the client's receive_message method to return a user
+        self.mock_client.receive_message.return_value = {"user": "user2", "error_message": ""}
+        
+        # Call the get_other_user_in_chat method
+        user, error_message = self.chat_app_logic.get_other_user_in_chat(1, "user1")
+        
+        # Assert that the method returned the expected values
+        self.assertEqual(user, "user2")
+        self.assertEqual(error_message, "")
+
+    def test_get_messages(self):
+        # Mock the client's receive_message method to return a list of messages
+        self.mock_client.receive_message.return_value = {"messages": ["msg1", "msg2"], "error_message": ""}
+        
+        # Call the get_messages method
+        messages, error_message = self.chat_app_logic.get_messages(1)
+        
+        # Assert that the method returned the expected values
+        self.assertEqual(messages, ["msg1", "msg2"])
+        self.assertEqual(error_message, "")
+
+    def test_send_chat_message(self):
+        # Mock the client's receive_message method to return a success response
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
+        
+        # Call the send_chat_message method
+        success, error_message = self.chat_app_logic.send_chat_message(1, "user1", "Hello")
+        
+        # Assert that the method returned the expected values
+        self.assertTrue(success)
+        self.assertEqual(error_message, "")
+
+    def test_get_unread_message_count(self):
+        # Mock the get_chats method to return a list of chats with unread messages
+        self.chat_app_logic.get_chats = MagicMock(return_value=([
+            {"chat_id": 1, "messages": [{"sender": "user2", "read": False}, {"sender": "user1", "read": True}]}
+        ], ""))
+        
+        # Call the get_unread_message_count method
+        unread_count, error_message = self.chat_app_logic.get_unread_message_count(1, "user1")
+        
+        # Assert that the method returned the expected values
+        self.assertEqual(unread_count, 1)
+        self.assertEqual(error_message, "")
 
 if __name__ == "__main__":
     unittest.main()
