@@ -27,7 +27,39 @@ class ChatPage(QWidget):
         self.main_window = parent
         self.chat_id = chat_id
         self.message_widgets = []
+        
+        # Initialize state manager and connect signals
+        from ..state_manager import StateManager
+        self.state_manager = StateManager()
+        self.state_manager.message_update.connect(self._handle_message_update)
+        self.state_manager.chat_update.connect(self._handle_chat_update)
+        
         self._setup_ui()
+
+    def _handle_message_update(self, message_data):
+        """Handle new message updates from the state manager"""
+        if message_data.get('chat_id') == self.chat_id:
+            # Only add message if we're not the sender (avoid duplicates)
+            if message_data.get('sender') != self.main_window.current_user:
+                # Create and display new message widget
+                msg_widget = MessageWidget(message_data.get('content'), False)
+                self.message_widgets.append(msg_widget)
+                self.messages_layout.addWidget(msg_widget)
+                
+                # Scroll to bottom to show new message
+                self.scroll_area.verticalScrollBar().setValue(
+                    self.scroll_area.verticalScrollBar().maximum()
+                )
+
+    def _handle_chat_update(self, chat_data):
+        """Handle chat updates from the state manager"""
+        if chat_data.get('chat_id') == self.chat_id:
+            # Update chat metadata if needed
+            if 'title' in chat_data:
+                self.chat_title.setText(chat_data['title'])
+            if 'participants' in chat_data:
+                # Update participants list if you have one
+                pass
 
     def _setup_ui(self):
         """Set up the chat page UI components."""

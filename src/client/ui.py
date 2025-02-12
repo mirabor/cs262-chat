@@ -23,6 +23,14 @@ class ChatAppUI(QMainWindow):
         self.setWindowTitle("Chat Application")
         self.setGeometry(100, 100, 800, 600)
 
+        # Initialize state manager
+        from .state_manager import StateManager
+
+        self.state_manager = StateManager()
+
+        # Initialize business logic
+        self.logic = ChatAppLogic()
+
         # Set dark theme
         self.setStyleSheet(
             """
@@ -104,6 +112,11 @@ class ChatAppUI(QMainWindow):
         settings_page = SettingsPage(self)
         self.setCentralWidget(settings_page)
 
+    def closeEvent(self, event):
+        """Handle application close event"""
+        self.state_manager.stop()
+        event.accept()
+
     def login(self, username, password):
         try:
             if self.logic.login(username, password):  # Call business logic
@@ -140,4 +153,3 @@ class ChatAppUI(QMainWindow):
         chat_id = self.logic.start_chat(
             self.current_user, other_user
         )  # Call business logic
-        self.show_chat_page(chat_id)
