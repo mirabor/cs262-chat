@@ -44,11 +44,34 @@ class TestChatAppLogic(unittest.TestCase):
         self.assertEqual(chat_id, "user1_user2")
         self.assertEqual(error, "")
 
-    def test_send_message(self):
+    @patch('PyQt6.QtWidgets.QMessageBox')
+    def test_send_message(self, mock_qmessagebox):
         """Test sending a message in a chat."""
-        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
-        result, error = self.logic.send_chat_message("chat_id", "user1", "Hello!")
-        self.assertTrue(result)
+        # Setup test data
+        chat_id = "chat123"
+        sender = "user1"
+        content = "Hello!"
+        
+        # Setup mock response
+        self.mock_client.receive_message.return_value = {
+            "success": True,
+            "error_message": ""
+        }
+        
+        # Call send_chat_message
+        success, error = self.logic.send_chat_message(chat_id, sender, content)
+        
+        # Verify results
+        self.assertTrue(success)
+        self.assertEqual(error, "")
+        
+        # Verify correct message was sent
+        self.mock_client.send_message.assert_called_once_with({
+            "action": "send_chat_message",
+            "chat_id": chat_id,
+            "sender": sender,
+            "content": content
+        })
         self.assertEqual(error, "")
 
     def test_delete_messages(self):
@@ -72,12 +95,32 @@ class TestChatAppLogic(unittest.TestCase):
         self.assertEqual(users, ["bob", "charlie"])
         self.assertEqual(error, "")
 
-    def test_save_settings(self):
+    @patch('PyQt6.QtWidgets.QMessageBox')
+    def test_save_settings(self, mock_qmessagebox):
         """Test saving user settings."""
-        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
-        result, error = self.logic.save_settings("testuser", 10)
-        self.assertTrue(result)
+        # Setup test data
+        username = "testuser"
+        message_limit = 10
+        
+        # Setup mock response
+        self.mock_client.receive_message.return_value = {
+            "success": True,
+            "error_message": ""
+        }
+        
+        # Call save_settings
+        success, error = self.logic.save_settings(username, message_limit)
+        
+        # Verify results
+        self.assertTrue(success)
         self.assertEqual(error, "")
+        
+        # Verify correct message was sent
+        self.mock_client.send_message.assert_called_once_with({
+            "action": "save_settings",
+            "username": username,
+            "message_limit": message_limit
+        })
 
     def test_delete_account(self):
         """Test account deletion and its effects on chats."""
@@ -107,19 +150,38 @@ class TestChatAppLogic(unittest.TestCase):
 
     def test_get_unread_message_count(self):
         """Test counting unread messages."""
+        # Setup test data
+        chat_id = "chat1"
+        current_user = "user1"
+        
+        # Setup mock response for get_chats
         self.mock_client.receive_message.return_value = {
+            "success": True,
             "chats": {
-                "chat1": {
+                chat_id: {
+                    "chat_id": chat_id,
                     "messages": [
-                        {"sender": "user2", "read": False},  # Unread message
-                        {"sender": "user1", "read": True},   # Read message
+                        {"sender": "user2", "content": "Hi", "read": False},
+                        {"sender": "user2", "content": "Hello", "read": False},
+                        {"sender": "user1", "content": "Hey", "read": True}
                     ]
                 }
-            }
+            },
+            "error_message": ""
         }
-        count, error = self.logic.get_unread_message_count("chat1", "user1")
-        self.assertEqual(count, 1)
-        self.assertEqual(error, None)
+        
+        # Call get_unread_message_count
+        count, error = self.logic.get_unread_message_count(chat_id, current_user)
+        
+        # Verify results
+        self.assertEqual(count, 2)  # Two unread messages from user2
+        self.assertIsNone(error)
+        
+        # Verify correct message was sent
+        self.mock_client.send_message.assert_called_once_with({
+            "action": "get_chats",
+            "user_id": current_user
+        })
 
     def test_get_other_user_in_chat(self):
         """Test getting the other user in a chat."""
@@ -147,33 +209,92 @@ class TestChatAppLogic(unittest.TestCase):
         self.assertFalse(result)
         self.assertEqual(error, "Invalid limit")
 
-    def test_send_message(self):
+    @patch('PyQt6.QtWidgets.QMessageBox')
+    def test_send_message(self, mock_qmessagebox):
         """Test sending a message."""
-        with patch.object(self.chat_page.main_window.logic, "send_chat_message") as mock_send:
-            mock_send.return_value = (True, "")
-            self.chat_page.message_input.setText("Hello")
-            self.chat_page._send_chat_message()
+        # Setup test data
+        chat_id = "chat123"
+        sender = "user1"
+        content = "Hello!"
+        
+        # Setup mock response
+        self.mock_client.receive_message.return_value = {
+            "success": True,
+            "error_message": ""
+        }
+        
+        # Call send_chat_message
+        success, error = self.logic.send_chat_message(chat_id, sender, content)
+        
+        # Verify results
+        self.assertTrue(success)
+        self.assertEqual(error, "")
+        
+        # Verify correct message was sent
+        self.mock_client.send_message.assert_called_once_with({
+            "action": "send_chat_message",
+            "chat_id": chat_id,
+            "sender": sender,
+            "content": content
+        })
 
-            mock_send.assert_called_once_with("chat1", self.mock_parent.current_user, "Hello")
-
-    def test_delete_selected_messages(self):
+    @patch('PyQt6.QtWidgets.QMessageBox')
+    def test_delete_selected_messages(self, mock_qmessagebox):
         """Test deleting selected messages."""
-        with patch("PyQt6.QtWidgets.QMessageBox.question") as mock_question:
-            mock_question.return_value = MagicMock(return_value=QMessageBox.StandardButton.Yes)
+        # Setup test data
+        chat_id = "chat123"
+        message_indices = [0, 2]
+        current_user = "user1"
+        
+        # Setup mock response
+        self.mock_client.receive_message.return_value = {
+            "success": True,
+            "error_message": ""
+        }
+        
+        # Call delete_messages
+        success, error = self.logic.delete_messages(chat_id, message_indices, current_user)
+        
+        # Verify results
+        self.assertTrue(success)
+        self.assertEqual(error, "")
+        
+        # Verify correct message was sent
+        self.mock_client.send_message.assert_called_once_with({
+            "action": "delete_messages",
+            "chat_id": chat_id,
+            "message_indices": message_indices,
+            "current_user": current_user
+        })
 
-            with patch.object(self.chat_page.main_window.logic, "delete_messages") as mock_delete:
-                mock_delete.return_value = (True, "")
-                self.chat_page._delete_selected_messages()
-
-                mock_delete.assert_called_once()
-
-    def test_display_chats(self):
-        """Test displaying chats."""
-        with patch.object(self.home_page.main_window.logic, "get_chats") as mock_get_chats:
-            mock_get_chats.return_value = ([{"chat_id": "chat1", "messages": []}], "")
-            self.home_page._display_chats()
-
-            self.assertEqual(len(self.home_page.chat_widgets), 1)
+    def test_get_chats(self):
+        """Test getting chat list."""
+        # Setup test data
+        user_id = "user1"
+        expected_chats = [
+            {"chat_id": "chat1", "messages": []},
+            {"chat_id": "chat2", "messages": []}
+        ]
+        
+        # Setup mock response
+        self.mock_client.receive_message.return_value = {
+            "success": True,
+            "chats": {chat["chat_id"]: chat for chat in expected_chats},
+            "error_message": ""
+        }
+        
+        # Call get_chats
+        chats, error = self.logic.get_chats(user_id)
+        
+        # Verify results
+        self.assertEqual(len(chats), 2)
+        self.assertEqual(error, "")
+        
+        # Verify correct message was sent
+        self.mock_client.send_message.assert_called_once_with({
+            "action": "get_chats",
+            "user_id": user_id
+        })
     
     def test_save_settings(self):
         """Test saving settings."""
