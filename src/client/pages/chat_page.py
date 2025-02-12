@@ -52,6 +52,13 @@ class ChatPage(QWidget):
         chat_label = QLabel(f"Chat with {other_user}")
         chat_label.setStyleSheet("font-size: 24px;")
         header_layout.addWidget(chat_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        # Add refresh button
+        refresh_btn = DarkPushButton("Refresh")
+        refresh_btn.setFixedWidth(100)  # Make the button a reasonable size
+        refresh_btn.clicked.connect(self.refresh_messages)
+        header_layout.addWidget(refresh_btn)
+        
         header_layout.addStretch()
         layout.addLayout(header_layout)
 
@@ -92,6 +99,21 @@ class ChatPage(QWidget):
         input_layout.addWidget(self.message_input)
         layout.addLayout(input_layout)
 
+    def refresh_messages(self):
+        """Refresh the messages in the chat."""
+        # Clear existing messages
+        for widget in self.message_widgets:
+            widget.setParent(None)
+        self.message_widgets.clear()
+        
+        # Re-display messages
+        self._display_messages()
+        
+        # Scroll to bottom
+        self.scroll_area.verticalScrollBar().setValue(
+            self.scroll_area.verticalScrollBar().maximum()
+        )
+    
     def _display_messages(self):
         """Display messages in the chat."""
         messages, error = self.main_window.logic.get_messages(self.chat_id)
