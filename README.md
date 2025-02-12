@@ -45,7 +45,7 @@ cd cs262-chat
 
 2. Install dependencies:
 ```bash
-make install
+make install && make install-dev
 ```
 
 ### Running the Application
