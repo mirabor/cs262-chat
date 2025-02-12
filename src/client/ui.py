@@ -130,11 +130,12 @@ class ChatAppUI(QMainWindow):
                 QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
 
     def save_settings(self, message_limit):
-        if message_limit < 1:
-            QMessageBox.critical(self, "Error", "Message limit must be at least 1")
-            return
+
         try:
             limit = int(message_limit)
+            if limit < 1:
+                QMessageBox.critical(self, "Error", "Message limit must be at least 1")
+                return
             self.logic.save_settings(self.current_user, limit)
             
             QMessageBox.information(self, "Success", "Settings saved")
