@@ -45,7 +45,7 @@ cd cs262-chat
 
 2. Install dependencies:
 ```bash
-make install
+make install && make install-dev
 ```
 
 ### Running the Application
@@ -81,3 +81,7 @@ This project follows PEP 8 style guidelines. Format your code using:
 ```bash
 make format
 ```
+## Initial Design Diagram
+
+![user_journey_ui drawio](https://github.com/user-attachments/assets/a4a1ac9a-180a-48af-b188-3a179f9b6674)
+
