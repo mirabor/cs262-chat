@@ -359,7 +359,6 @@ class DBManager:
             }
             for msg in messages
         ]
-            print(f"yes, it worked, here are the messages {formatted_messages}")
             return {"success": True, "messages": formatted_messages, "error_message": ""}
     
     def get_other_user_in_chat(self, chat_id, current_user):
