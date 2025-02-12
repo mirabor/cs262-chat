@@ -1,5 +1,6 @@
 import sqlite3
 from datetime import datetime
+from src.client.utils import hash_password, verify_password
 
 DATABASE_FILE = "chat_app.db"
 
@@ -81,6 +82,7 @@ class DBManager:
                 if cursor.fetchone():
                     return {"success": False, "error_message": "Username already taken."}
 
+
                 # Insert the new user into the users table
                 cursor.execute(
                     """
@@ -111,39 +113,33 @@ class DBManager:
         password = login_data.get("password")
 
         print(f"Login data: {login_data}")
-        print("From db manager")
         print(f"Username: {username}")
         print(f"Password: {password}")
 
         if not username or not password:
-
             return {"success": False, "error_message": "Username and password are required."}
 
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
-            print('connected in db manager for password')
             # Fetch the user's password and nickname
-            try:
-                cursor.execute(
-                    "SELECT id, username, nickname, password FROM users WHERE username = ?",
-                    (username,)
-                )
-                user = cursor.fetchone()
-            except:
-                return {"success": False, "error_message": "cursor issue Invalid username or password."}
+            cursor.execute(
+                "SELECT id, username, nickname, password FROM users WHERE username = ?",
+                (username,)
+            )
+            user = cursor.fetchone()
 
             if not user:
-                print("User not found")
                 return {"success": False, "error_message": "Invalid username or password."}
 
             user_id, db_username, db_nickname, db_password = user
-            print(f"Password: {password}")
-            print(f"db Password: {db_password}")
-            # Check if password matches
-            if password != db_password:
+            print(f"Stored hashed password from login: {db_password}")
+
+            # Verify the password
+            if not verify_password(password, db_password):
                 return {"success": False, "error_message": "Invalid username or password."}
 
+            print("Password verification succeeded")
             # Fetch the message view limit
             cursor.execute(
                 "SELECT msg_view_limit FROM userconfig WHERE username = ?",
@@ -159,8 +155,6 @@ class DBManager:
                 "nickname": db_nickname,
                 "view_limit": view_limit
             }
-        
-        return {"success": False, "error_message": "Invalid username or password."}
 
     def delete_user(self, user_id):
         """Delete a user and all associated data."""

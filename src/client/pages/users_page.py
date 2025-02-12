@@ -24,7 +24,6 @@ class UsersPage(QWidget):
         self.main_window = parent
         self.current_page = 0
         self.users_per_page = 10
-        self.filtered_users = []
         self._setup_ui()
 
     def _setup_ui(self):
@@ -79,7 +78,7 @@ class UsersPage(QWidget):
 
     def _show_next_users(self):
         """Show the next page of users."""
-        if (self.current_page + 1) * self.users_per_page < len(self.filtered_users):
+        if (self.current_page + 1) * self.users_per_page < len(self.main_window.logic.filtered_users):
             self.current_page += 1
             self._update_users_display()
 

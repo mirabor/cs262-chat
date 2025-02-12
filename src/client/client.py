@@ -75,4 +75,3 @@ class Client:
         self.connected = False
         print("Disconnected from server")
 
-

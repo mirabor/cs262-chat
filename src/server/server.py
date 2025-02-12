@@ -134,7 +134,6 @@ class Server:
         elif action == "login":
             print("calling login api")
             response = login(request)
-            print("it worked")
         elif action == "delete_user":
             response = delete_user(request.get("username"))
         elif action == "get_chats":

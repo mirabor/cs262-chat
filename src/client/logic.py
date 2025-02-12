@@ -38,8 +38,10 @@ class ChatAppLogic:
     def login(self, username, password):
         if not username or not password:
             return False
-        hashed_password = hash_password(password)
         print("i am about to send message to login")
+
+        hashed_password = hash_password(password)
+
         self.client.send_message({
         "action": "login",
         "username": username,
@@ -52,19 +54,22 @@ class ChatAppLogic:
 
     def signup(self, username, nickname, password):
         if not username or not nickname or not password:
-            return False
-        if username in self.users:
-            return False
+            return False, "All fields are required."
+        
         hashed_password = hash_password(password)
+
+        # Send the signup request to the server
         self.client.send_message({
             "action": "signup",
             "username": username,
             "nickname": nickname,
             "password": hashed_password
         })
-        response = self.receive_message()
-        return response.get("success"), response.get("error_message", "")
 
+        # Receive the server's response
+        response = self.client.receive_message()
+        return response.get("success", False), response.get("error_message", "")
+    
     def save_settings(self, username, message_limit):
         self.client.send_message({
             "action": "save_settings",
