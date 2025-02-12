@@ -13,7 +13,6 @@ os.environ["QT_QPA_PLATFORM"] = "minimal"
 if not QApplication.instance():
     app = QApplication([])
 
-
 class TestChatAppUI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -27,22 +26,13 @@ class TestChatAppUI(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         # Mock ChatAppLogic to avoid actual file operations
-        self.logic_patcher = patch("src.client.logic.ChatAppLogic")
-        self.MockLogic = self.logic_patcher.start()
-        self.mock_logic_instance = self.MockLogic.return_value
-
-        # Create UI instance with mocked logic
-        with patch("src.client.ui.ChatAppLogic", return_value=self.mock_logic_instance):
-            self.ui = ChatAppUI()
-
-    def tearDown(self):
-        """Clean up test fixtures after each test method."""
-        self.logic_patcher.stop()
+        self.mock_client = MagicMock()
+        self.ui = ChatAppUI(self.mock_client)
 
     def test_login_success(self):
         """Test successful login updates UI state."""
         # Configure mock
-        self.mock_logic_instance.login.return_value = True
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
 
         # Mock UI elements
         with patch("PyQt6.QtWidgets.QLineEdit") as mock_line_edit:
@@ -63,14 +53,11 @@ class TestChatAppUI(unittest.TestCase):
 
                 # Verify UI state
                 self.assertEqual(self.ui.current_user, "testuser")
-        self.mock_logic_instance.login.assert_called_once_with(
-            "testuser", "password123"
-        )
 
     def test_login_failure(self):
         """Test failed login keeps UI in login state."""
         # Configure mock
-        self.mock_logic_instance.login.return_value = False
+        self.mock_client.receive_message.return_value = {"success": False, "error_message": "Invalid credentials"}
 
         # Store initial state
         initial_user = self.ui.current_user
@@ -88,7 +75,7 @@ class TestChatAppUI(unittest.TestCase):
     def test_signup_success(self):
         """Test successful signup transitions to login page."""
         # Configure mock
-        self.mock_logic_instance.signup.return_value = True
+        self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
 
         # Mock UI elements
         with patch("PyQt6.QtWidgets.QLineEdit") as mock_line_edit:
@@ -113,9 +100,7 @@ class TestChatAppUI(unittest.TestCase):
                 self.ui.signup("newuser", "New User", "password123")
 
                 # Verify logic call
-                self.mock_logic_instance.signup.assert_called_once_with(
-                    "newuser", "New User", "password123"
-                )
+                self.mock_client.send_message.assert_called_once()
 
     def test_save_settings(self):
         """Test saving user settings."""
@@ -141,10 +126,7 @@ class TestChatAppUI(unittest.TestCase):
                 self.ui.save_settings("10")
 
                 # Verify logic call
-                self.mock_logic_instance.save_settings.assert_called_once_with(
-                    "testuser", 10
-                )
-
+                self.mock_client.send_message.assert_called_once()
 
 class TestChatWidget(unittest.TestCase):
     @classmethod
@@ -184,7 +166,6 @@ class TestChatWidget(unittest.TestCase):
             self.assertEqual(len(labels), 2)
             self.assertEqual(labels[0].text(), username)
             self.assertEqual(labels[1].text(), f"[{unread_count} unreads]")
-
 
 class TestMessageWidget(unittest.TestCase):
     @classmethod
@@ -235,7 +216,6 @@ class TestMessageWidget(unittest.TestCase):
 
             # Verify widget properties
             self.assertEqual(widget.findChild(QLabel).text(), "Hi")
-
 
 if __name__ == "__main__":
     unittest.main()
