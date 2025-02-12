@@ -5,6 +5,7 @@ import sys
 import os
 from src.client.ui import ChatAppUI
 from src.client.components import ChatWidget, MessageWidget
+from PyQt6.QtWidgets import QMessageBox
 
 # Set Qt to use minimal platform plugin to avoid opening windows during tests
 os.environ["QT_QPA_PLATFORM"] = "minimal"
@@ -128,6 +129,7 @@ class TestChatAppUI(unittest.TestCase):
                 # Verify logic call
                 self.mock_client.send_message.assert_called_once()
 
+
 class TestChatWidget(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -216,6 +218,7 @@ class TestMessageWidget(unittest.TestCase):
 
             # Verify widget properties
             self.assertEqual(widget.findChild(QLabel).text(), "Hi")
+
 
 if __name__ == "__main__":
     unittest.main()
