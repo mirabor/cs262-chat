@@ -109,7 +109,7 @@ class TestChatAppLogic(unittest.TestCase):
         }
         
         # Call save_settings
-        success, error = self.mock_client.save_settings(username, message_limit)
+        success, error = self.logic.save_settings(username, message_limit)
         
         # Verify results
         self.assertTrue(success)
