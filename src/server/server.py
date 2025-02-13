@@ -12,7 +12,7 @@ sys.path.insert(0, parent_dir)
 
 from src.server.api import (
     signup, login, delete_user, get_chats, get_all_users, update_view_limit,
-    save_settings, start_chat, get_user_message_limit, delete_chats, delete_messages, get_messages, get_other_user_in_chat, send_chat_message, get_users_to_display
+    save_settings, start_chat, get_user_message_limit, delete_chats, delete_messages, get_messages, send_chat_message, get_users_to_display
 )
 
 
@@ -152,10 +152,8 @@ class Server:
             response = delete_chats(request.get("chat_ids"))
         elif action == "delete_messages":
             response = delete_messages(request.get("chat_id"), request.get("message_indices"), request.get("current_user"))
-        elif action == "get_other_user_in_chat":
-            response = get_other_user_in_chat(request.get("chat_id"), request.get("current_user"))
         elif action == "get_messages":
-            response = get_messages(request.get("chat_id"))
+            response = get_messages(request)
         elif action == "send_chat_message":
             response = send_chat_message(request.get("chat_id"), request.get("sender"), request.get("content"))
         elif action == "get_users_to_display":

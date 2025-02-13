@@ -1,14 +1,11 @@
-import json
-import os
-from datetime import datetime
 from .utils import hash_password
-from fnmatch import fnmatch
 
 class ChatAppLogic:
     def __init__(self, client):
         self.current_user = None
         self.client = client
         self.filtered_users = []
+        self.chat_cache = {}
 
         if not self.client.connect():
             print("Failed to connect to the server.")
@@ -136,31 +133,27 @@ class ChatAppLogic:
         })
         response = self.client.receive_message()
         if response.get("success"):
-            # Convert the chats dictionary to a list of chat objects
-            chats = [
-                {"chat_id": chat_id, **chat_data}
-                for chat_id, chat_data in response.get("chats", {}).items()
-            ]
-            return chats, response.get("error_message", "")
+            chats = response.get("chats", [])
+            # Update the chat cache, for quick access (esp. on ChatPage)
+            # to get some metadata (e.g. other user's name  )
+            for chat in chats:
+                print("chat: ", chat)
+                self.chat_cache[chat["chat_id"]] = chat
+
+            return response.get("chats", []), response.get("error_message", "")
         else:
             return [], response.get("error_message", "Failed to fetch chats")
         
-    def get_other_user_in_chat(self, chat_id, current_user):
+    def get_other_user_in_chat(self, chat_id):
         """Get the other user in the chat."""
-        self.client.send_message({
-            "action": "get_other_user_in_chat",
-            "chat_id": chat_id,
-            "current_user": current_user
-        })
-        response = self.client.receive_message()
-        print(response)
-        return response.get("user", []), response.get("error_message", "")
+        return self.chat_cache.get(chat_id, {}).get("other_user")
 
-    def get_messages(self, chat_id):
+    def get_messages(self, chat_id, current_user):
         """Get messages for a chat."""
         self.client.send_message({
             "action": "get_messages",
-            "chat_id": chat_id
+            "chat_id": chat_id,
+            "current_user": current_user
         })
         response = self.client.receive_message()
         print("response: is what we r getting and giving to display ", response)
@@ -176,20 +169,3 @@ class ChatAppLogic:
         })
         response = self.client.receive_message()
         return response.get("success", False), response.get("error_message", "")
-    
-    def get_unread_message_count(self, chat_id, current_user):
-        """Count unread messages in a chat for a specific user."""
-        chats, error = self.get_chats(current_user)
-        if error:
-            return 0, error
-
-        print(chats)
-        for chat in chats:
-            if chat["chat_id"] == chat_id:
-                unread_count = sum(  1
-                    for msg in chat["messages"]
-                    if msg["sender"] != current_user and not msg["read"]
-                )
-                return unread_count, None
-
-        return 0, "Chat not found"

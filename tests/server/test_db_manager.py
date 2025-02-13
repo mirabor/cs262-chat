@@ -3,7 +3,9 @@
 import pytest
 import sqlite3
 import os
-from datetime import datetime
+# timedelta
+from datetime import datetime, timedelta
+
 from src.server.db_manager import DBManager
 
 @pytest.fixture
@@ -84,7 +86,8 @@ def test_get_chats_empty(db_manager, sample_users):
     """Test getting chats when no messages exist."""
     result = db_manager.get_chats(1)  # user1's ID should be 1
     assert result["success"] is True
-    assert result["chats"] == {}
+    assert result["chats"] == []
+    assert result["error_message"] == ""
 
 def test_get_chats(db_manager):
     """Test the get_chats function with messages."""
@@ -100,27 +103,136 @@ def test_get_chats(db_manager):
         cursor.execute("SELECT id FROM users WHERE username = ?", ("user2",))
         user2_id = cursor.fetchone()[0]
 
-        # Add a test message
+        # Add test messages
+        current_time = datetime.now()
+        messages = [
+            (user1_id, user2_id, "Hello!", current_time.isoformat(), False),
+            (user2_id, user1_id, "Hi back!", current_time.isoformat(), True)
+        ]
+
         cursor.execute(
             """
-            INSERT INTO messages (sender_id, receiver_id, content, timestamp)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp, read)
+            VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)
             """,
-            (user1_id, user2_id, "Hello, User Two!", datetime.now().isoformat())
+            [param for msg in messages for param in msg]
         )
         conn.commit()
 
     response = db_manager.get_chats(user1_id)
-    assert response["success"] is True
-    assert len(response["chats"]) == 1
-    
-    # Verify message content
-    chat_key = f"{min(user1_id, user2_id)}_{max(user1_id, user2_id)}"
-    chat = response["chats"][chat_key]
-    assert len(chat["messages"]) == 1
-    assert chat["messages"][0]["content"] == "Hello, User Two!"
-    assert chat["messages"][0]["sender"] == user1_id
 
+    # Test basic response structure
+    assert response["success"] is True
+    assert response["error_message"] == ""
+    assert isinstance(response["chats"], list)
+    assert len(response["chats"]) == 1
+
+    # Test chat content
+    chat = response["chats"][0]
+    expected_chat_id = f"{min(user1_id, user2_id)}_{max(user1_id, user2_id)}"
+    assert chat["chat_id"] == expected_chat_id
+    assert chat["other_user"] == user2_id
+    assert chat["unread_count"] == 0  # user1 has no unread messages
+
+def test_get_chats_with_unread(db_manager):
+    """Test get_chats with unread messages."""
+    # Create users
+    db_manager.add_user("user1", "User One", "password123")
+    db_manager.add_user("user2", "User Two", "password123")
+
+    with db_manager._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user1",))
+        user1_id = cursor.fetchone()[0]
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user2",))
+        user2_id = cursor.fetchone()[0]
+
+        # Add messages with some unread
+        current_time = datetime.now()
+        messages = [
+            (user2_id, user1_id, "Hi!", current_time.isoformat(), False),
+            (user2_id, user1_id, "Hello again!", current_time.isoformat(), False),
+            (user1_id, user2_id, "Hey!", current_time.isoformat(), True)
+        ]
+
+        cursor.executemany(
+            """
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp, read)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            messages
+        )
+        conn.commit()
+
+    response = db_manager.get_chats(user1_id)
+    chat = response["chats"][0]
+    assert chat["unread_count"] == 2  # user1 has 2 unread messages
+
+def test_get_chats_ordering(db_manager):
+    """Test that chats are ordered by most recent message."""
+    # Create users
+    db_manager.add_user("user1", "User One", "password123")
+    db_manager.add_user("user2", "User Two", "password123")
+    db_manager.add_user("user3", "User Three", "password123")
+
+    with db_manager._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user1",))
+        user1_id = cursor.fetchone()[0]
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user2",))
+        user2_id = cursor.fetchone()[0]
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user3",))
+        user3_id = cursor.fetchone()[0]
+
+        # Add messages with different timestamps
+        base_time = datetime.now()
+        messages = [
+            # Older message with user2
+            (user1_id, user2_id, "Old message",
+             (base_time - timedelta(hours=1)).isoformat(), True),
+            # Recent message with user3
+            (user3_id, user1_id, "Recent message",
+             base_time.isoformat(), False)
+        ]
+
+        cursor.executemany(
+            """
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp, read)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            messages
+        )
+        conn.commit()
+
+    response = db_manager.get_chats(user1_id)
+    chats = response["chats"]
+    assert len(chats) == 2
+    # Chat with user3 should be first (more recent)
+    assert chats[0]["other_user"] == user3_id
+    assert chats[1]["other_user"] == user2_id
+
+def test_get_chats_exclude_self_messages(db_manager):
+    """Test that self-messages are excluded from chat list."""
+    # Create user
+    db_manager.add_user("user1", "User One", "password123")
+
+    with db_manager._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", ("user1",))
+        user1_id = cursor.fetchone()[0]
+
+        # Add a self-message
+        cursor.execute(
+            """
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp, read)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (user1_id, user1_id, "Note to self", datetime.now().isoformat(), True)
+        )
+        conn.commit()
+
+    response = db_manager.get_chats(user1_id)
+    assert len(response["chats"]) == 0  # No chats should be returned
 def test_get_all_users(db_manager, sample_users):
     """Test getting all users except excluded one."""
     result = db_manager.get_all_users(exclude_username="user1")

@@ -53,27 +53,17 @@ class HomePage(QWidget):
         chats, error = self.main_window.logic.get_chats(current_user)
         if error:
             # Handle error (e.g., show a message to the user)
-            print(f"Error fetching chats: {error}")
+            print(f"DEBUG: Error fetching chats: {error}")
             return
 
         # Display each chat
         for chat in chats:
-            chat_id = chat["chat_id"]
-
-            # Get the other participant in the chat
-            other_user, error = self.main_window.logic.get_other_user_in_chat(chat_id, current_user)
-            if error:
-                print(f"Error getting other user in chat {chat_id}: {error}")
-                continue  # Skip this chat if there's an error
-
-            # Count unread messages
-            unread_count, error = self.main_window.logic.get_unread_message_count(chat_id, current_user)
-            if error:
-                print(f"Error counting unread messages in chat {chat_id}: {error}")
-                unread_count = 0  # Default to 0 if there's an error
-
+            chat_id = chat.get("chat_id")
             # Create chat widget
-            chat_widget = ChatWidget(other_user, unread_count, show_checkbox=False)
+            chat_widget = ChatWidget(
+                chat.get("other_user"),
+                chat.get("unread_count"),
+                show_checkbox=False)
             chat_widget.mousePressEvent = (
                 lambda e, cid=chat_id: self.main_window.show_chat_page(cid)
             )

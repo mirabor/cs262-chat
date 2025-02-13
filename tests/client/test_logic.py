@@ -109,7 +109,7 @@ class TestChatAppLogic(unittest.TestCase):
         }
         
         # Call save_settings
-        success, error = self.mock_client.save_settings(username, message_limit)
+        success, error = self.logic.save_settings(username, message_limit)
         
         # Verify results
         self.assertTrue(success)
@@ -148,47 +148,12 @@ class TestChatAppLogic(unittest.TestCase):
         self.assertFalse(result)
         self.assertEqual(error, "Invalid limit")
 
-    def test_get_unread_message_count(self):
-        """Test counting unread messages."""
-        # Setup test data
-        chat_id = "chat1"
-        current_user = "user1"
-        
-        # Setup mock response for get_chats
-        self.mock_client.receive_message.return_value = {
-            "success": True,
-            "chats": {
-                chat_id: {
-                    "chat_id": chat_id,
-                    "messages": [
-                        {"sender": "user2", "content": "Hi", "read": False},
-                        {"sender": "user2", "content": "Hello", "read": False},
-                        {"sender": "user1", "content": "Hey", "read": True}
-                    ]
-                }
-            },
-            "error_message": ""
-        }
-        
-        # Call get_unread_message_count
-        count, error = self.logic.get_unread_message_count(chat_id, current_user)
-        
-        # Verify results
-        self.assertEqual(count, 2)  # Two unread messages from user2
-        self.assertIsNone(error)
-        
-        # Verify correct message was sent
-        self.mock_client.send_message.assert_called_once_with({
-            "action": "get_chats",
-            "user_id": current_user
-        })
-
     def test_get_other_user_in_chat(self):
         """Test getting the other user in a chat."""
-        self.mock_client.receive_message.return_value = {"user": "user2", "error_message": ""}
-        user, error = self.logic.get_other_user_in_chat("chat1", "user1")
+        # test that it accesses the local cache to get the other user
+        self.logic.chat_cache["chat1"] = {"other_user": "user2"}
+        user = self.logic.get_other_user_in_chat("chat1")
         self.assertEqual(user, "user2")
-        self.assertEqual(error, "")
     
     def test_signup_invalid_input(self):
         """Test signup fails with invalid input."""
@@ -272,14 +237,16 @@ class TestChatAppLogic(unittest.TestCase):
         # Setup test data
         user_id = "user1"
         expected_chats = [
-            {"chat_id": "chat1", "messages": []},
-            {"chat_id": "chat2", "messages": []}
-        ]
+             {
+                  "chat_id": "1some_id2",
+                  "other_user": "username",
+                  "unread_count": 5 # Number of unread messages
+             }]
         
         # Setup mock response
         self.mock_client.receive_message.return_value = {
             "success": True,
-            "chats": {chat["chat_id"]: chat for chat in expected_chats},
+            "chats": [chat for chat in expected_chats],
             "error_message": ""
         }
         
@@ -287,7 +254,7 @@ class TestChatAppLogic(unittest.TestCase):
         chats, error = self.logic.get_chats(user_id)
         
         # Verify results
-        self.assertEqual(len(chats), 2)
+        self.assertEqual(len(chats), 1)
         self.assertEqual(error, "")
         
         # Verify correct message was sent
@@ -296,6 +263,9 @@ class TestChatAppLogic(unittest.TestCase):
             "user_id": user_id
         })
 
+        # Verify correct number of unread messages
+        self.assertEqual(chats[0]["unread_count"], 5)
+
     def test_delete_chats(self):
         """Test deleting chats."""
         self.mock_client.receive_message.return_value = {"success": True, "error_message": ""}
@@ -303,32 +273,25 @@ class TestChatAppLogic(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(error, "")
 
-    def test_get_unread_message_count(self):
-        """Test counting unread messages."""
-        self.mock_client.receive_message.return_value = {"chats": {"chat1": {"messages": [{"read": False}]}}}
-        count, error = self.logic.get_unread_message_count("chat1", "user1")
-        self.assertEqual(count, 1)
-        self.assertEqual(error, None)
-
     def test_get_user_message_limit(self):
         """Test getting the message limit for a user."""
         # Setup test data
         current_user = "testuser"
         expected_limit = 100
-        
+
         # Setup mock response
         self.mock_client.receive_message.return_value = {
             "message_limit": expected_limit,
             "error_message": ""
         }
-        
+
         # Call get_user_message_limit
         limit, error = self.logic.get_user_message_limit(current_user)
-        
+
         # Verify results
         self.assertEqual(limit, expected_limit)
         self.assertEqual(error, "")
-        
+
         # Verify correct message was sent
         self.mock_client.send_message.assert_called_once_with({
             "action": "get_user_message_limit",
@@ -343,96 +306,26 @@ class TestChatAppLogic(unittest.TestCase):
             {"sender": "user1", "content": "Hello!", "read": True},
             {"sender": "user2", "content": "Hi!", "read": False}
         ]
-        
+
         # Setup mock response
         self.mock_client.receive_message.return_value = {
             "messages": expected_messages,
             "error_message": ""
         }
-        
+
         # Call get_messages
-        messages, error = self.logic.get_messages(chat_id)
-        
+        messages, error = self.logic.get_messages(chat_id, "user1")
+
         # Verify results
         self.assertEqual(messages, expected_messages)
         self.assertEqual(error, "")
-        
+
         # Verify correct message was sent
         self.mock_client.send_message.assert_called_once_with({
             "action": "get_messages",
-            "chat_id": chat_id
+            "chat_id": chat_id,
+            "current_user": "user1"
         })
-
-    def test_get_unread_message_count_chat_not_found(self):
-        """Test counting unread messages when chat is not found."""
-        # Setup test data
-        chat_id = "chat123"
-        current_user = "user1"
-        
-        # Setup mock response for get_chats
-        self.mock_client.receive_message.return_value = {
-            "success": True,
-            "chats": {
-                "chat456": {
-                    "chat_id": "chat456",
-                    "messages": [
-                        {"sender": "user2", "content": "Hi", "read": False},
-                        {"sender": "user2", "content": "Hello", "read": False},
-                        {"sender": "user1", "content": "Hey", "read": True}
-                    ]
-                }
-            },
-            "error_message": ""
-        }
-        
-        # Call get_unread_message_count
-        count, error = self.logic.get_unread_message_count(chat_id, current_user)
-        
-        # Verify results
-        self.assertEqual(count, 0)
-        self.assertEqual(error, "Chat not found")
-        
-        # Verify correct message was sent
-        self.mock_client.send_message.assert_called_once_with({
-            "action": "get_chats",
-            "user_id": current_user
-        })
-
-    def test_get_unread_message_count_no_unread(self):
-        """Test counting unread messages when there are no unread messages."""
-        # Setup test data
-        chat_id = "chat123"
-        current_user = "user1"
-        
-        # Setup mock response for get_chats
-        self.mock_client.receive_message.return_value = {
-            "success": True,
-            "chats": {
-                chat_id: {
-                    "chat_id": chat_id,
-                    "messages": [
-                        {"sender": "user2", "content": "Hi", "read": True},
-                        {"sender": "user2", "content": "Hello", "read": True},
-                        {"sender": "user1", "content": "Hey", "read": True}
-                    ]
-                }
-            },
-            "error_message": ""
-        }
-        
-        # Call get_unread_message_count
-        count, error = self.logic.get_unread_message_count(chat_id, current_user)
-        
-        # Verify results
-        self.assertEqual(count, 0)
-        self.assertIsNone(error)
-        
-        # Verify correct message was sent
-        self.mock_client.send_message.assert_called_once_with({
-            "action": "get_chats",
-            "user_id": current_user
-        })
-
 
 if __name__ == "__main__":
     unittest.main()
