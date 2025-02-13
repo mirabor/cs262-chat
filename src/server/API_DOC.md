@@ -58,6 +58,7 @@ Retrieves all necessary chat information for displaying the chat list UI.
 
 ```json
 {
+  "success": true,
   "chats": [
     {
       "chat_id": "1some_id2",
