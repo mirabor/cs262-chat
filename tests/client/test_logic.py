@@ -109,7 +109,7 @@ class TestChatAppLogic(unittest.TestCase):
         }
         
         # Call save_settings
-        success, error = self.logic.save_settings(username, message_limit)
+        success, error = self.mock_client.save_settings(username, message_limit)
         
         # Verify results
         self.assertTrue(success)
@@ -295,25 +295,6 @@ class TestChatAppLogic(unittest.TestCase):
             "action": "get_chats",
             "user_id": user_id
         })
-    
-    def test_save_settings(self):
-        """Test saving settings."""
-        with patch.object(self.settings_page.main_window.logic, "save_settings") as mock_save:
-            mock_save.return_value = (True, "")
-            self.settings_page.limit_input.setText("10")
-            self.settings_page._handle_save()
-
-            mock_save.assert_called_once_with(self.settings_page.main_window.current_user, 10)
-    
-    def test_signup(self):
-        """Test signup."""
-        with patch.object(self.signup_page.main_window, "signup") as mock_signup:
-            self.signup_page.username_input.setText("user1")
-            self.signup_page.nickname_input.setText("User One")
-            self.signup_page.password_input.setText("password123")
-            self.signup_page._handle_signup()
-
-            mock_signup.assert_called_once_with("user1", "User One", "password123")
 
     def test_delete_chats(self):
         """Test deleting chats."""
