@@ -292,15 +292,6 @@ class DBManager:
             if cursor.fetchone():
                 return {"success": True, "chat_id": chat_id, "error_message": ""}
 
-            # Insert a new message to create the chat
-            cursor.execute(
-                """
-                INSERT INTO messages (sender_id, receiver_id, content, timestamp)
-                VALUES (?, ?, ?, ?)
-                """,
-                (current_user, other_user, "Chat started", datetime.now().isoformat())
-            )
-
             conn.commit()
             return {"success": True, "chat_id": chat_id, "error_message": ""}
 
