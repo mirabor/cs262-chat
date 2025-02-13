@@ -144,10 +144,11 @@ class ChatAppUI(QMainWindow):
             QMessageBox.critical(self, "Error", "Invalid message limit")
 
     def start_chat(self, other_user):
-        if not self.current_user:
-            QMessageBox.critical(self, "Error", "Please login first")
-            return
-        chat_id = self.logic.start_chat(
-            self.current_user, other_user
-        )  # Call business logic
-        self.show_chat_page(chat_id)
+        try:
+            if not self.current_user:
+                QMessageBox.critical(self, "Error", "Please login first")
+                return
+            chat_id = self.logic.start_chat(self.current_user, other_user)
+            self.show_chat_page(chat_id)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
