@@ -148,41 +148,6 @@ class TestChatAppLogic(unittest.TestCase):
         self.assertFalse(result)
         self.assertEqual(error, "Invalid limit")
 
-    def test_get_unread_message_count(self):
-        """Test counting unread messages."""
-        # Setup test data
-        chat_id = "chat1"
-        current_user = "user1"
-        
-        # Setup mock response for get_chats
-        self.mock_client.receive_message.return_value = {
-            "success": True,
-            "chats": {
-                chat_id: {
-                    "chat_id": chat_id,
-                    "messages": [
-                        {"sender": "user2", "content": "Hi", "read": False},
-                        {"sender": "user2", "content": "Hello", "read": False},
-                        {"sender": "user1", "content": "Hey", "read": True}
-                    ]
-                }
-            },
-            "error_message": ""
-        }
-        
-        # Call get_unread_message_count
-        count, error = self.logic.get_unread_message_count(chat_id, current_user)
-        
-        # Verify results
-        self.assertEqual(count, 2)  # Two unread messages from user2
-        self.assertIsNone(error)
-        
-        # Verify correct message was sent
-        self.mock_client.send_message.assert_called_once_with({
-            "action": "get_chats",
-            "user_id": current_user
-        })
-
     def test_get_other_user_in_chat(self):
         """Test getting the other user in a chat."""
         self.mock_client.receive_message.return_value = {"user": "user2", "error_message": ""}
@@ -272,8 +237,8 @@ class TestChatAppLogic(unittest.TestCase):
         # Setup test data
         user_id = "user1"
         expected_chats = [
-            {"chat_id": "chat1", "messages": []},
-            {"chat_id": "chat2", "messages": []}
+            {"chat_id": "chat1", "other_user": "user2", "unread_count": 2},
+            {"chat_id": "chat2", "other_user": "user3", "unread_count": 1}
         ]
         
         # Setup mock response
@@ -302,14 +267,6 @@ class TestChatAppLogic(unittest.TestCase):
         result, error = self.logic.delete_chats(["chat1", "chat2"])
         self.assertTrue(result)
         self.assertEqual(error, "")
-
-    def test_get_unread_message_count(self):
-        """Test counting unread messages."""
-        self.mock_client.receive_message.return_value = {"chats": {"chat1": {"messages": [{"read": False}]}}}
-        count, error = self.logic.get_unread_message_count("chat1", "user1")
-        self.assertEqual(count, 1)
-        self.assertEqual(error, None)
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -170,54 +170,76 @@ class DBManager:
             return {"success": True, "error_message": ""}
 
     def get_chats(self, user_id):
-        """Get all chats involving a user, excluding the current user from chat participants, sorted by most recent."""
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
+        """
+        Get all chats involving a user with their unread message counts and
+        other participants for chat list UI display.
 
-            # Fetch all messages involving the user
-            cursor.execute(
-                """
-                SELECT * FROM messages
-                WHERE sender_id = ? OR receiver_id = ?
-                ORDER BY timestamp DESC
-                """,
-                (user_id, user_id)
-            )
+        Args:
+            user_id (int): ID of the user whose chats to retrieve
 
-            messages = cursor.fetchall()
+        Returns:
+            dict: Contains:
+                - success (bool): Whether operation succeeded
+                - chats (list): List of chat dictionaries, each containing:
+                    - chat_id (str): Unique chat identifier (smaller_id_larger_id)
+                    - other_user (int): ID of the other chat participant
+                    - unread_count (int): Number of unread messages for current user
+                - error_message (str): Error details if any, empty if successful
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
 
-            # Organize messages into chats, excluding the current user from the participants list
-            chats = {}
-            for message in messages:
-                sender_id = message[1]
-                receiver_id = message[2]
+                cursor.execute(
+                    """
+                    WITH ChatSummary AS (
+                        SELECT
+                            CASE
+                                WHEN sender_id < receiver_id THEN sender_id || '_' || receiver_id
+                                ELSE receiver_id || '_' || sender_id
+                            END as chat_id,
+                            CASE
+                                WHEN sender_id = ? THEN receiver_id
+                                ELSE sender_id
+                            END as other_user,
+                            COUNT(CASE
+                                WHEN receiver_id = ? AND read = FALSE
+                                THEN 1
+                            END) as unread_count,
+                            MAX(timestamp) as last_message_time
+                        FROM messages
+                        WHERE (sender_id = ? OR receiver_id = ?)
+                            AND sender_id != receiver_id  -- Exclude self-messages
+                        GROUP BY chat_id, other_user
+                    )
+                    SELECT chat_id, other_user, unread_count
+                    FROM ChatSummary
+                    ORDER BY last_message_time DESC
+                    """,
+                    (user_id, user_id, user_id, user_id)
+                )
 
-                if sender_id == user_id and receiver_id == user_id:
-                    continue
-
-                # Create a unique key for each chat
-                chat_key = f"{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
-
-                # Initialize chat if not already in the dictionary
-                if chat_key not in chats:
-                    # Identify the other participant
-                    other_user = receiver_id if sender_id == user_id else sender_id
-
-                    chats[chat_key] = {
-                        "other_user": other_user,
-                        "messages": []
+                chats = [
+                    {
+                        "chat_id": row[0],
+                        "other_user": row[1],
+                        "unread_count": row[2] or 0  # Convert None to 0
                     }
+                    for row in cursor.fetchall()
+                ]
 
-                # Append the message to the chat
-                chats[chat_key]["messages"].append({
-                    "sender": sender_id,
-                    "content": message[3],
-                    "timestamp": message[4],
-                    "read": message[5]
-                })
+                return {
+                    "success": True,
+                    "chats": chats,
+                    "error_message": ""
+                }
 
-            return {"success": True, "chats": chats, "error_message": ""}
-    
+        except Exception as e:
+            return {
+                "success": False,
+                "chats": [],
+                "error_message": str(e)
+            }
     def get_all_users(self, exclude_username=None):
         """Get all users except the excluded one."""
         with self._get_connection() as conn:
