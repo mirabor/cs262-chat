@@ -42,12 +42,7 @@ class ChatPage(QWidget):
         header_layout.addWidget(back_btn)
 
         # Get other user's name
-        other_user, error = self.main_window.logic.get_other_user_in_chat(
-            self.chat_id, self.main_window.current_user
-        )
-        if error:
-            QMessageBox.critical(self, "Error", f"Failed to load chat: {error}")
-            return
+        other_user = self.main_window.logic.get_other_user_in_chat(self.chat_id)
 
         chat_label = QLabel(f"Chat with {other_user}")
         chat_label.setStyleSheet("font-size: 24px;")
@@ -94,7 +89,7 @@ class ChatPage(QWidget):
 
     def _display_messages(self):
         """Display messages in the chat."""
-        messages, error = self.main_window.logic.get_messages(self.chat_id)
+        messages, error = self.main_window.logic.get_messages(self.chat_id, self.main_window.current_user)
         if error:
             QMessageBox.critical(self, "Error", f"Failed to fetch messages: {error}")
             return

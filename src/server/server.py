@@ -155,7 +155,7 @@ class Server:
         elif action == "get_other_user_in_chat":
             response = get_other_user_in_chat(request.get("chat_id"), request.get("current_user"))
         elif action == "get_messages":
-            response = get_messages(request.get("chat_id"))
+            response = get_messages(request)
         elif action == "send_chat_message":
             response = send_chat_message(request.get("chat_id"), request.get("sender"), request.get("content"))
         elif action == "get_users_to_display":

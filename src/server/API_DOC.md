@@ -84,7 +84,34 @@ TODO: should we delete all chats they are involved in??
 #### Get Chat Messages
 
 Retrieves messages for a specific chat. If the retriever is the `receiver` all the
-unread messages will automatically be marked as read (TODO: double check in code)
+unread messages will automatically be marked as read. Intuitively it'd make more sense to have client request to mark messages as read, after they're displayed... but for simplicity, we let the server handle it here.
+
+**Parameters**
+
+```json
+{
+  "action": "get_messages",
+  "chat_id": "chat_id",
+  "current_user": "current_user"
+}
+```
+
+**Output**
+
+```json
+{
+  "success": true,
+  "messages": {
+    "id": "some_id",
+    "sender": "username"
+    "receiver": "username.",
+    "content": "...",
+    "timestamp": "...",
+    "read": 1
+  },
+  "error_message": ""
+}
+```
 
 ### 4. User Management
 

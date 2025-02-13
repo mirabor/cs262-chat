@@ -51,13 +51,13 @@ def delete_messages(chat_id, message_indices, current_user):
     """Delete messages."""
     return db_manager.delete_messages(chat_id, message_indices, current_user)
 
-def get_other_user_in_chat(chat_id, current_user):
-    """Get the other user in the chat."""
-    return db_manager.get_other_user_in_chat(chat_id, current_user)
-
-def get_messages(chat_id):
+def get_messages(payload):
     """Get messages for a chat."""
-    return db_manager.get_messages(chat_id)
+    if "chat_id" not in payload or "current_user" not in payload:
+        print(f"DEBUG: Get messages in api.py: payload {payload} is invalid")
+        return {"messages": [], "error_message": "Invalid payload."}
+    return db_manager.get_messages(payload["chat_id"], payload["current_user"])
+
 
 def send_chat_message(chat_id, sender, content):
     """Send a message in a chat."""

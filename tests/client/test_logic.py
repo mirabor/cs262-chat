@@ -150,10 +150,10 @@ class TestChatAppLogic(unittest.TestCase):
 
     def test_get_other_user_in_chat(self):
         """Test getting the other user in a chat."""
-        self.mock_client.receive_message.return_value = {"user": "user2", "error_message": ""}
-        user, error = self.logic.get_other_user_in_chat("chat1", "user1")
+        # test that it accesses the local cache to get the other user
+        self.logic.chat_cache["chat1"] = {"other_user": "user2"}
+        user = self.logic.get_other_user_in_chat("chat1")
         self.assertEqual(user, "user2")
-        self.assertEqual(error, "")
     
     def test_signup_invalid_input(self):
         """Test signup fails with invalid input."""
@@ -244,7 +244,7 @@ class TestChatAppLogic(unittest.TestCase):
         # Setup mock response
         self.mock_client.receive_message.return_value = {
             "success": True,
-            "chats": {chat["chat_id"]: chat for chat in expected_chats},
+            "chats": [chat for chat in expected_chats],
             "error_message": ""
         }
         

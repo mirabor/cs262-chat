@@ -352,7 +352,7 @@ class DBManager:
             conn.commit()
             return {"success": True, "error_message": ""}
 
-    def get_messages(self, chat_id):
+    def get_messages(self, chat_id, current_user):
         """Retrieve messages for a specific chat."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -371,44 +371,32 @@ class DBManager:
             messages = cursor.fetchall()
             
             formatted_messages = [
-            {
-                "id": msg[0],
-                "sender": msg[1],
-                "receiver": msg[2],
-                "content": msg[3],
-                "timestamp": msg[4],
-                "read": msg[5]
-            }
-            for msg in messages
-        ]
-            return {"success": True, "messages": formatted_messages, "error_message": ""}
-    
-    def get_other_user_in_chat(self, chat_id, current_user):
-        """Get the other participant in a chat."""
-        
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
+                {
+                    "id": msg[0],
+                    "sender": msg[1],
+                    "receiver": msg[2],
+                    "content": msg[3],
+                    "timestamp": msg[4],
+                    "read": msg[5]
+                }
+                for msg in messages
+            ]
 
-            if isinstance(chat_id, list):
-                chat_id = chat_id[0]
+            # Mark messages as read for the current user
 
+            # DOC: intuitively it'd make more sense to have client request
+            # to mark messages as read, after they're displayed...
+            # but for simplicity, we'll handle it here
             cursor.execute(
                 """
-                SELECT sender_id, receiver_id FROM messages
-                WHERE (sender_id = ? AND receiver_id = ?)
-                OR (sender_id = ? AND receiver_id = ?)
-                LIMIT 1
+                UPDATE messages
+                SET read = TRUE
+                WHERE receiver_id = ?
                 """,
-                (chat_id.split("_")[0], chat_id.split("_")[1], chat_id.split("_")[1], chat_id.split("_")[0])
+                (current_user,)
             )
-            participants = cursor.fetchone()
-            if participants:
-                other_user_id = participants[0] if participants[1] == current_user else participants[1]
-                return {"user": other_user_id, "error_message": ""}
-            else:
-                print("no participants found")
-                return {"user": None, "error_message": "Unknown user in chat."}
-
+            return {"success": True, "messages": formatted_messages, "error_message": ""}
+    
     def send_chat_message(self, chat_id, sender, content):
         """Send a message in a chat."""
         with self._get_connection() as conn:
@@ -472,4 +460,4 @@ class DBManager:
             )
             conn.commit()
             return {"success": True, "error_message": ""}
-        
+
