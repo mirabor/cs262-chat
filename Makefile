@@ -23,8 +23,11 @@ run-client: # Run the chat client (usage: make run-client CLIENT_ID=your_id SERV
 
 test: # Run all tests
 	@echo "Running all tests..."
-	@$(VENV)/pytest tests/ --cov=src --cov-report term-missing --cov-fail-under=80
+	@$(VENV)/pytest tests/ --cov=src --cov-report term-missing --cov-fail-under=80 --cov-config=.coveragerc
 
+test-report: # Generate and open HTML coverage report
+	@echo "Generating coverage report..."
+	@$(VENV)/pytest tests/ --cov=src --cov-report html --cov-config=.coveragerc
 
 # Development Tools
 # -----------------------------

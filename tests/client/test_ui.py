@@ -6,6 +6,7 @@ import os
 from src.client.ui import ChatAppUI
 from src.client.components import ChatWidget, MessageWidget
 from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QWidget
 
 # Set Qt to use minimal platform plugin to avoid opening windows during tests
 os.environ["QT_QPA_PLATFORM"] = "minimal"
@@ -128,6 +129,195 @@ class TestChatAppUI(unittest.TestCase):
 
                 # Verify logic call
                 self.mock_client.send_message.assert_called_once()
+
+    def test_show_users_page(self):
+        """Test that the users page is shown correctly."""
+        with patch("src.client.ui.UsersPage") as mock_users_page:
+            # Create a mock QWidget instance to return
+            mock_widget = QWidget()
+            mock_users_page.return_value = mock_widget
+
+            # Call the method
+            self.ui.show_users_page()
+
+            # Assert that UsersPage was called with the correct argument
+            mock_users_page.assert_called_once_with(self.ui)
+
+            # Assert that the central widget was set
+            self.assertEqual(self.ui.centralWidget(), mock_widget)
+
+    def test_show_signup_page(self):
+        """Test that the signup page is shown correctly."""
+        with patch("src.client.ui.SignupPage") as mock_signup_page:
+            # Create a mock QWidget instance to return
+            mock_widget = QWidget()
+            mock_signup_page.return_value = mock_widget
+
+            # Call the method
+            self.ui.show_signup_page()
+
+            # Assert that SignupPage was called with the correct argument
+            mock_signup_page.assert_called_once_with(self.ui)
+
+            # Assert that the central widget was set
+            self.assertEqual(self.ui.centralWidget(), mock_widget)
+
+    def test_show_settings_page(self):
+        """Test that the settings page is shown correctly."""
+        with patch("src.client.ui.SettingsPage") as mock_settings_page:
+            # Create a mock QWidget instance to return
+            mock_widget = QWidget()
+            mock_settings_page.return_value = mock_widget
+
+            # Call the method
+            self.ui.show_settings_page()
+
+            # Assert that SettingsPage was called with the correct argument
+            mock_settings_page.assert_called_once_with(self.ui)
+
+            # Assert that the central widget was set
+            self.assertEqual(self.ui.centralWidget(), mock_widget)
+
+    def test_show_chat_page(self):
+        """Test that the chat page is shown correctly."""
+        with patch("src.client.ui.ChatPage") as mock_chat_page:
+            # Create a mock QWidget instance to return
+            mock_widget = QWidget()
+            mock_chat_page.return_value = mock_widget
+
+            # Define a chat_id for testing
+            chat_id = "12345"
+
+            # Call the method
+            self.ui.show_chat_page(chat_id)
+
+            # Assert that ChatPage was called with the correct arguments
+            mock_chat_page.assert_called_once_with(self.ui, chat_id)
+
+            # Assert that the central widget was set
+            self.assertEqual(self.ui.centralWidget(), mock_widget)
+
+
+    def test_login_exception(self):
+        """Test that exceptions during login are handled correctly."""
+        # Configure mock to raise an exception
+        self.mock_client.receive_message.side_effect = Exception("Test exception")
+
+        # Mock QMessageBox to avoid GUI popups
+        with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_critical:
+            # Call the method
+            self.ui.login("testuser", "password123")
+
+            # Assert that QMessageBox.critical was called
+            mock_critical.assert_called_once_with(self.ui, "Error", "An error occurred: Test exception")
+
+    def test_signup_exception(self):
+        """Test that exceptions during signup are handled correctly."""
+        # Configure mock to raise an exception
+        self.mock_client.receive_message.side_effect = Exception("Test exception")
+
+        # Mock QMessageBox to avoid GUI popups
+        with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_critical:
+            # Call the method
+            self.ui.signup("newuser", "New User", "password123")
+
+            # Assert that QMessageBox.critical was called
+            mock_critical.assert_called_once_with(self.ui, "Error", "An error occurred: Test exception")
+
+    def test_save_settings_exception(self):
+        """Test that exceptions during save_settings are handled correctly."""
+        # Set current user
+        self.ui.current_user = "testuser"
+
+        # Configure mock to raise a ValueError
+        self.mock_client.send_message.side_effect = ValueError("Invalid message limit")
+
+        # Mock QMessageBox to avoid GUI popups
+        with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_critical:
+            # Call the method
+            self.ui.save_settings("invalid")
+
+            # Assert that QMessageBox.critical was called
+            mock_critical.assert_called_once_with(self.ui, "Error", "Invalid message limit")
+
+    def test_signup_failure_username_taken(self):
+        """Test that signup fails when the username is already taken."""
+        # Configure mock to return a failure response
+        self.mock_client.receive_message.return_value = {
+            "success": False,
+            "error_message": "Username already taken",
+        }
+
+        # Mock QMessageBox to avoid GUI popups
+        with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_critical:
+            # Call the method
+            self.ui.signup("existinguser", "Existing User", "password123")
+
+            # Assert that QMessageBox.critical was called with the correct message
+            mock_critical.assert_called_once_with(
+                self.ui, "Username already taken or invalid input", "Username already taken"
+            )
+
+    def test_save_settings_invalid_limit_less_than_1(self):
+        """Test that save_settings fails when the message limit is less than 1."""
+        # Set current user
+        self.ui.current_user = "testuser"
+
+        # Mock QMessageBox to avoid GUI popups
+        with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_critical:
+            # Call the method with an invalid limit
+            self.ui.save_settings("0")
+
+            # Assert that QMessageBox.critical was called with the correct message
+            mock_critical.assert_called_once_with(
+                self.ui, "Error", "Message limit must be at least 1"
+            )
+
+    def test_save_settings_invalid_limit_non_numeric(self):
+        """Test that save_settings fails when the message limit is not a number."""
+        # Set current user
+        self.ui.current_user = "testuser"
+
+        # Mock QMessageBox to avoid GUI popups
+        with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_critical:
+            # Call the method with a non-numeric limit
+            self.ui.save_settings("invalid")
+
+            # Assert that QMessageBox.critical was called with the correct message
+            mock_critical.assert_called_once_with(self.ui, "Error", "Invalid message limit")
+
+    def test_start_chat_not_logged_in(self):
+        """Test that start_chat fails when the user is not logged in."""
+        # Ensure no user is logged in
+        self.ui.current_user = None
+
+        # Mock QMessageBox to avoid GUI popups
+        with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_critical:
+            # Call the method
+            self.ui.start_chat("otheruser")
+
+            # Assert that QMessageBox.critical was called with the correct message
+            mock_critical.assert_called_once_with(self.ui, "Error", "Please login first")
+
+    def test_start_chat_exception(self):
+        """Test that exceptions during start_chat are handled correctly."""
+        # Set current user
+        self.ui.current_user = "testuser"
+
+        # Configure mock to raise an exception
+        self.mock_client.send_message.side_effect = Exception("Test exception")
+
+        # Mock QMessageBox to avoid GUI popups
+        with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_critical:
+            # Call the method
+            self.ui.start_chat("otheruser")
+
+            # Assert that QMessageBox.critical was called with the correct message
+            mock_critical.assert_called_once_with(
+                self.ui, "Error", "An error occurred: Test exception"
+            )
+
+
 
 
 class TestChatWidget(unittest.TestCase):
