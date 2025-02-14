@@ -126,7 +126,7 @@ JSON Protocol: This protocol uses JSON for message serialization. It's easier to
   - `src/server/db_manager.py`
 
 ### 4. **Sending a Message**
-- **Description**: Users can send messages to other users. If the recipient is offline, the message is stored until they log in.
+- **Description**: Users can send messages to other users. If the recipient is offline, the message is stored until they log in. Messages will deliver immediately if the recipient is logged in and will dynamically update if two users are chatting at the same time. In order to update a user's home page with new messages, they can simply click any button to refresh, including the Home button.
 - **Implementation**:
   - **Client**: The `chat_page.py` file handles the UI for composing and sending messages.
   - **Server**: The `api.py` file processes the message and checks the recipient's status. If the recipient is offline, the message is stored in the database.
@@ -137,7 +137,7 @@ JSON Protocol: This protocol uses JSON for message serialization. It's easier to
   - `src/server/db_manager.py`
 
 ### 5. **Reading Messages**
-- **Description**: Users can read their messages. The system allows users to specify the number of messages that are "delivered" as unread messages to the user's home page at once to avoid overwhelming the client. Once users open a chat, those messages are "read", and the new, unread messages (up to the limit specified) will display if the user navigates back to the home page and requests to see their messages again.
+- **Description**: Users can read their messages. The system allows users to specify the number of messages that are "delivered" as unread messages to the user's home page at once to avoid overwhelming the client. Once users open a chat, those messages are "read", and the new, unread messages (up to the limit specified) will display if the user navigates back to the home page and requests to see their messages again. 
 - 
 - **Implementation**:
   - **Client**: The `chat_page.py` and `settings_page.py` files handles the UI for displaying messages and allowing users to specify the number of unread messages to display at once.
