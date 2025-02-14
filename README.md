@@ -137,7 +137,7 @@ JSON Protocol: This protocol uses JSON for message serialization. It's easier to
   - `src/server/db_manager.py`
 
 ### 5. **Reading Messages**
-- **Description**: Users can read their messages. The system allows users to specify the number of messages that are "delivered" as unread messages to the user's home page at once to avoid overwhelming the client. Once users open a chat, those messages are "read", and the new, unread messages (up to the limit specified) will display if the user navigates back to the home page and requests to see their messages again. 
+- **Description**: Users can read their messages. The system allows users to specify the number of messages that are "delivered" as unread messages to the user's home page at once to avoid overwhelming the client. Once users open a chat, those messages are "read", and the new, unread messages (up to the limit specified) will display if the user navigates back to the home page and requests to see their messages again. The messages will populate the user's inbox in order of oldest unreads (up to the limit specified) because we assume that users want to see the answers to whatever prior conversation they had.
 - 
 - **Implementation**:
   - **Client**: The `chat_page.py` and `settings_page.py` files handles the UI for displaying messages and allowing users to specify the number of unread messages to display at once.
