@@ -350,6 +350,14 @@ class DBManager:
 
             if isinstance(chat_id, list):
                 chat_id = chat_id[0]
+
+            other_user = None
+            if chat_id.split("_")[0] == current_user:
+                other_user = chat_id.split("_")[1]
+            else:
+                other_user = chat_id.split("_")[0]
+
+            # Fetch all messages in the chat
             cursor.execute(
                 """
                 SELECT * FROM messages
@@ -382,9 +390,9 @@ class DBManager:
                 """
                 UPDATE messages
                 SET read = TRUE
-                WHERE receiver_id = ?
+                WHERE receiver_id = ? AND sender_id = ?
                 """,
-                (current_user,)
+                (current_user, other_user)
             )
             return {"success": True, "messages": formatted_messages, "error_message": ""}
     
