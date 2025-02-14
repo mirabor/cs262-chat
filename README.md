@@ -1,6 +1,6 @@
 # CS262 Chat Application
 
-Our chat app consists of a PyQt6-based client with a dark theme UI and a robust Python server supporting real-time messaging.
+Welcome to our chat app, a PyQt6-based client with a dark theme UI and a Python server for real-time messaging!
 
 ## Project Structure
 
