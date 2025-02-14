@@ -15,6 +15,10 @@ Our chat app consists of a PyQt6-based client with a dark theme UI and a robust 
 └── Makefile            # Build and run commands
 ```
 
+## Project Status
+
+[![Test Suite & Coverage Status](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml/badge.svg)](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml)
+
 ## Features
 
 - Real-time messaging with message status tracking
