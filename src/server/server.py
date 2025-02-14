@@ -119,49 +119,45 @@ class Server:
             print(f"Client {client_id} disconnected")
 
     def handle_request(self, request):
-        """Handle incoming requests and return a response"""
-        action = request.get("action")
-        print(f"Action: {action}")
-        if action == "send_message":
-            # Store the message
-            self.store_message(request.get("client_id"), request.get("message", ""))
-            response = {
-                "status": "received",
-                "message": "Message stored successfully",
-            }
-        elif action == "signup":
-            response = signup(request)
-        elif action == "login":
-            print("calling login api")
-            response = login(request)
-        elif action == "delete_user":
-            response = delete_user(request.get("username"))
-        elif action == "get_chats":
-            response = get_chats(request.get("user_id"))
-        elif action == "get_all_users":
-            response = get_all_users(request.get("exclude_username"))
-        elif action == "update_view_limit":
-            response = update_view_limit(request.get("username"), request.get("new_limit"))
-        elif action == "save_settings":
-            response = save_settings(request.get("username"), request.get("message_limit"))
-        elif action == "start_chat":
-            response = start_chat(request.get("current_user"), request.get("other_user"))
-        elif action == "get_user_message_limit":
-            response = get_user_message_limit(request.get("username"))
-        elif action == "delete_chats":
-            response = delete_chats(request.get("chat_ids"))
-        elif action == "delete_messages":
-            response = delete_messages(request.get("chat_id"), request.get("message_indices"), request.get("current_user"))
-        elif action == "get_messages":
-            response = get_messages(request)
-        elif action == "send_chat_message":
-            response = send_chat_message(request.get("chat_id"), request.get("sender"), request.get("content"))
-        elif action == "get_users_to_display":
-            response = get_users_to_display(request.get("current_user"), request.get("search_pattern"), request.get("current_page"), request.get("users_per_page"))
-        else:
-            response = {"success": False, "error_message": "Invalid action"}
+            """Handle incoming requests and return a response"""
+            action = request.get("action")
+            print(f"Action: {action}")
 
-        return response
+            actions = {
+                "send_message": lambda: self._handle_send_message(request),
+                "signup": lambda: signup(request),
+                "login": lambda: login(request),
+                "delete_user": lambda: delete_user(request.get("username")),
+                "get_chats": lambda: get_chats(request.get("user_id")),
+                "get_all_users": lambda: get_all_users(request.get("exclude_username")),
+                "update_view_limit": lambda: update_view_limit(request.get("username"), request.get("new_limit")),
+                "save_settings": lambda: save_settings(request.get("username"), request.get("message_limit")),
+                "start_chat": lambda: start_chat(request.get("current_user"), request.get("other_user")),
+                "get_user_message_limit": lambda: get_user_message_limit(request.get("username")),
+                "delete_chats": lambda: delete_chats(request.get("chat_ids")),
+                "delete_messages": lambda: delete_messages(request.get("chat_id"), request.get("message_indices"), request.get("current_user")),
+                "get_messages": lambda: get_messages(request),
+                "send_chat_message": lambda: send_chat_message(request.get("chat_id"), request.get("sender"), request.get("content")),
+                "get_users_to_display": lambda: get_users_to_display(request.get("current_user"), request.get("search_pattern"), request.get("current_page"), request.get("users_per_page")),
+            }
+
+            handler = actions.get(action, lambda: {"success": False, "error_message": "Invalid action"})
+            return handler()
+
+    def _handle_send_message(self, request):
+        self.store_message(request.get("client_id"), request.get("message", ""))
+        return {
+            "status": "received",
+            "message": "Message stored successfully",
+        }
+
+    def store_message(self, client_id, message):
+        """Store client message in their designated file"""
+        filename = os.path.join(self.config.messages_dir, f"{client_id}.txt")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        with open(filename, "a") as f:
+            f.write(f"[{timestamp}] {message}\n")
 
     def store_message(self, client_id, message):
         """Store client message in their designated file"""
