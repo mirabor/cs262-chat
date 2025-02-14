@@ -61,8 +61,12 @@ def format_stats(times: List[float]) -> Dict[str, float]:
         "max": max(times) * 1000
     }
 
+import gc
+
 def run_benchmark(message_sizes: List[int], iterations: int = 1000):
     """Run benchmark comparing JSON and Custom protocols."""
+    gc.disable()  # Disable garbage collection during the benchmark
+    
     json_protocol = JsonProtocol()
     custom_protocol = CustomProtocol()
     
@@ -123,6 +127,7 @@ def run_benchmark(message_sizes: List[int], iterations: int = 1000):
         print(f"Serialization speedup: {ser_speedup:.2f}x")
         print(f"Deserialization speedup: {deser_speedup:.2f}x")
     
+    gc.enable()  # Re-enable garbage collection after the benchmark
     return results
 
 if __name__ == "__main__":
@@ -132,3 +137,4 @@ if __name__ == "__main__":
     
     print(f"Running benchmarks with {iterations} iterations per test...")
     results = run_benchmark(message_sizes, iterations)
+
