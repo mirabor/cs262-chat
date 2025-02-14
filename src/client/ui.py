@@ -84,8 +84,8 @@ class ChatAppUI(QMainWindow):
         home_page = HomePage(self)
         self.setCentralWidget(home_page)
 
-    def show_chat_page(self, chat_id):
-        chat_page = ChatPage(self, chat_id)
+    def show_chat_page(self, chat_id=None, other_user=None):
+        chat_page = ChatPage(self, chat_id, other_user)
         self.setCentralWidget(chat_page)
 
     def show_login_page(self):
@@ -148,7 +148,16 @@ class ChatAppUI(QMainWindow):
             if not self.current_user:
                 QMessageBox.critical(self, "Error", "Please login first")
                 return
-            chat_id = self.logic.start_chat(self.current_user, other_user)
-            self.show_chat_page(chat_id)
+            
+            # Attempt to create a new chat or get an existing chat ID
+            chat_id, error = self.logic.start_chat(self.current_user, other_user)
+            
+            if error:
+                QMessageBox.critical(self, "Error", error)
+                # Still show chat page with other_user even if chat creation failed
+                self.show_chat_page(other_user=other_user)
+            else:
+                # Show chat page with the new chat_id
+                self.show_chat_page(chat_id=chat_id, other_user=other_user)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
