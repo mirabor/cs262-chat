@@ -20,9 +20,7 @@ if __name__ == "__main__":
     # Create and start client
     client = Client(server_addr=server_addr, client_id=client_id)
     if client.connect():
-        print("connected ajh")
         app = QApplication(sys.argv)
         window = ChatAppUI(client)
         window.show()
         sys.exit(app.exec())
-        print("bruh")
