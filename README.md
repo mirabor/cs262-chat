@@ -1,6 +1,6 @@
 # CS262 Chat Application
 
-A real-time chat application built with PyQt6 and Python, featuring dark mode UI and robust message handling.
+Welcome to our chat app, a PyQt6-based client with a dark theme UI and a Python server for real-time messaging!
 
 Our application is built with a client-server architecture, supporting multiple clients connecting to the server from different machines. We have implemented two **wire protocols**: JSON and our custom protocol (SAMIRA🔥).
 
@@ -75,8 +75,7 @@ make run-server
       make run-client-gui CLIENT_ID=YOUR_DESIRED_ID SERVER_IP=SERVER_IP
       ```
 
-> [!NOTE]
-> `SERVER_IP` will be displayed on the machine where the server is running with other server details (e.g. what wire protocol is being used, port, etc.).  
+> [!NOTE] > `SERVER_IP` will be displayed on the machine where the server is running with other server details (e.g. what wire protocol is being used, port, etc.).  
 > `YOUR_DESIRED_ID` can be any string you want to use as your client ID.
 
 ## Documentation Structure
@@ -102,9 +101,8 @@ Our documentation is organized for easy navigation:
   - Message format details
   - Protocol Implementation (JSON vs Custom)
 
-> [!NOTE]
-> **Engineering Notebook**
-> 
+> [!NOTE] > **Engineering Notebook**
+>
 > For our other documents, especially engineering notebooks, see the [notebook.md](./design/notebook.md) file and the [Issues Page](https://github.com/mirabor/cs262-chat/issues?q=is%3Aissue%20state%3Aclosed)
 
 ## Testing Coverage

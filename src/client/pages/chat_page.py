@@ -46,20 +46,17 @@ class ChatPage(QWidget):
 
         # Header
         header_layout = QHBoxLayout()
-        back_btn = DarkPushButton("Chat")
-        back_btn.clicked.connect(self.main_window.show_home_page)
-        header_layout.addWidget(back_btn)
 
         # Get other user's name from chat if not already provided
         if self.chat_id is not None and self.other_user is None:
             self.other_user = self.main_window.logic.get_other_user_in_chat(self.chat_id)
-        
+
         # Make sure we have a valid other_user to display
         if self.other_user is None:
             QMessageBox.critical(self, "Error", "Could not determine chat participant")
             self.main_window.show_home_page()
             return
-            
+
         chat_label = QLabel(f"Chat with {self.other_user}")
         chat_label.setStyleSheet("font-size: 24px;")
         header_layout.addWidget(chat_label, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -196,15 +193,19 @@ class ChatPage(QWidget):
         # Clear the input field after successful sending
         self.message_input.clear()
 
-        # Display the new message in the UI
-        msg_widget = MessageWidget(content, True)
-        self.message_widgets.append(msg_widget)
-        self.messages_layout.addWidget(msg_widget)
+        # Let the timer handle updating the display to keep it consistent
+        # with server data and avoid duplicate messages.
 
-        # Scroll to bottom
-        self.scroll_area.verticalScrollBar().setValue(
-            self.scroll_area.verticalScrollBar().maximum()
-        )
+        # Other option was to update the display here:
+        # Display the new message in the UI
+        # msg_widget = MessageWidget(content, True)
+        # self.message_widgets.append(msg_widget)
+        # self.messages_layout.addWidget(msg_widget)
+
+        # # Scroll to bottom
+        # self.scroll_area.verticalScrollBar().setValue(
+        #     self.scroll_area.verticalScrollBar().maximum()
+        # )
     def closeEvent(self, event):
         """Handle cleanup when the widget is closed."""
         self.update_timer.stop()
