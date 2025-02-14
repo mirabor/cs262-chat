@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QMessageBox,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from ..components import DarkPushButton, MessageWidget
 
 
@@ -27,7 +27,14 @@ class ChatPage(QWidget):
         self.chat_id = chat_id
         self.other_user = other_user
         self.message_widgets = []
+        self.last_message_count = 0  # Track number of messages for updates
+
         self._setup_ui()
+
+        # Set up timer for real-time updates
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self._check_new_messages)
+        self.update_timer.start(1000)  # Check every second
 
     def _setup_ui(self):
         """Set up the chat page UI components."""
@@ -92,13 +99,36 @@ class ChatPage(QWidget):
         input_layout = QHBoxLayout()
         self.message_input = QLineEdit()
         self.message_input.setPlaceholderText("Type your message here...")
-        self.message_input.returnPressed.connect(self._send_chat_message)  # Corrected
+        self.message_input.returnPressed.connect(self._send_chat_message)
         input_layout.addWidget(self.message_input)
         layout.addLayout(input_layout)
 
+    def _check_new_messages(self):
+        """Check for new messages and update the display if necessary."""
+        messages, error = self.main_window.logic.get_messages(
+            self.chat_id, self.main_window.current_user
+        )
+
+        if error:
+            print(f"Error checking for new messages: {error}")
+            return
+
+        if len(messages) > self.last_message_count:
+            # New messages found
+            new_messages = messages[self.last_message_count:]
+            for message in new_messages:
+                is_sender = message["sender"] == self.main_window.current_user
+                msg_widget = MessageWidget(message["content"], is_sender)
+                self.message_widgets.append(msg_widget)
+                self.messages_layout.addWidget(msg_widget)
+
+            self.last_message_count = len(messages)
+
     def _display_messages(self):
         """Display messages in the chat."""
-        messages, error = self.main_window.logic.get_messages(self.chat_id, self.main_window.current_user)
+        messages, error = self.main_window.logic.get_messages(
+            self.chat_id, self.main_window.current_user
+        )
         if error:
             QMessageBox.critical(self, "Error", f"Failed to fetch messages: {error}")
             return
@@ -108,6 +138,8 @@ class ChatPage(QWidget):
             msg_widget = MessageWidget(message["content"], is_sender)
             self.message_widgets.append(msg_widget)
             self.messages_layout.addWidget(msg_widget)
+
+        self.last_message_count = len(messages)
 
     def _delete_selected_messages(self):
         """Delete selected messages."""
@@ -131,7 +163,6 @@ class ChatPage(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            
             success, error = self.main_window.logic.delete_messages(
                 self.chat_id, messages_to_delete, self.main_window.current_user
             )
@@ -144,15 +175,17 @@ class ChatPage(QWidget):
                 widget = self.message_widgets.pop(i)
                 widget.setParent(None)
 
+            self.last_message_count -= len(messages_to_delete)
+
     def _send_chat_message(self):
         """Send a new message."""
         content = self.message_input.text().strip()
         if not content:
             return
 
-        print(f"Sending message: {content} from {self.main_window.current_user} with chat id {self.chat_id}")
-
-        success, error = self.main_window.logic.send_chat_message(self.chat_id, self.main_window.current_user, content)
+        success, error = self.main_window.logic.send_chat_message(
+            self.chat_id, self.main_window.current_user, content
+        )
 
         print(f"Success value is: {success}, error value is: {error}")
         if not success:
@@ -172,3 +205,7 @@ class ChatPage(QWidget):
         self.scroll_area.verticalScrollBar().setValue(
             self.scroll_area.verticalScrollBar().maximum()
         )
+    def closeEvent(self, event):
+        """Handle cleanup when the widget is closed."""
+        self.update_timer.stop()
+        super().closeEvent(event)
