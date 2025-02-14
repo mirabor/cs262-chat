@@ -196,15 +196,19 @@ class ChatPage(QWidget):
         # Clear the input field after successful sending
         self.message_input.clear()
 
-        # Display the new message in the UI
-        msg_widget = MessageWidget(content, True)
-        self.message_widgets.append(msg_widget)
-        self.messages_layout.addWidget(msg_widget)
+        # Let the timer handle updating the display to keep it consistent
+        # with server data and avoid duplicate messages.
 
-        # Scroll to bottom
-        self.scroll_area.verticalScrollBar().setValue(
-            self.scroll_area.verticalScrollBar().maximum()
-        )
+        # Other option was to update the display here:
+        # Display the new message in the UI
+        # msg_widget = MessageWidget(content, True)
+        # self.message_widgets.append(msg_widget)
+        # self.messages_layout.addWidget(msg_widget)
+
+        # # Scroll to bottom
+        # self.scroll_area.verticalScrollBar().setValue(
+        #     self.scroll_area.verticalScrollBar().maximum()
+        # )
     def closeEvent(self, event):
         """Handle cleanup when the widget is closed."""
         self.update_timer.stop()
