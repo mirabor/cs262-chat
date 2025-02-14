@@ -4,7 +4,7 @@ A real-time chat application built with PyQt6 and Python, featuring dark mode UI
 
 Our application is built with a client-server architecture, supporting multiple clients connecting to the server from different machines. We have implemented two **wire protocols**: JSON and our custom protocol (SAMIRA🔥).
 
-[![Client Documentation](https://img.shields.io/badge/Client-Documentation-blue)](src/client/README.md) [![Server Documentation](https://img.shields.io/badge/Server-Documentation-blue)](src/server/README.md) [![Protocol Documentation](https://img.shields.io/badge/Protocol-Documentation-blue)](src/protocol/README.md)
+[![Design Documentation](https://img.shields.io/badge/Design-Documentation-blue)](/design/DESIGN_DOC.md) [![Client Documentation](https://img.shields.io/badge/Client-Documentation-blue)](src/client/README.md) [![Server Documentation](https://img.shields.io/badge/Server-Documentation-blue)](src/server/README.md) [![Protocol Documentation](https://img.shields.io/badge/Protocol-Documentation-blue)](src/protocol/README.md)
 
 [![Test Suite & Coverage Status](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml/badge.svg)](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml)
 
