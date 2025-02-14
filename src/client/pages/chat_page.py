@@ -14,16 +14,18 @@ from ..components import DarkPushButton, MessageWidget
 class ChatPage(QWidget):
     """Chat page widget that displays messages between users."""
 
-    def __init__(self, parent=None, chat_id=None):
+    def __init__(self, parent=None, chat_id=None, other_user=None):
         """Initialize the chat page.
 
         Args:
             parent: The parent widget (ChatAppUI)
-            chat_id: The ID of the chat to display
+            chat_id: The ID of the chat to display (when coming from HomePage)
+            other_user: The username of the other user (when coming from UserPage)
         """
         super().__init__(parent)
         self.main_window = parent
         self.chat_id = chat_id
+        self.other_user = other_user
         self.message_widgets = []
         self._setup_ui()
 
@@ -41,10 +43,17 @@ class ChatPage(QWidget):
         back_btn.clicked.connect(self.main_window.show_home_page)
         header_layout.addWidget(back_btn)
 
-        # Get other user's name
-        other_user = self.main_window.logic.get_other_user_in_chat(self.chat_id)
-
-        chat_label = QLabel(f"Chat with {other_user}")
+        # Get other user's name from chat if not already provided
+        if self.chat_id is not None and self.other_user is None:
+            self.other_user = self.main_window.logic.get_other_user_in_chat(self.chat_id)
+        
+        # Make sure we have a valid other_user to display
+        if self.other_user is None:
+            QMessageBox.critical(self, "Error", "Could not determine chat participant")
+            self.main_window.show_home_page()
+            return
+            
+        chat_label = QLabel(f"Chat with {self.other_user}")
         chat_label.setStyleSheet("font-size: 24px;")
         header_layout.addWidget(chat_label, alignment=Qt.AlignmentFlag.AlignCenter)
         header_layout.addStretch()
