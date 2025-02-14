@@ -24,7 +24,7 @@ Our chat app consists of a PyQt6-based client with a dark theme UI and a robust 
 - Persistent chat history
 - Marking messages as read/unread
 - User search filtering
-- Configurable message view limits
+- Configurable message view limits (i.e. number of messages that can be delivered at any time)
 - Robust error handling
 
 ## Getting Started
