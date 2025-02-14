@@ -175,6 +175,9 @@ JSON Protocol: This protocol uses JSON for message serialization. It's easier to
 
 ![user_journey_ui drawio](https://github.com/user-attachments/assets/a4a1ac9a-180a-48af-b188-3a179f9b6674)
 
+## Test Coverage
+<img width="638" alt="Screenshot 2025-02-14 at 12 43 15 AM" src="https://github.com/user-attachments/assets/62d6de9d-1f58-4dd2-a380-d56a49712d98" />
+
 ## TODO
 New design diagrams
 GIFs showing UI
