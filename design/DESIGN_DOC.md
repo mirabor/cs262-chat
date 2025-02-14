@@ -81,12 +81,6 @@ Custom Protocol: Designed for efficiency, our protocol minimizes the size of the
 
 JSON Protocol: This protocol uses JSON for message serialization. It's easier to debug and human-readable, development and testing.
 
-## Initial Design Diagram
+## Initial UI Design Diagram
 
 ![user_journey_ui drawio](https://github.com/user-attachments/assets/a4a1ac9a-180a-48af-b188-3a179f9b6674)
-
-## TODO
-
-New design diagrams
-GIFs showing UI
-showing it works on multiple machines
