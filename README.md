@@ -171,8 +171,12 @@ JSON Protocol: This protocol uses JSON for message serialization. It's easier to
   - `src/server/api.py`
   - `src/server/db_manager.py`
 
-
 ## Initial Design Diagram
 
 ![user_journey_ui drawio](https://github.com/user-attachments/assets/a4a1ac9a-180a-48af-b188-3a179f9b6674)
+
+## TODO
+New design diagrams
+GIFs showing UI
+showing it works on multiple machines
 
