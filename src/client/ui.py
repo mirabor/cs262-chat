@@ -78,6 +78,12 @@ class ChatAppUI(QMainWindow):
         #     nav_layout.addWidget(delete_chat_btn)
 
         nav_layout.addStretch()
+
+        # Add logout button
+        logout_btn = DarkPushButton("Logout")
+        logout_btn.clicked.connect(self.logout)
+        nav_layout.addWidget(logout_btn)
+
         container.addLayout(nav_layout)
 
     def show_home_page(self):
@@ -99,6 +105,16 @@ class ChatAppUI(QMainWindow):
     def show_signup_page(self):
         signup_page = SignupPage(self)
         self.setCentralWidget(signup_page)
+
+    def logout(self):
+        # Clear current user
+        self.current_user = None
+        # Disconnect from server
+        self.logic.client.disconnect()
+        # Show login page
+        self.show_login_page()
+        # Show logout message
+        QMessageBox.information(self, "Logged Out", "You have been successfully logged out.")
 
     def show_settings_page(self):
         settings_page = SettingsPage(self)
