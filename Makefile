@@ -29,6 +29,13 @@ test-report: # Generate and open HTML coverage report
 	@echo "Generating coverage report..."
 	@$(VENV)/pytest tests/ --cov=src --cov-report html --cov-config=.coveragerc
 
+benchmark: # Run protocol performance benchmarks
+	@echo "Running protocol benchmarks..."
+	@mkdir -p benchmarks/protocol/results
+	@PYTHONPATH=. python benchmarks/protocol/test_protocol_performance.py
+	@echo "Benchmark results saved in benchmarks/protocol/results/"
+
+
 # Development Tools
 # -----------------------------
 
@@ -66,10 +73,12 @@ help: # Show available make targets
 	@echo "Chat System Make Targets\n"
 	@echo "Core Commands:\n--------------"
 	@echo "\033[1;32minstall\033[00m: Install all project dependencies"
+	@echo "\033[1;32minstall-dev\033[00m: Install development tools, pytest, pylint, mypy"
 	@echo "\033[1;32mrun-server\033[00m: Run the chat server"
 	@echo "\033[1;32mrun-client\033[00m: Run the chat client"
 	@echo "\033[1;32mrun-client-gui\033[00m: Run the GUI chat client"
 	@echo "\033[1;32mtest\033[00m: Run all tests"
+	@echo "\033[1;32mbenchmark\033[00m: Run protocol performance benchmarks"
 	@echo "\n"
 	@echo "Development Tools:\n------------------"
 	@echo "\033[1;32minstall-dev\033[00m: Install development tools"
@@ -86,4 +95,4 @@ help: # Show available make targets
 # PHONY Targets
 # -----------------------------
 
-.PHONY: help install test style run-server run-client run-client-gui clean venv show-ip
+.PHONY: help install install-dev test test-report benchmark fix-style run-server run-client run-client-gui clean venv show-ip
