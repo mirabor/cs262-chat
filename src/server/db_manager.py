@@ -162,7 +162,7 @@ class DBManager:
 
             # Delete the user from the users table (cascading deletes will handle userconfig and messages)
             cursor.execute(
-                "DELETE FROM users WHERE id = ?",
+                "DELETE FROM users WHERE username = ?",
                 (user_id,)
             )
 
