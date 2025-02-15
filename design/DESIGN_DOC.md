@@ -68,7 +68,7 @@
 <details>
 <summary> <h4> 7. Deleting an Account </h4></summary>
 
-- **Description**: Users can delete their accounts. The system specifies the behavior for accounts with unread messages (e.g., notify the user before deletion).
+- **Description**: Users can delete their accounts. For accounts with unread messages, the system notifies the user before deletion. If a user tries to message a user with a deleted account, they'll see an error page and be unable to send messages.
 - **Implementation**:
   - **Client**: The `settings_page.py` file handles the UI for account deletion.
   - **Server**: The `api.py` file processes the deletion request and removes the account and associated messages from the database.
