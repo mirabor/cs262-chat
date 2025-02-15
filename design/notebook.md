@@ -1,3 +1,6 @@
+
+ChatApp-262
+
 2-3-2025, evening: set up project structure
 
 2-3-2025, late night:
@@ -385,4 +388,12 @@ c) pubsub
 
 polishing docs and squashing the last few bugs
 
+Added enhancements/future directions to the Issues tab on Github
 
+made GIFs of UI demo showing functionality
+
+Improved test coverage
+
+Cleaned up documentation formatting/added design doc for easy navigaiton
+
+Ready to submit! yayay
