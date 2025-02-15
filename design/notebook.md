@@ -1,6 +1,10 @@
 ## **Mira and Sam's Engineering Notebook**
 
-_N.B.: Look at the closed Issues for a more formal description of technical issues and how we resolved them. This was more of a braindump for our planning process (and doesn't include some of the diagrams we did on whiteboards IRL, but the rest of the documentation should clarify that)._
+_N.B.: Look at the closed [Issues]([url](https://github.com/mirabor/cs262-chat/issues?q=is%3Aissue%20state%3Aclosed)) for a more formal description of technical issues and how we resolved them. This was more of a braindump for our planning process (and doesn't include some of the diagrams we did on whiteboards IRL, but the rest of the documentation should clarify that)._
+
+[**Notebook part 1**](https://github.com/mirabor/cs262-chat/issues?q=is%3Aissue%20state%3Aclosed)
+
+[**Notebook part 2**](https://github.com/mirabor/cs262-chat/edit/main/design/notebook.md)
 
 2-3-2025, evening: set up project structure
 
