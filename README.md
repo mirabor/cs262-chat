@@ -33,9 +33,26 @@ Our application implements the below functional requirements:
 - Server accessible from any client on the network
 - Tested with two **wire protocols**: JSON and our custom protocol (SAMIRA🔥)
 
-For more details on features, high level design, and implementation, see our [High-Level Design & Implementation Plan](/design/DESIGN_DOC.md).
+For more details on features, high-level design, and implementation, see our [High-Level Design & Implementation Plan](/design/DESIGN_DOC.md).
 
+## Demo
 <!-- TODO: [View Demo GIFs showing multi-machine usage](#demo-gifs) -->
+<details>
+  <summary><strong><span style="font-size: 2em;"> Open Me! 🎬 </span></strong></summary>
+   
+https://github.com/user-attachments/assets/23159f82-a360-44ae-9f69-68630fd223f8
+
+https://github.com/user-attachments/assets/79279374-0d96-4468-a49f-0a8b925eca22
+
+https://github.com/user-attachments/assets/90902194-2182-40e5-b5b0-f3dc60822fd2
+
+https://github.com/user-attachments/assets/4c007c8a-32b3-4ade-a0ac-e5670e87555d
+
+https://github.com/user-attachments/assets/b0ac3eb2-e144-4800-b412-a0a5f059d8a0
+
+https://github.com/user-attachments/assets/cce96add-d02c-4c67-b1b2-f980f0db6108
+
+</details>
 
 ## Getting Started
 
