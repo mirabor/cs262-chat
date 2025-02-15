@@ -253,19 +253,16 @@ def test_update_view_limit(db_manager, sample_users):
 
 def test_delete_user(db_manager, sample_users):
     """Test deleting a user."""
-    # First get the user's ID
-    with db_manager._get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM users WHERE username = ?", ("user1",))
-        user_id = cursor.fetchone()[0]
-    
-    result = db_manager.delete_user(user_id)
+    # would be better to use the user's ID here, but we also ensure that
+    # user name is unique in the database. Plus, frontend currently don't
+    # currently track exact user ID.
+    result = db_manager.delete_user("user1")
     assert result["success"] is True
     
     # Verify user was deleted
     with db_manager._get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        cursor.execute("SELECT * FROM users WHERE username = ?", ("user1",))
         assert cursor.fetchone() is None
 
 # Edge Cases and Error Tests
