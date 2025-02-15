@@ -56,7 +56,8 @@ class Client:
             self.socket.send(data_bytes)
         except Exception as e:
             print(f"Error sending message: {e}")
-            self.connected = False
+            return False
+        return True
 
     def receive_message(self):
         """Receive message from server"""
@@ -65,7 +66,7 @@ class Client:
             return self.protocol.deserialize(data_bytes)
         except Exception as e:
             print(f"Error receiving message: {e}")
-            self.connected = False
+            # self.connected = False
             return {}
 
     def disconnect(self):

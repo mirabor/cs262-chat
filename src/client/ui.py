@@ -109,8 +109,6 @@ class ChatAppUI(QMainWindow):
     def logout(self):
         # Clear current user
         self.current_user = None
-        # Disconnect from server
-        self.logic.client.disconnect()
         # Show login page
         self.show_login_page()
         # Show logout message

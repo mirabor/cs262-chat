@@ -43,16 +43,16 @@ class ChatAppLogic:
             "username": username,
             "password": hashed_password
         }):
-            return False, "Failed to connect to server"
+            return False, "Error: logic.login Failed to send message to server"
 
         # Get server response
         response = self.client.receive_message()
         
         # If login failed, ensure we're disconnected
         if not response.get("success", False):
-            self.client.disconnect()
+            return False, response.get("error_message", "Invalid username or password")
             
-        return response.get("success", False), response.get("error_message", "Invalid username or password")
+        return response.get("success", False), response.get("error_message", "500 Internal Server Error")
 
     def signup(self, username, nickname, password):
         if not username or not nickname or not password:
