@@ -1,5 +1,6 @@
+## **Mira and Sam's Engineering Notebook**
 
-ChatApp-262
+_N.B.: Look at the closed Issues for a more formal description of technical issues and how we resolved them. This was more of a braindump for our planning process (and doesn't include some of the diagrams we did on whiteboards IRL, but the rest of the documentation should clarify that)._
 
 2-3-2025, evening: set up project structure
 
