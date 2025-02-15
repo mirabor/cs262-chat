@@ -398,18 +398,30 @@ class DBManager:
     
     def send_chat_message(self, chat_id, sender, content):
         """Send a message in a chat."""
+        if not chat_id or not sender or not content:
+            return {"success": False, "error_message": "Missing required fields."}
+            
         with self._get_connection() as conn:
             cursor = conn.cursor()
             print("i'm boutta insert a message trying to be sent")
             if isinstance(chat_id, list):
                 chat_id = chat_id[0]
 
+            # Get recipient's username
+            recipient = chat_id.split("_")[1] if sender == chat_id.split("_")[0] else chat_id.split("_")[0]
+            
+            # Check if recipient still exists
+            cursor.execute("SELECT username FROM users WHERE username = ?", (recipient,))
+            if not cursor.fetchone():
+                return {"success": False, "error_message": f"Cannot send message. User '{recipient}' has deleted their account."}
+            
+            # Insert the message
             cursor.execute(
                 """
                 INSERT INTO messages (sender_id, receiver_id, content, timestamp)
                 VALUES (?, ?, ?, ?)
                 """,
-                (sender, chat_id.split("_")[1] if sender == chat_id.split("_")[0] else chat_id.split("_")[0], content, datetime.now().isoformat())
+                (sender, recipient, content, datetime.now().isoformat())
             )
             conn.commit()
             print("yay i did it")
