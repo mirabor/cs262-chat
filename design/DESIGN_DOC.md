@@ -1,5 +1,7 @@
 ## High-Level Design & Implementation Plan
 
+![image](https://github.com/user-attachments/assets/428fda87-5ae3-4445-89f9-a48ab46efcd8)
+
 ### Functional Requirements
 
 <details>
