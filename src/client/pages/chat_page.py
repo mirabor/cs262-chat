@@ -188,6 +188,10 @@ class ChatPage(QWidget):
         if not success:
             print(f"Failed to send message: {error}")
             QMessageBox.critical(self, "Error", f"Failed to send message: {error}")
+            
+            # If user has deleted their account, return to home page
+            if "has deleted their account" in error:
+                self.main_window.show_home_page()
             return
 
         # Clear the input field after successful sending
