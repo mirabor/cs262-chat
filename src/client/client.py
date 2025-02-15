@@ -74,4 +74,3 @@ class Client:
             self.socket.close()
         self.connected = False
         print("Disconnected from server")
-

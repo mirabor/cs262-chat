@@ -34,19 +34,25 @@ class ChatAppLogic:
     def login(self, username, password):
         if not username or not password:
             return False, "Username and password are required."
-        print("i am about to send message to login")
 
         hashed_password = hash_password(password)
 
-        self.client.send_message({
-        "action": "login",
-        "username": username,
-        "password": hashed_password
-        })
-        print("sent login request")
+        # Attempt to send login message
+        if not self.client.send_message({
+            "action": "login",
+            "username": username,
+            "password": hashed_password
+        }):
+            return False, "Failed to connect to server"
+
+        # Get server response
         response = self.client.receive_message()
-        print(f"response: {response}")
-        return response.get("success"), response.get("error_message", "")
+        
+        # If login failed, ensure we're disconnected
+        if not response.get("success", False):
+            self.client.disconnect()
+            
+        return response.get("success", False), response.get("error_message", "Invalid username or password")
 
     def signup(self, username, nickname, password):
         if not username or not nickname or not password:
