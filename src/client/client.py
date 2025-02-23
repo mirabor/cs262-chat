@@ -1,5 +1,3 @@
-import socket
-import sys
 import time
 
 from src.protocol.config_manager import ConfigManager

@@ -124,7 +124,6 @@ class Server:
             print(f"Action: {action}")
 
             actions = {
-                "send_message": lambda: self._handle_send_message(request),
                 "signup": lambda: signup(request),
                 "login": lambda: login(request),
                 "delete_user": lambda: delete_user(request.get("username")),
@@ -143,29 +142,6 @@ class Server:
 
             handler = actions.get(action, lambda: {"success": False, "error_message": "Invalid action"})
             return handler()
-
-    def _handle_send_message(self, request):
-        self.store_message(request.get("client_id"), request.get("message", ""))
-        return {
-            "status": "received",
-            "message": "Message stored successfully",
-        }
-
-    def store_message(self, client_id, message):
-        """Store client message in their designated file"""
-        filename = os.path.join(self.config.messages_dir, f"{client_id}.txt")
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        with open(filename, "a") as f:
-            f.write(f"[{timestamp}] {message}\n")
-
-    def store_message(self, client_id, message):
-        """Store client message in their designated file"""
-        filename = os.path.join(self.config.messages_dir, f"{client_id}.txt")
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        with open(filename, "a") as f:
-            f.write(f"[{timestamp}] {message}\n")
 
 
 if __name__ == "__main__":
