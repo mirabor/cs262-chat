@@ -68,6 +68,7 @@ clean: # Clean up cache files and directories
 	@find . -name ".pytest_cache" -type d -exec rm -rf {} +;
 	@find . -name ".mypy_cache" -type d -exec rm -rf {} +;
 	@find . -name ".venv" -type d -exec rm -rf {} +;
+	@find . -name "*_pb2*.py" -exec rm -f {} \;
 
 help: # Show available make targets
 	@echo "Chat System Make Targets\n"
@@ -79,6 +80,9 @@ help: # Show available make targets
 	@echo "\033[1;32mrun-client-gui\033[00m: Run the GUI chat client"
 	@echo "\033[1;32mtest\033[00m: Run all tests"
 	@echo "\033[1;32mbenchmark\033[00m: Run protocol performance benchmarks"
+	@echo "\n"
+	@echo "gRPC Commands:\n--------------"
+	@echo "\033[1;32mgenerate-grpc\033[00m: Generate gRPC stubs from proto files"
 	@echo "\n"
 	@echo "Development Tools:\n------------------"
 	@echo "\033[1;32minstall-dev\033[00m: Install development tools"
@@ -92,7 +96,17 @@ help: # Show available make targets
 	@echo "\033[1;32mhelp\033[00m: Show this help message"
 
 
+# gRPC Commands
+# -----------------------------
+
+generate-grpc: # Generate gRPC stubs from proto files
+	@echo "Generating gRPC stubs..."
+	@source .venv/bin/activate && python -m grpc_tools.protoc -I src/protocol/grpc \
+		--python_out=src/protocol/grpc \
+		--grpc_python_out=src/protocol/grpc \
+		src/protocol/grpc/chat.proto
+
 # PHONY Targets
 # -----------------------------
 
-.PHONY: help install install-dev test test-report benchmark fix-style run-server run-client run-client-gui clean venv show-ip
+.PHONY: help install install-dev test test-report benchmark fix-style run-server run-client run-client-gui clean venv show-ip generate-grpc
