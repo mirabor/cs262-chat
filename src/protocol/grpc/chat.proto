@@ -8,19 +8,16 @@ service ChatService {
   rpc Signup (SignupRequest) returns (UserResponse);
   rpc Login (LoginRequest) returns (UserResponse);
   rpc DeleteUser (DeleteUserRequest) returns (StatusResponse);
-  rpc GetAllUsers (GetAllUsersRequest) returns (UsersResponse);
-  rpc UpdateViewLimit (UpdateViewLimitRequest) returns (StatusResponse);
   rpc GetUserMessageLimit (GetUserMessageLimitRequest) returns (MessageLimitResponse);
   rpc SaveSettings (SaveSettingsRequest) returns (StatusResponse);
-  
+  rpc GetUsersToDisplay (GetUsersToDisplayRequest) returns (UsersDisplayResponse);
+
   // Chat Management
-  rpc StartChat (StartChatRequest) returns (ChatResponse);
   rpc GetChats (GetChatsRequest) returns (ChatsResponse);
-  rpc DeleteChats (DeleteChatsRequest) returns (StatusResponse);
-  rpc DeleteMessages (DeleteMessagesRequest) returns (StatusResponse);
+  rpc StartChat (StartChatRequest) returns (ChatResponse);
   rpc GetMessages (GetMessagesRequest) returns (MessagesResponse);
   rpc SendChatMessage (SendMessageRequest) returns (MessageResponse);
-  rpc GetUsersToDisplay (GetUsersToDisplayRequest) returns (UsersDisplayResponse);
+  rpc DeleteMessages (DeleteMessagesRequest) returns (StatusResponse);
 }
 
 // Request/Response messages
@@ -38,31 +35,19 @@ message LoginRequest {
 message UserResponse {
   bool success = 1;
   string error_message = 2;
-  User user = 3;
+  int32 user_id = 3;
+  string nickname = 4;
+  int32 view_limit = 5;
 }
 
 message User {
   string username = 1;
   string nickname = 2;
-  int32 message_limit = 3;
+  int32 view_limit = 3;
 }
 
 message DeleteUserRequest {
-  string user_id = 1;
-}
-
-message GetAllUsersRequest {
-  string exclude_username = 1;
-}
-
-message UsersResponse {
-  repeated User users = 1;
-  string error_message = 2;
-}
-
-message UpdateViewLimitRequest {
   string username = 1;
-  int32 new_limit = 2;
 }
 
 message GetUserMessageLimitRequest {
@@ -70,13 +55,13 @@ message GetUserMessageLimitRequest {
 }
 
 message MessageLimitResponse {
-  int32 limit = 1;
+  string limit = 1;
   string error_message = 2;
 }
 
 message SaveSettingsRequest {
   string username = 1;
-  int32 message_limit = 2;
+  string message_limit = 2;
 }
 
 message StartChatRequest {
@@ -92,7 +77,8 @@ message ChatResponse {
 
 message Chat {
   string chat_id = 1;
-  repeated string participants = 2;
+  string other_user = 2;
+  int32 unread_count = 3;
 }
 
 message GetChatsRequest {
@@ -102,10 +88,6 @@ message GetChatsRequest {
 message ChatsResponse {
   repeated Chat chats = 1;
   string error_message = 2;
-}
-
-message DeleteChatsRequest {
-  repeated string chat_ids = 1;
 }
 
 message DeleteMessagesRequest {
@@ -120,9 +102,11 @@ message GetMessagesRequest {
 }
 
 message Message {
-  string sender = 1;
-  string content = 2;
-  string timestamp = 3;
+  int32 id = 1;
+  string sender = 2;
+  string content = 3;
+  string timestamp = 4;
+  int32 read = 5;
 }
 
 message MessagesResponse {
@@ -139,7 +123,6 @@ message SendMessageRequest {
 message MessageResponse {
   bool success = 1;
   string error_message = 2;
-  Message message = 3;
 }
 
 message GetUsersToDisplayRequest {
@@ -150,7 +133,7 @@ message GetUsersToDisplayRequest {
 }
 
 message UsersDisplayResponse {
-  repeated User users = 1;
+  repeated string usernames = 1;
   int32 total_pages = 2;
   string error_message = 3;
 }

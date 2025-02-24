@@ -50,16 +50,6 @@ class ChatServiceStub(object):
                 request_serializer=chat__pb2.DeleteUserRequest.SerializeToString,
                 response_deserializer=chat__pb2.StatusResponse.FromString,
                 _registered_method=True)
-        self.GetAllUsers = channel.unary_unary(
-                '/chat.ChatService/GetAllUsers',
-                request_serializer=chat__pb2.GetAllUsersRequest.SerializeToString,
-                response_deserializer=chat__pb2.UsersResponse.FromString,
-                _registered_method=True)
-        self.UpdateViewLimit = channel.unary_unary(
-                '/chat.ChatService/UpdateViewLimit',
-                request_serializer=chat__pb2.UpdateViewLimitRequest.SerializeToString,
-                response_deserializer=chat__pb2.StatusResponse.FromString,
-                _registered_method=True)
         self.GetUserMessageLimit = channel.unary_unary(
                 '/chat.ChatService/GetUserMessageLimit',
                 request_serializer=chat__pb2.GetUserMessageLimitRequest.SerializeToString,
@@ -70,25 +60,20 @@ class ChatServiceStub(object):
                 request_serializer=chat__pb2.SaveSettingsRequest.SerializeToString,
                 response_deserializer=chat__pb2.StatusResponse.FromString,
                 _registered_method=True)
-        self.StartChat = channel.unary_unary(
-                '/chat.ChatService/StartChat',
-                request_serializer=chat__pb2.StartChatRequest.SerializeToString,
-                response_deserializer=chat__pb2.ChatResponse.FromString,
+        self.GetUsersToDisplay = channel.unary_unary(
+                '/chat.ChatService/GetUsersToDisplay',
+                request_serializer=chat__pb2.GetUsersToDisplayRequest.SerializeToString,
+                response_deserializer=chat__pb2.UsersDisplayResponse.FromString,
                 _registered_method=True)
         self.GetChats = channel.unary_unary(
                 '/chat.ChatService/GetChats',
                 request_serializer=chat__pb2.GetChatsRequest.SerializeToString,
                 response_deserializer=chat__pb2.ChatsResponse.FromString,
                 _registered_method=True)
-        self.DeleteChats = channel.unary_unary(
-                '/chat.ChatService/DeleteChats',
-                request_serializer=chat__pb2.DeleteChatsRequest.SerializeToString,
-                response_deserializer=chat__pb2.StatusResponse.FromString,
-                _registered_method=True)
-        self.DeleteMessages = channel.unary_unary(
-                '/chat.ChatService/DeleteMessages',
-                request_serializer=chat__pb2.DeleteMessagesRequest.SerializeToString,
-                response_deserializer=chat__pb2.StatusResponse.FromString,
+        self.StartChat = channel.unary_unary(
+                '/chat.ChatService/StartChat',
+                request_serializer=chat__pb2.StartChatRequest.SerializeToString,
+                response_deserializer=chat__pb2.ChatResponse.FromString,
                 _registered_method=True)
         self.GetMessages = channel.unary_unary(
                 '/chat.ChatService/GetMessages',
@@ -100,10 +85,10 @@ class ChatServiceStub(object):
                 request_serializer=chat__pb2.SendMessageRequest.SerializeToString,
                 response_deserializer=chat__pb2.MessageResponse.FromString,
                 _registered_method=True)
-        self.GetUsersToDisplay = channel.unary_unary(
-                '/chat.ChatService/GetUsersToDisplay',
-                request_serializer=chat__pb2.GetUsersToDisplayRequest.SerializeToString,
-                response_deserializer=chat__pb2.UsersDisplayResponse.FromString,
+        self.DeleteMessages = channel.unary_unary(
+                '/chat.ChatService/DeleteMessages',
+                request_serializer=chat__pb2.DeleteMessagesRequest.SerializeToString,
+                response_deserializer=chat__pb2.StatusResponse.FromString,
                 _registered_method=True)
 
 
@@ -130,18 +115,6 @@ class ChatServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetAllUsers(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def UpdateViewLimit(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def GetUserMessageLimit(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -154,26 +127,20 @@ class ChatServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StartChat(self, request, context):
+    def GetUsersToDisplay(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetChats(self, request, context):
         """Chat Management
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetChats(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def DeleteChats(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def DeleteMessages(self, request, context):
+    def StartChat(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -191,7 +158,7 @@ class ChatServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetUsersToDisplay(self, request, context):
+    def DeleteMessages(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -215,16 +182,6 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.DeleteUserRequest.FromString,
                     response_serializer=chat__pb2.StatusResponse.SerializeToString,
             ),
-            'GetAllUsers': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetAllUsers,
-                    request_deserializer=chat__pb2.GetAllUsersRequest.FromString,
-                    response_serializer=chat__pb2.UsersResponse.SerializeToString,
-            ),
-            'UpdateViewLimit': grpc.unary_unary_rpc_method_handler(
-                    servicer.UpdateViewLimit,
-                    request_deserializer=chat__pb2.UpdateViewLimitRequest.FromString,
-                    response_serializer=chat__pb2.StatusResponse.SerializeToString,
-            ),
             'GetUserMessageLimit': grpc.unary_unary_rpc_method_handler(
                     servicer.GetUserMessageLimit,
                     request_deserializer=chat__pb2.GetUserMessageLimitRequest.FromString,
@@ -235,25 +192,20 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.SaveSettingsRequest.FromString,
                     response_serializer=chat__pb2.StatusResponse.SerializeToString,
             ),
-            'StartChat': grpc.unary_unary_rpc_method_handler(
-                    servicer.StartChat,
-                    request_deserializer=chat__pb2.StartChatRequest.FromString,
-                    response_serializer=chat__pb2.ChatResponse.SerializeToString,
+            'GetUsersToDisplay': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUsersToDisplay,
+                    request_deserializer=chat__pb2.GetUsersToDisplayRequest.FromString,
+                    response_serializer=chat__pb2.UsersDisplayResponse.SerializeToString,
             ),
             'GetChats': grpc.unary_unary_rpc_method_handler(
                     servicer.GetChats,
                     request_deserializer=chat__pb2.GetChatsRequest.FromString,
                     response_serializer=chat__pb2.ChatsResponse.SerializeToString,
             ),
-            'DeleteChats': grpc.unary_unary_rpc_method_handler(
-                    servicer.DeleteChats,
-                    request_deserializer=chat__pb2.DeleteChatsRequest.FromString,
-                    response_serializer=chat__pb2.StatusResponse.SerializeToString,
-            ),
-            'DeleteMessages': grpc.unary_unary_rpc_method_handler(
-                    servicer.DeleteMessages,
-                    request_deserializer=chat__pb2.DeleteMessagesRequest.FromString,
-                    response_serializer=chat__pb2.StatusResponse.SerializeToString,
+            'StartChat': grpc.unary_unary_rpc_method_handler(
+                    servicer.StartChat,
+                    request_deserializer=chat__pb2.StartChatRequest.FromString,
+                    response_serializer=chat__pb2.ChatResponse.SerializeToString,
             ),
             'GetMessages': grpc.unary_unary_rpc_method_handler(
                     servicer.GetMessages,
@@ -265,10 +217,10 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.SendMessageRequest.FromString,
                     response_serializer=chat__pb2.MessageResponse.SerializeToString,
             ),
-            'GetUsersToDisplay': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetUsersToDisplay,
-                    request_deserializer=chat__pb2.GetUsersToDisplayRequest.FromString,
-                    response_serializer=chat__pb2.UsersDisplayResponse.SerializeToString,
+            'DeleteMessages': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteMessages,
+                    request_deserializer=chat__pb2.DeleteMessagesRequest.FromString,
+                    response_serializer=chat__pb2.StatusResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -364,60 +316,6 @@ class ChatService(object):
             _registered_method=True)
 
     @staticmethod
-    def GetAllUsers(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/chat.ChatService/GetAllUsers',
-            chat__pb2.GetAllUsersRequest.SerializeToString,
-            chat__pb2.UsersResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def UpdateViewLimit(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/chat.ChatService/UpdateViewLimit',
-            chat__pb2.UpdateViewLimitRequest.SerializeToString,
-            chat__pb2.StatusResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
     def GetUserMessageLimit(request,
             target,
             options=(),
@@ -472,7 +370,7 @@ class ChatService(object):
             _registered_method=True)
 
     @staticmethod
-    def StartChat(request,
+    def GetUsersToDisplay(request,
             target,
             options=(),
             channel_credentials=None,
@@ -485,9 +383,9 @@ class ChatService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/chat.ChatService/StartChat',
-            chat__pb2.StartChatRequest.SerializeToString,
-            chat__pb2.ChatResponse.FromString,
+            '/chat.ChatService/GetUsersToDisplay',
+            chat__pb2.GetUsersToDisplayRequest.SerializeToString,
+            chat__pb2.UsersDisplayResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -526,7 +424,7 @@ class ChatService(object):
             _registered_method=True)
 
     @staticmethod
-    def DeleteChats(request,
+    def StartChat(request,
             target,
             options=(),
             channel_credentials=None,
@@ -539,36 +437,9 @@ class ChatService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/chat.ChatService/DeleteChats',
-            chat__pb2.DeleteChatsRequest.SerializeToString,
-            chat__pb2.StatusResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def DeleteMessages(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/chat.ChatService/DeleteMessages',
-            chat__pb2.DeleteMessagesRequest.SerializeToString,
-            chat__pb2.StatusResponse.FromString,
+            '/chat.ChatService/StartChat',
+            chat__pb2.StartChatRequest.SerializeToString,
+            chat__pb2.ChatResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -634,7 +505,7 @@ class ChatService(object):
             _registered_method=True)
 
     @staticmethod
-    def GetUsersToDisplay(request,
+    def DeleteMessages(request,
             target,
             options=(),
             channel_credentials=None,
@@ -647,9 +518,9 @@ class ChatService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/chat.ChatService/GetUsersToDisplay',
-            chat__pb2.GetUsersToDisplayRequest.SerializeToString,
-            chat__pb2.UsersDisplayResponse.FromString,
+            '/chat.ChatService/DeleteMessages',
+            chat__pb2.DeleteMessagesRequest.SerializeToString,
+            chat__pb2.StatusResponse.FromString,
             options,
             channel_credentials,
             insecure,
