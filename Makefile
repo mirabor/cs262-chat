@@ -30,11 +30,10 @@ run-client: # Run the chat client (usage: make run-client MODE={grpc|socket} POR
 
 test: # Run all tests
 	@echo "Running all tests..."
-	@$(VENV)/pytest tests/ --cov=src --cov-report term-missing --cov-fail-under=80 --cov-config=.coveragerc
-
+	@source .venv/bin/activate && PYTHONPATH=src pytest tests/ --cov=src --cov-report term-missing --cov-fail-under=80 --cov-config=.coveragerc
 test-report: # Generate and open HTML coverage report
 	@echo "Generating coverage report..."
-	@$(VENV)/pytest tests/ --cov=src --cov-report html --cov-config=.coveragerc
+	@PYTHONPATH=src && $(VENV)/pytest tests/ --cov=src --cov-report html --cov-config=.coveragerc
 
 benchmark: # Run protocol performance benchmarks
 	@echo "Running protocol benchmarks..."

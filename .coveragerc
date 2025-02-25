@@ -1,2 +1,2 @@
 [run]
-omit = src/client/pages/*,src/protocol_benchmark.py,src/client/main.py
+omit = src/client/pages/*,src/protocol_benchmark.py,src/client/main.py,src/protocol/grpc/*
