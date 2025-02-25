@@ -18,8 +18,20 @@ from .pages import (
 
 from .logic import ChatAppLogic
 
+
 class ChatAppUI(QMainWindow):
-    def __init__(self, client):
+    def __init__(self, client=None, rpc_logic=None):
+        """
+        Initialize the ChatAppUI class.
+
+        Args:
+            client: An instance of the Client class (socket-based client)
+            rpc_logic: An instance of the RpcLogic class (RPC-based client)
+
+        Note:
+            We only kept client just for backward compatibility from previous version.
+            Therefore, this expect at least one of client or rpc_logic to be provided.
+        """
         super().__init__()
         self.setWindowTitle("Chat Application")
         self.setGeometry(100, 100, 800, 600)
@@ -44,7 +56,15 @@ class ChatAppUI(QMainWindow):
         )
     
         self.current_user = None
-        self.logic = ChatAppLogic(client)  # Instantiate ChatAppLogic
+
+        # Initialize logic
+        if client is None and rpc_logic is None:
+            raise ValueError("Either client or rpc_logic must be provided.")
+        if client is not None:
+            self.logic = ChatAppLogic(client)
+        else:
+            self.logic = rpc_logic
+
         self.show_login_page()  # Show UI page, not from logic
 
     def create_navigation(self, container, show_delete=False):

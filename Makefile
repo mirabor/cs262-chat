@@ -12,22 +12,28 @@ default: help
 install: venv # Install all project dependencies
 	@$(VENV)/pip3 install -U -r requirements.txt;
 
-run-server: # Run the chat server
+# Default values
+MODE ?= grpc
+PORT ?= 5555
+CLIENT_ID ?= default_client
+SERVER_IP ?= 127.0.0.1
+HOST ?= localhost
+
+run-server: # Run the chat server (usage: make run-server MODE={grpc|socket})
 	@echo "Checking for existing server instances..."
 	@lsof -i :5555 -t | xargs kill 2>/dev/null || true
 	@echo "Starting server..."
-	@source .venv/bin/activate && PYTHONPATH=src python src/server/server.py
+	@source .venv/bin/activate && PYTHONPATH=src python src/server/server.py --mode $(MODE)
 
-run-client: # Run the chat client (usage: make run-client CLIENT_ID=your_id SERVER_IP=x.x.x.x)
-	@source .venv/bin/activate && PYTHONPATH=src python src/client/main.py $(CLIENT_ID) $(SERVER_IP)
+run-client: # Run the chat client (usage: make run-client MODE={grpc|socket} PORT=5555 CLIENT_ID=your_id SERVER_IP=x.x.x.x)
+	@source .venv/bin/activate && PYTHONPATH=src python src/client/main.py --mode $(MODE) --port $(PORT) --client_id $(CLIENT_ID) --server_addr $(SERVER_IP)
 
 test: # Run all tests
 	@echo "Running all tests..."
-	@$(VENV)/pytest tests/ --cov=src --cov-report term-missing --cov-fail-under=80 --cov-config=.coveragerc
-
+	@PYTHONPATH=src pytest tests/ --cov=src --cov-report term-missing --cov-fail-under=80 --cov-config=.coveragerc
 test-report: # Generate and open HTML coverage report
 	@echo "Generating coverage report..."
-	@$(VENV)/pytest tests/ --cov=src --cov-report html --cov-config=.coveragerc
+	@PYTHONPATH=src && $(VENV)/pytest tests/ --cov=src --cov-report html --cov-config=.coveragerc
 
 benchmark: # Run protocol performance benchmarks
 	@echo "Running protocol benchmarks..."
@@ -68,17 +74,21 @@ clean: # Clean up cache files and directories
 	@find . -name ".pytest_cache" -type d -exec rm -rf {} +;
 	@find . -name ".mypy_cache" -type d -exec rm -rf {} +;
 	@find . -name ".venv" -type d -exec rm -rf {} +;
+	@find . -name "*_pb2*.py" -exec rm -f {} \;
 
 help: # Show available make targets
 	@echo "Chat System Make Targets\n"
 	@echo "Core Commands:\n--------------"
 	@echo "\033[1;32minstall\033[00m: Install all project dependencies"
 	@echo "\033[1;32minstall-dev\033[00m: Install development tools, pytest, pylint, mypy"
-	@echo "\033[1;32mrun-server\033[00m: Run the chat server"
-	@echo "\033[1;32mrun-client\033[00m: Run the chat client"
+	@echo "\033[1;32mrun-server\033[00m: Run the chat server (usage: make run-server MODE={grpc|socket})"
+	@echo "\033[1;32mrun-client\033[00m: Run the chat client (usage: make run-client MODE={grpc|socket} PORT=5555 CLIENT_ID=your_id SERVER_IP=x.x.x.x)"
 	@echo "\033[1;32mrun-client-gui\033[00m: Run the GUI chat client"
 	@echo "\033[1;32mtest\033[00m: Run all tests"
 	@echo "\033[1;32mbenchmark\033[00m: Run protocol performance benchmarks"
+	@echo "\n"
+	@echo "gRPC Commands:\n--------------"
+	@echo "\033[1;32mgenerate-grpc\033[00m: Generate gRPC stubs from proto files"
 	@echo "\n"
 	@echo "Development Tools:\n------------------"
 	@echo "\033[1;32minstall-dev\033[00m: Install development tools"
@@ -92,7 +102,17 @@ help: # Show available make targets
 	@echo "\033[1;32mhelp\033[00m: Show this help message"
 
 
+# gRPC Commands
+# -----------------------------
+
+generate-grpc: # Generate gRPC stubs from proto files
+	@echo "Generating gRPC stubs..."
+	@source .venv/bin/activate && python -m grpc_tools.protoc -I src/protocol/grpc \
+		--python_out=src/protocol/grpc \
+		--grpc_python_out=src/protocol/grpc \
+		src/protocol/grpc/chat.proto
+
 # PHONY Targets
 # -----------------------------
 
-.PHONY: help install install-dev test test-report benchmark fix-style run-server run-client run-client-gui clean venv show-ip
+.PHONY: help install install-dev test test-report benchmark fix-style run-server run-client run-client-gui clean venv show-ip generate-grpc

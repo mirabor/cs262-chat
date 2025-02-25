@@ -1,0 +1,144 @@
+syntax = "proto3";
+
+package chat;
+
+// The chat service definition
+service ChatService {
+  // User Management
+  rpc Signup (SignupRequest) returns (UserResponse);
+  rpc Login (LoginRequest) returns (UserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (StatusResponse);
+  rpc GetUserMessageLimit (GetUserMessageLimitRequest) returns (MessageLimitResponse);
+  rpc SaveSettings (SaveSettingsRequest) returns (StatusResponse);
+  rpc GetUsersToDisplay (GetUsersToDisplayRequest) returns (UsersDisplayResponse);
+
+  // Chat Management
+  rpc GetChats (GetChatsRequest) returns (ChatsResponse);
+  rpc StartChat (StartChatRequest) returns (ChatResponse);
+  rpc GetMessages (GetMessagesRequest) returns (MessagesResponse);
+  rpc SendChatMessage (SendMessageRequest) returns (MessageResponse);
+  rpc DeleteMessages (DeleteMessagesRequest) returns (StatusResponse);
+}
+
+// Request/Response messages
+message SignupRequest {
+  string username = 1;
+  string nickname = 2;
+  string password = 3;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message UserResponse {
+  bool success = 1;
+  string error_message = 2;
+  int32 user_id = 3;
+  string nickname = 4;
+  int32 view_limit = 5;
+}
+
+message User {
+  string username = 1;
+  string nickname = 2;
+  int32 view_limit = 3;
+}
+
+message DeleteUserRequest {
+  string username = 1;
+}
+
+message GetUserMessageLimitRequest {
+  string username = 1;
+}
+
+message MessageLimitResponse {
+  string limit = 1;
+  string error_message = 2;
+}
+
+message SaveSettingsRequest {
+  string username = 1;
+  string message_limit = 2;
+}
+
+message StartChatRequest {
+  string current_user = 1;
+  string other_user = 2;
+}
+
+message ChatResponse {
+  bool success = 1;
+  string error_message = 2;
+  Chat chat = 3;
+}
+
+message Chat {
+  string chat_id = 1;
+  string other_user = 2;
+  int32 unread_count = 3;
+}
+
+message GetChatsRequest {
+  string user_id = 1;
+}
+
+message ChatsResponse {
+  repeated Chat chats = 1;
+  string error_message = 2;
+}
+
+message DeleteMessagesRequest {
+  string chat_id = 1;
+  repeated int32 message_indices = 2;
+  string current_user = 3;
+}
+
+message GetMessagesRequest {
+  string chat_id = 1;
+  string current_user = 2;
+}
+
+message Message {
+  int32 id = 1;
+  string sender = 2;
+  string content = 3;
+  string timestamp = 4;
+  int32 read = 5;
+}
+
+message MessagesResponse {
+  repeated Message messages = 1;
+  string error_message = 2;
+}
+
+message SendMessageRequest {
+  string chat_id = 1;
+  string sender = 2;
+  string content = 3;
+}
+
+message MessageResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message GetUsersToDisplayRequest {
+  string exclude_username = 1;
+  string search_pattern = 2;
+  int32 current_page = 3;
+  int32 users_per_page = 4;
+}
+
+message UsersDisplayResponse {
+  repeated string usernames = 1;
+  int32 total_pages = 2;
+  string error_message = 3;
+}
+
+message StatusResponse {
+  bool success = 1;
+  string error_message = 2;
+}
