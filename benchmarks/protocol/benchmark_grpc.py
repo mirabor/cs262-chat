@@ -30,7 +30,7 @@ class GRPCBenchmark:
                 "type": "typical_chat_message",
                 "id": 2,
                 "sender": "user1",
-                "content": "Hey, how are you?",
+                "content": "Hey, how are you? I'm having a great day and I love life. What about you?",
                 "timestamp": "1644582795",
                 "read": 1
             },
@@ -40,7 +40,7 @@ class GRPCBenchmark:
                 "type": "complex_message",
                 "id": 3,
                 "sender": "user1",
-                "content": "Meeting at 3pm",
+                "content": "Hi!!!! ##^Q*!*(($$)@$ The mitochondria is the powerhouse of the cell. It is where DNA is synthesized and where most of the cell's energy is generated. $**$@(#())() It was the best of times. It was the worst of times. 439340w0934904399304805885843839034435678954321456786543245678" * 10,
                 "timestamp": "1644582796",
                 "read": 0
             },
@@ -60,15 +60,13 @@ class GRPCBenchmark:
         """Measure size of serialized data in bytes."""
         return len(data)
 
-    def measure_time(self, func, *args, iterations: int = 1000) -> float:
-        """Measure average execution time of a function."""
-        times = []
+    def measure_time(func, *args, iterations: int = 1000) -> float:
+        """Measure average execution time of a function, reducing timer overhead."""
+        start = time.perf_counter()
         for _ in range(iterations):
-            start = time.perf_counter()
             func(*args)
-            end = time.perf_counter()
-            times.append(end - start)
-        return statistics.mean(times)
+        end = time.perf_counter()
+        return (end - start) / iterations
 
     def run_benchmarks(self) -> Dict[str, List[Dict]]:
         """Run all benchmarks and return results."""
