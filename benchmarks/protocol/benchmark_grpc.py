@@ -60,7 +60,7 @@ class GRPCBenchmark:
         """Measure size of serialized data in bytes."""
         return len(data)
 
-    def measure_time(func, *args, iterations: int = 1000) -> float:
+    def measure_time(self, func, *args, iterations: int = 1000) -> float:
         """Measure average execution time of a function, reducing timer overhead."""
         start = time.perf_counter()
         for _ in range(iterations):
