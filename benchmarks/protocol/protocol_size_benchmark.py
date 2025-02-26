@@ -297,6 +297,124 @@ class ProtocolSizeBenchmark:
         plt.savefig(f"{output_dir}/all_protocols_size_comparison.png", dpi=300)
         plt.close()
 
+    def print_size_summary(self, results):
+        """Print a summary of the size benchmark results."""
+        print("\nProtocol Size Comparison Summary:")
+        print("================================")
+
+        print(
+            f"{'Message Type':<30} {'JSON':<10} {'Custom':<10} {'gRPC':<10} {'Reduction':<10} {'Ratio':<5}"
+        )
+        print("-" * 75)
+
+        total_json = 0
+        total_custom = 0
+        total_grpc = 0
+
+        for i in range(len(results["json"])):
+            message_type = results["json"][i]["message_type"]
+            description = results["json"][i]["description"]
+
+            json_size = results["json"][i]["size"]
+            custom_size = results["custom"][i]["size"]
+            grpc_size = results["grpc"][i]["size"]
+
+            reduction = (json_size - grpc_size) / json_size * 100
+            ratio = json_size / max(1, grpc_size)
+
+            print(
+                f"{message_type:<30} {json_size:<10} {custom_size:<10} {grpc_size:<10} {reduction:>6.1f}% {ratio:>5.1f}x"
+            )
+
+            total_json += json_size
+            total_custom += custom_size
+            total_grpc += grpc_size
+
+        # Print totals and averages
+        print("-" * 75)
+        total_reduction = (total_json - total_grpc) / total_json * 100
+        total_ratio = total_json / max(1, total_grpc)
+        print(
+            f"{'TOTAL':<30} {total_json:<10} {total_custom:<10} {total_grpc:<10} {total_reduction:>6.1f}% {total_ratio:>5.1f}x"
+        )
+
+        print("\nSize Efficiency Analysis:")
+        print("------------------------")
+
+        # Find best and worst cases
+        best_case_idx = max(
+            range(len(results["json"])),
+            key=lambda i: results["json"][i]["size"]
+            / max(1, results["grpc"][i]["size"]),
+        )
+        worst_case_idx = min(
+            range(len(results["json"])),
+            key=lambda i: results["json"][i]["size"]
+            / max(1, results["grpc"][i]["size"]),
+        )
+
+        best_case = results["json"][best_case_idx]["message_type"]
+        best_reduction = (
+            (
+                results["json"][best_case_idx]["size"]
+                - results["grpc"][best_case_idx]["size"]
+            )
+            / results["json"][best_case_idx]["size"]
+            * 100
+        )
+
+        worst_case = results["json"][worst_case_idx]["message_type"]
+        worst_reduction = (
+            (
+                results["json"][worst_case_idx]["size"]
+                - results["grpc"][worst_case_idx]["size"]
+            )
+            / results["json"][worst_case_idx]["size"]
+            * 100
+        )
+
+        print(f"- Most efficient for: {best_case} ({best_reduction:.1f}% reduction)")
+        print(f"- Least efficient for: {worst_case} ({worst_reduction:.1f}% reduction)")
+
+        # Categorize by message structure
+        print("\nEfficiency by Message Structure:")
+
+        # Repeated fields (arrays)
+        array_types = ["users_response", "chats_response"]
+        array_reductions = []
+
+        for i, result in enumerate(results["json"]):
+            if any(t in result["message_type"] for t in array_types):
+                reduction = (
+                    (result["size"] - results["grpc"][i]["size"]) / result["size"] * 100
+                )
+                array_reductions.append(reduction)
+
+        if array_reductions:
+            avg_array_reduction = sum(array_reductions) / len(array_reductions)
+            print(
+                f"- Repeated fields (arrays): {avg_array_reduction:.1f}% average reduction"
+            )
+
+        # Nested structures
+        nested_types = ["messages_response"]
+        nested_reductions = []
+
+        for i, result in enumerate(results["json"]):
+            if any(t in result["message_type"] for t in nested_types):
+                reduction = (
+                    (result["size"] - results["grpc"][i]["size"]) / result["size"] * 100
+                )
+                nested_reductions.append(reduction)
+
+        if nested_reductions:
+            avg_nested_reduction = sum(nested_reductions) / len(nested_reductions)
+            print(f"- Nested structures: {avg_nested_reduction:.1f}% average reduction")
+
+            print(
+                f"For transferring 1GB of data, you would save approximately {total_reduction/100:.2f}GB using gRPC instead of JSON"
+            )
+
 
 def main():
     """Run size benchmarks and generate visualizations."""
@@ -307,6 +425,9 @@ def main():
 
     print("Generating size comparison visualizations...")
     benchmark.plot_size_results(results)
+
+    # Print summary to console
+    benchmark.print_size_summary(results)
 
     print("\nBenchmark complete. Results saved to benchmarks/protocol/results/")
 
