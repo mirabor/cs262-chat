@@ -147,7 +147,7 @@ class ProtocolBenchmark:
         plt.title("Message Size Comparison")
         plt.xticks(x, message_types)
         plt.legend()
-        plt.savefig("benchmarks/protocol/results/size_comparison.png")
+        plt.savefig("benchmarks/protocol/results/json_vs_custom_size_comparison.png")
         plt.close()
 
         # Plot serialization times

@@ -15,6 +15,10 @@ class ChatAppLogicGRPC:
         self.stub = chat_pb2_grpc.ChatServiceStub(self.channel)
         self.current_user = None
         self.chat_cache = {}  # mimic the old 'chat_cache' usage
+        self.prev_metric_size = {
+            "request_size": 0,
+            "response_size": 0,
+        }
 
     def signup(self, username, nickname, password):
         """Sign up a new user."""
@@ -37,10 +41,29 @@ class ChatAppLogicGRPC:
 
         hashed_password = hash_password(password)
         request = chat_pb2.LoginRequest(username=username, password=hashed_password)
+
+        # Serialize the request to get the byte size
+        serialized_request = request.SerializeToString()
+        print(
+            f"METRIC SerTString: grpc_logic login request size: {len(serialized_request)} bytes"
+        )
+
+        serialized_size = (
+            request.ByteSize()
+        )  # This gets the exact byte size when serialized
+        print(f"METRIC ByteSize: grpc_login request size: {serialized_size} bytes")
+
         response = self.stub.Login(request)
 
         if not response.success:
             return False, response.error_message or "Login failed"
+
+        # Serialize the response to get its size
+        serialized_response = response.SerializeToString()
+        print(
+            f"METRIC: grpc_logic login response size: {len(serialized_response)} bytes"
+        )
+
         return True, ""
 
     def get_users_to_display(

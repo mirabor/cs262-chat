@@ -96,6 +96,7 @@ def test_login_success(chat_logic, mock_stub):
     mock_response = Mock()
     mock_response.success = True
     mock_response.error_message = ""
+    mock_response.SerializeToString.return_value = b"mock serialized response"
     mock_stub.Login.return_value = mock_response
 
     # Test

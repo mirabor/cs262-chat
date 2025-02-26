@@ -4,3 +4,4 @@ bcrypt
 grpcio>=1.59.0
 grpcio-tools>=1.59.0
 protobuf>=4.24.0
+matplotlib
