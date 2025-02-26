@@ -36,7 +36,9 @@ test-report: # Generate and open HTML coverage report
 	@PYTHONPATH=src && $(VENV)/pytest tests/ --cov=src --cov-report html --cov-config=.coveragerc
 
 benchmark: # Run protocol performance benchmarks
-	@echo "Running protocol benchmarks..."
+	@echo "Running protocol size benchmarks (json, custom, and grpc)..."
+	@PYTHONPATH=. python benchmarks/protocol/protocol_size_benchmark.py
+	@echo "\n\nRunning protocol json and custom benchmarks..."
 	@mkdir -p benchmarks/protocol/results
 	@PYTHONPATH=. python benchmarks/protocol/test_protocol_performance.py
 	@echo "Benchmark results saved in benchmarks/protocol/results/"
