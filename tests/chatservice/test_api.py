@@ -3,12 +3,12 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.chatservice import api
+from src.services import api
 
 @pytest.fixture
 def mock_db_manager():
     """Create a mock database manager."""
-    with patch('src.chatservice.api.db_manager') as mock:
+    with patch('src.services.api.db_manager') as mock:
         yield mock
 
 def test_signup(mock_db_manager):

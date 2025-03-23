@@ -6,7 +6,7 @@ import os
 # timedelta
 from datetime import datetime, timedelta
 
-from src.chatservice.db_manager import DBManager
+from src.services.db_manager import DBManager
 
 @pytest.fixture
 def db_manager():

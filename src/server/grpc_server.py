@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 from protocol.grpc import chat_pb2, chat_pb2_grpc
 from protocol.config_manager import ConfigManager
-from src.chatservice import api
+from src.services import api
 
 
 class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
