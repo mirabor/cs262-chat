@@ -5,12 +5,12 @@ import os
 from protocol.config_manager import ConfigManager
 from protocol.protocol_factory import ProtocolFactory
 
-from src.server.api import (
+from src.chatservice.api import (
     signup, login, delete_user, get_chats, get_all_users, update_view_limit,
     save_settings, start_chat, get_user_message_limit, delete_chats, delete_messages, get_messages, send_chat_message, get_users_to_display
 )
 
-class Server:
+class TCPServer:
     def __init__(self):
         # Load configuration
         self.config_manager = ConfigManager()

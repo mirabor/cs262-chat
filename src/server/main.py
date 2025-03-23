@@ -13,7 +13,7 @@ import os
 parent_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path.insert(0, parent_dir)
 
-from src.server.server import Server
+from src.server.tcp_server import TCPServer
 from src.server.grpc_server import GRPCServer
 
 def main():
@@ -26,7 +26,7 @@ def main():
     if args.mode == 'grpc':
         server = GRPCServer()
     else:
-        server = Server()
+        server = TCPServer()
 
     try:
         server.start()
