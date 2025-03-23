@@ -6,31 +6,31 @@ This is the server-side implementation of our chat app, which provides real-time
 
 ```
 src/server/
-├── __init__.py
-├── config_manager.py    # Server configuration management
-├── db_manager.py        # Database operations and management
-├── main.py             # Server entry point
-├── server.py           # Core server implementation
-└── utils.py            # Utility functions
+├── APL_DOC.md
+├── db_manager.py
+├── grpc_server.py
+├── main.py
+├── README.md
+├── tcp_server.py
 ```
 
 ## Key Components
 
 ### Core Files
 
-- `main.py`: Server entry point that initializes the server and starts listening for connections
-- `server.py`: Core server implementation handling client connections, message routing, and chat management
-- `db_manager.py`: SQLite database interface for persistent storage of users, chats, and messages
-- `config_manager.py`: Manages server configuration including network settings and database options
+- `main.py`: Server entry point that initializes the server and starts listening for connections.
+- `grpc_server.py`: gRPC server implementation for handling gRPC-based client connections.
+- `tcp_server.py`: TCP server implementation for handling TCP-based client connections.
+- `db_manager.py`: SQLite database interface for persistent storage of users, chats, and messages.
 
 ### Features
 
-- Real-time message delivery
-- User authentication and session management
-- Persistent chat history
-- Message status tracking (sent, delivered, read)
-- Configurable message retention and view limits
-- Support for multiple chat protocols (JSON, Custom)
+- Real-time message delivery.
+- User authentication and session management.
+- Persistent chat history.
+- Message status tracking (sent, delivered, read).
+- Configurable message retention and view limits.
+- Support for multiple chat protocols (gRPC, TCP, JSON)
 
 ## Getting Started
 
@@ -48,46 +48,49 @@ make run-server
 
 ## Configuration
 
-The server can be configured through a JSON configuration file with the following options:
+The server can be configured through a YAML configuration file with the following options:
 
-```json
-{
-    "network": {
-        "host": "localhost",
-        "port": 8000,
-        "protocol": "json",
-        "max_clients": 100,
-        "message_buffer_size": 2048
-    },
-    "database": {
-        "path": "chat_app.db",
-        "default_view_limit": 50,
-        "message_retention_days": 30
-    },
-    "security": {
-        "min_password_length": 8,
-        "max_login_attempts": 3,
-        "session_timeout_minutes": 60
-    }
-}
+```yaml
+network:
+  buffer_size: 1024
+  connection_timeout: 10
+  host: 0.0.0.0
+  max_clients: 10
+  messages_dir: client_messages
+  port: 5555
+  protocol: custom
+  retry_attempts: 3
+  retry_delay: 2
 ```
+
+### Configuration Options
+
+- `buffer_size`: The size of the buffer used for message transmission.
+- `connection_timeout`: The timeout duration for client connections in seconds.
+- `host`: The host address the server will bind to (e.g., `0.0.0.0` for all interfaces).
+- `max_clients`: The maximum number of clients that can connect to the server simultaneously.
+- `messages_dir`: The directory where client messages are stored.
+- `port`: The port number the server will listen on.
+- `protocol`: The communication protocol used (e.g., `custom`, `json`, `grpc`).
+- `retry_attempts`: The number of retry attempts for failed operations.
+- `retry_delay`: The delay between retry attempts in seconds.
 
 ## Development
 
 Our design choices included:
 
-- Clean separation of concerns between components
-- Protocol-agnostic message handling
-- Efficient database operations
-- Robust error handling and logging
-- Configurable settings for different deployment scenarios
+- Clean separation of concerns between components.
+- Protocol-agnostic message handling.
+- Efficient database operations.
+- Robust error handling and logging.
+- Configurable settings for different deployment scenarios.
 
 ### Adding New Features
 
-1. For new message types, update the message handling in `server.py`
-2. For new database operations, add them to `db_manager.py`
-3. For new configuration options, update `config_manager.py`
-4. Ensure proper error handling and logging
+1. For new message types, update the message handling in `grpc_server.py` or `tcp_server.py`.
+2. For new database operations, add them to `db_manager.py`.
+3. For new configuration options, update the YAML configuration file.
+4. Ensure proper error handling and logging.
 
 ### Testing
 
