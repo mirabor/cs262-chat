@@ -23,7 +23,7 @@ run-server: # Run the chat server (usage: make run-server MODE={grpc|socket})
 	@echo "Checking for existing server instances..."
 	@lsof -i :5555 -t | xargs kill 2>/dev/null || true
 	@echo "Starting server..."
-	@source .venv/bin/activate && PYTHONPATH=src python src/server/server.py --mode $(MODE)
+	@source .venv/bin/activate && PYTHONPATH=src python src/server/main.py --mode $(MODE)
 
 run-client: # Run the chat client (usage: make run-client MODE={grpc|socket} PORT=5555 CLIENT_ID=your_id SERVER_IP=x.x.x.x)
 	@source .venv/bin/activate && PYTHONPATH=src python src/client/main.py --mode $(MODE) --port $(PORT) --client_id $(CLIENT_ID) --server_addr $(SERVER_IP)

@@ -144,21 +144,3 @@ class Server:
 
             handler = actions.get(action, lambda: {"success": False, "error_message": "Invalid action"})
             return handler()
-
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description='Start the chat server')
-    parser.add_argument('--mode', choices=['socket', 'grpc'], default='socket',
-                        help='Server mode: socket (default) or grpc')
-    args = parser.parse_args()
-
-    if args.mode == 'grpc':
-        server = GRPCServer()
-    else:
-        server = Server()
-
-    try:
-        server.start()
-    except KeyboardInterrupt:
-        print("\nShutting down server...")
