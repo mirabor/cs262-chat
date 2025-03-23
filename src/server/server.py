@@ -1,22 +1,14 @@
 import socket
 import threading
 import os
-from datetime import datetime
-import sys
-import argparse
 
 from protocol.config_manager import ConfigManager
 from protocol.protocol_factory import ProtocolFactory
 
-parent_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-sys.path.insert(0, parent_dir)
-
-from src.server.grpc_server import GRPCServer
 from src.server.api import (
     signup, login, delete_user, get_chats, get_all_users, update_view_limit,
     save_settings, start_chat, get_user_message_limit, delete_chats, delete_messages, get_messages, send_chat_message, get_users_to_display
 )
-
 
 class Server:
     def __init__(self):
