@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import replication_pb2 as replication__pb2
+from src.protocol.grpc import replication_pb2 as replication__pb2
 
 GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__
@@ -61,7 +61,9 @@ class ReplicationServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def RequestVote(self, request, context):
-        """RequestVote RPC is used by candidates to gather votes
+        """RequestVote RPC is used by candidates to gather VoteRequest
+        Will use this for leader-based replication version, time permitting
+        (see issue: https://github.com/mirabor/cs262-chat/issues/111)
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -89,7 +91,7 @@ def add_ReplicationServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class ReplicationService(object):
-    """Service for handling replication and consensus between chat servers
+    """Service for handling replication and consensus between server replicas
     """
 
     @staticmethod
