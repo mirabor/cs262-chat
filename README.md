@@ -9,6 +9,8 @@ Our application is built with a client-server architecture, supporting multiple 
 [![Test Suite & Coverage Status](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml/badge.svg)](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml)
 
 ## Features
+<details>
+  <summary><strong>Click to open/close features section </strong></summary>
 
 Our application implements the below functional requirements:
 
@@ -34,6 +36,8 @@ Our application implements the below functional requirements:
 - Tested with two **wire protocols**: JSON and our custom protocol (SAMIRA🔥)
 
 For more details on features, high-level design, and implementation, see our [High-Level Design & Implementation Plan](/design/DESIGN_DOC.md).
+
+</details>
 
 ## Demo
 <!-- TODO: [View Demo GIFs showing multi-machine usage](#demo-gifs) -->
