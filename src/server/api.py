@@ -53,11 +53,16 @@ def delete_messages(chat_id, message_indices, current_user):
 
 def get_messages(payload):
     """Get messages for a chat."""
-    if "chat_id" not in payload or "current_user" not in payload:
+    if not isinstance(payload, dict):
         print(f"DEBUG: Get messages in api.py: payload {payload} is invalid")
         return {"messages": [], "error_message": "Invalid payload."}
-    return db_manager.get_messages(payload["chat_id"], payload["current_user"])
-
+    
+    required_keys = {"chat_id", "username"}
+    if not required_keys.issubset(payload.keys()):
+        print(f"DEBUG: Get messages in api.py: payload {payload} is invalid")
+        return {"messages": [], "error_message": "Invalid payload."}
+    
+    return db_manager.get_messages(payload["chat_id"], payload["username"])
 
 def send_chat_message(chat_id, sender, content):
     """Send a message in a chat."""
