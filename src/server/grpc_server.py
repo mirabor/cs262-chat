@@ -1,11 +1,21 @@
 import grpc
 from concurrent import futures
-from typing import Dict, Any
+from typing import List, Dict, Any
 
 from protocol.grpc import chat_pb2, chat_pb2_grpc
 from protocol.config_manager import ConfigManager
 from src.services import api
 
+class ReplicationServicer(chat_pb2_grpc.ReplicationServiceServicer):
+    """Implementation of the ReplicationService service."""
+
+    def __init__(self, server):
+        self.server = server
+
+    def ReplicateMessage(self, request, context):
+        # Handle message replication logic here
+        print(f"Replicating message: {request.content} to peers")
+        return chat_pb2.StatusResponse(success=True, error_message="")
 
 class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
     """Implementation of the ChatService service."""
@@ -156,7 +166,11 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
 
 
 class GRPCServer:
-    def __init__(self):
+    def __init__(self, host: str, port: int, peers: List[str]):
+        self.host = host
+        self.port = port
+        self.peers = peers
+
         self.config_manager = ConfigManager()
         self.config = self.config_manager.network
         self.config_manager.get_network_info()
@@ -164,12 +178,18 @@ class GRPCServer:
         # Create gRPC server
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatServicer(), self.server)
+        chat_pb2_grpc.add_ReplicationServiceServicer_to_server(ReplicationServicer(self), self.server)
+        # Connect to peer servers
+        self.peer_channels = {}
+        for peer in self.peers:
+            channel = grpc.insecure_channel(peer)
+            self.peer_channels[peer] = chat_pb2_grpc.ReplicationServiceStub(channel)
+            print(f"Connected to peer server at {peer}")
 
     def start(self):
         """Start the gRPC server"""
         try:
-            # Use same host/port as socket server for now
-            address = f"{self.config.host}:{self.config.port}"
+            address = f"{self.host}:{self.port}"
             self.server.add_insecure_port(address)
             self.server.start()
             print(f"gRPC Server started on {address}")

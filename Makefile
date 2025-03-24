@@ -19,14 +19,15 @@ CLIENT_ID ?= default_client
 SERVER_IP ?= 127.0.0.1
 HOST ?= localhost
 
-run-server: # Run the chat server (usage: make run-server MODE={grpc|socket})
+run-server: # Run the chat server (usage: make run-server MODE={grpc|socket} HOST=host_addr PEERS=peer1_addr,peer2_addr,...)
 	@echo "Checking for existing server instances..."
-	@lsof -i :5555 -t | xargs kill 2>/dev/null || true
+	@lsof -i :$(PORT) -t | xargs kill 2>/dev/null || true
 	@echo "Starting server..."
-	@source .venv/bin/activate && PYTHONPATH=src python src/server/main.py --mode $(MODE)
+	@source .venv/bin/activate && PYTHONPATH=src python src/server/main.py --mode $(MODE) --host $(HOST) --port $(PORT) --peers $(PEERS)
 
 run-client: # Run the chat client (usage: make run-client MODE={grpc|socket} PORT=5555 CLIENT_ID=your_id SERVER_IP=x.x.x.x)
 	@source .venv/bin/activate && PYTHONPATH=src python src/client/main.py --mode $(MODE) --port $(PORT) --client_id $(CLIENT_ID) --server_addr $(SERVER_IP)
+
 
 test: # Run all tests
 	@echo "Running all tests..."
