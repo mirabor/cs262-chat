@@ -43,17 +43,6 @@ benchmark: # Run protocol performance benchmarks
 	@PYTHONPATH=. python benchmarks/protocol/test_protocol_performance.py
 	@echo "Benchmark results saved in benchmarks/protocol/results/"
 
-# Protocol Commands
-# -----------------------------
-
-proto: # Generate Python code from all .proto files
-	@echo "Generating Python code from protocol buffers..."
-	@$(VENV)/python -m grpc_tools.protoc \
-		-I./src/protocol/grpc \
-		--python_out=./src/protocol/grpc \
-		--grpc_python_out=./src/protocol/grpc \
-		./src/protocol/grpc/*.proto
-	@echo "Protocol buffers compiled successfully"
 
 # Development Tools
 # -----------------------------
