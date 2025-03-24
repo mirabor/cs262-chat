@@ -1,4 +1,4 @@
-from .db_manager import DBManager
+from src.services.db_manager import DBManager
 
 db_manager = DBManager()
 db_manager.initialize_database()
