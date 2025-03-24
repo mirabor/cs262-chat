@@ -1,21 +1,15 @@
 import grpc
 from concurrent import futures
-from typing import List, Dict, Any
+from typing import Dict, Any, List
 
-from protocol.grpc import chat_pb2, chat_pb2_grpc
+from protocol.grpc import chat_pb2, chat_pb2_grpc, replication_pb2, replication_pb2_grpc
 from protocol.config_manager import ConfigManager
 from src.services import api
+import logging
 
-class ReplicationServicer(chat_pb2_grpc.ReplicationServiceServicer):
-    """Implementation of the ReplicationService service."""
+from src.server.replication_servicer import ReplicationServicer
 
-    def __init__(self, server):
-        self.server = server
-
-    def ReplicateMessage(self, request, context):
-        # Handle message replication logic here
-        print(f"Replicating message: {request.content} to peers")
-        return chat_pb2.StatusResponse(success=True, error_message="")
+logger = logging.getLogger(__name__)
 
 class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
     """Implementation of the ChatService service."""
@@ -164,37 +158,49 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             error_message=result.get("error_message", ""),
         )
 
-
 class GRPCServer:
-    def __init__(self, host: str, port: int, peers: List[str]):
-        self.host = host
-        self.port = port
-        self.peers = peers
-
+    def __init__(self, host: str, peers: List[str]):
         self.config_manager = ConfigManager()
         self.config = self.config_manager.network
         self.config_manager.get_network_info()
 
+        self.host = host
+        self.peers = peers
+
         # Create gRPC server
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatServicer(), self.server)
-        chat_pb2_grpc.add_ReplicationServiceServicer_to_server(ReplicationServicer(self), self.server)
-        # Connect to peer servers
-        self.peer_channels = {}
+        replication_pb2_grpc.add_ReplicationServiceServicer_to_server(ReplicationServicer(), self.server)
+
+    def connect_to_peers(self):
+        """Connect to peer servers and confirm connections."""
         for peer in self.peers:
+            if peer == self.host:
+                continue  # Skip self
+
             channel = grpc.insecure_channel(peer)
-            self.peer_channels[peer] = chat_pb2_grpc.ReplicationServiceStub(channel)
-            print(f"Connected to peer server at {peer}")
+            stub = replication_pb2_grpc.ReplicationServiceStub(channel)
+            try:
+                response = stub.ConfirmConnection(replication_pb2.PeerAddress(peer_address=self.host))
+                if response.success:
+                    logger.info(f"Connection to peer {peer} confirmed.")
+                else:
+                    logger.warning(f"Failed to confirm connection to peer {peer}.")
+            except grpc.RpcError as e:
+                logger.error(f"Failed to connect to peer {peer}: {e}")
 
     def start(self):
-        """Start the gRPC server"""
+        """Start the gRPC server and connect to peers."""
         try:
-            address = f"{self.host}:{self.port}"
-            self.server.add_insecure_port(address)
+            self.server.add_insecure_port(self.host)
             self.server.start()
-            print(f"gRPC Server started on {address}")
-            print(f"Maximum workers: 10")
+            logger.info(f"gRPC Server started on {self.host}")
+            logger.info(f"Maximum workers: 10")
+
+            # Connect to peers
+            self.connect_to_peers()
+
             self.server.wait_for_termination()
         except Exception as e:
-            print(f"Error starting gRPC server: {e}")
+            logger.error(f"Error starting gRPC server: {e}")
             self.server.stop(0)

@@ -28,6 +28,12 @@ run-server: # Run the chat server (usage: make run-server MODE={grpc|socket} HOS
 run-client: # Run the chat client (usage: make run-client MODE={grpc|socket} PORT=5555 CLIENT_ID=your_id SERVER_IP=x.x.x.x)
 	@source .venv/bin/activate && PYTHONPATH=src python src/client/main.py --mode $(MODE) --port $(PORT) --client_id $(CLIENT_ID) --server_addr $(SERVER_IP)
 
+run-replica: # Run a replica server with peer connections (usage: make run-replica HOST_ADDR=host:port PEER_ADDRS=peer1:port,peer2:port,...)
+	@echo "Checking for existing server instances..."
+	@lsof -i :$(PORT) -t | xargs kill 2>/dev/null || true
+	@echo "Starting replica server in the background..."
+	@source .venv/bin/activate && PYTHONPATH=src python src/server/main.py --mode $(MODE) --host $(HOST_ADDR) --peers $(PEER_ADDRS) > server_$(HOST_ADDR).log 2>&1 &
+	@echo "Server started in the background. Logs are being written to server_$(HOST_ADDR).log"
 
 test: # Run all tests
 	@echo "Running all tests..."

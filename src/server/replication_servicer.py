@@ -107,3 +107,16 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
             term=self.current_term,
             vote_granted=vote_granted
         )
+
+    def ConfirmConnection(
+        self, request: replication_pb2.PeerAddress, context
+    ) -> replication_pb2.AckResponse:
+        """
+        Handle ConfirmConnection RPC from a peer server.
+        Log the connection and return success.
+        """
+        logger.info(f"Connection confirmed by peer: {request.peer_address}")
+        return replication_pb2.AckResponse(
+            term=self.current_term,
+            success=True
+        )

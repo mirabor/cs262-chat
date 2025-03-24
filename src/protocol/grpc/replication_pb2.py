@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11replication.proto\x12\x0breplication\"\x9f\x01\n\x0e\x45ntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x11\n\tleader_id\x18\x02 \x01(\t\x12\x16\n\x0eprev_log_index\x18\x03 \x01(\x03\x12\x15\n\rprev_log_term\x18\x04 \x01(\x03\x12&\n\x07\x65ntries\x18\x05 \x03(\x0b\x32\x15.replication.LogEntry\x12\x15\n\rleader_commit\x18\x06 \x01(\x03\",\n\x0b\x41\x63kResponse\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x0f\n\x07success\x18\x02 \x01(\x08\"`\n\x0bVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x14\n\x0c\x63\x61ndidate_id\x18\x02 \x01(\t\x12\x16\n\x0elast_log_index\x18\x03 \x01(\x03\x12\x15\n\rlast_log_term\x18\x04 \x01(\x03\"2\n\x0cVoteResponse\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x14\n\x0cvote_granted\x18\x02 \x01(\x08\"8\n\x08LogEntry\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\r\n\x05index\x18\x02 \x01(\x03\x12\x0f\n\x07\x63ommand\x18\x03 \x01(\x0c\x32\xa4\x01\n\x12ReplicationService\x12H\n\rAppendEntries\x12\x1b.replication.EntriesRequest\x1a\x18.replication.AckResponse\"\x00\x12\x44\n\x0bRequestVote\x12\x18.replication.VoteRequest\x1a\x19.replication.VoteResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11replication.proto\x12\x0breplication\"\x9f\x01\n\x0e\x45ntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x11\n\tleader_id\x18\x02 \x01(\t\x12\x16\n\x0eprev_log_index\x18\x03 \x01(\x03\x12\x15\n\rprev_log_term\x18\x04 \x01(\x03\x12&\n\x07\x65ntries\x18\x05 \x03(\x0b\x32\x15.replication.LogEntry\x12\x15\n\rleader_commit\x18\x06 \x01(\x03\",\n\x0b\x41\x63kResponse\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x0f\n\x07success\x18\x02 \x01(\x08\"`\n\x0bVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x14\n\x0c\x63\x61ndidate_id\x18\x02 \x01(\t\x12\x16\n\x0elast_log_index\x18\x03 \x01(\x03\x12\x15\n\rlast_log_term\x18\x04 \x01(\x03\"2\n\x0cVoteResponse\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x14\n\x0cvote_granted\x18\x02 \x01(\x08\"8\n\x08LogEntry\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\r\n\x05index\x18\x02 \x01(\x03\x12\x0f\n\x07\x63ommand\x18\x03 \x01(\x0c\"#\n\x0bPeerAddress\x12\x14\n\x0cpeer_address\x18\x01 \x01(\t2\xef\x01\n\x12ReplicationService\x12H\n\rAppendEntries\x12\x1b.replication.EntriesRequest\x1a\x18.replication.AckResponse\"\x00\x12\x44\n\x0bRequestVote\x12\x18.replication.VoteRequest\x1a\x19.replication.VoteResponse\"\x00\x12I\n\x11\x43onfirmConnection\x12\x18.replication.PeerAddress\x1a\x18.replication.AckResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -41,6 +41,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_VOTERESPONSE']._serialized_end=390
   _globals['_LOGENTRY']._serialized_start=392
   _globals['_LOGENTRY']._serialized_end=448
-  _globals['_REPLICATIONSERVICE']._serialized_start=451
-  _globals['_REPLICATIONSERVICE']._serialized_end=615
+  _globals['_PEERADDRESS']._serialized_start=450
+  _globals['_PEERADDRESS']._serialized_end=485
+  _globals['_REPLICATIONSERVICE']._serialized_start=488
+  _globals['_REPLICATIONSERVICE']._serialized_end=727
 # @@protoc_insertion_point(module_scope)

@@ -26,7 +26,7 @@ if _version_not_supported:
 
 
 class ReplicationServiceStub(object):
-    """Service for handling replication and consensus between chat servers
+    """Service for handling replication and consensus between server replicas
     """
 
     def __init__(self, channel):
@@ -45,10 +45,15 @@ class ReplicationServiceStub(object):
                 request_serializer=replication__pb2.VoteRequest.SerializeToString,
                 response_deserializer=replication__pb2.VoteResponse.FromString,
                 _registered_method=True)
+        self.ConfirmConnection = channel.unary_unary(
+                '/replication.ReplicationService/ConfirmConnection',
+                request_serializer=replication__pb2.PeerAddress.SerializeToString,
+                response_deserializer=replication__pb2.AckResponse.FromString,
+                _registered_method=True)
 
 
 class ReplicationServiceServicer(object):
-    """Service for handling replication and consensus between chat servers
+    """Service for handling replication and consensus between server replicas
     """
 
     def AppendEntries(self, request, context):
@@ -62,8 +67,13 @@ class ReplicationServiceServicer(object):
 
     def RequestVote(self, request, context):
         """RequestVote RPC is used by candidates to gather VoteRequest
-        Will use this for leader-based replication version, time permitting
-        (see issue: https://github.com/mirabor/cs262-chat/issues/111)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ConfirmConnection(self, request, context):
+        """ConfirmConnection RPC is used to confirm connection between peers
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -81,6 +91,11 @@ def add_ReplicationServiceServicer_to_server(servicer, server):
                     servicer.RequestVote,
                     request_deserializer=replication__pb2.VoteRequest.FromString,
                     response_serializer=replication__pb2.VoteResponse.SerializeToString,
+            ),
+            'ConfirmConnection': grpc.unary_unary_rpc_method_handler(
+                    servicer.ConfirmConnection,
+                    request_deserializer=replication__pb2.PeerAddress.FromString,
+                    response_serializer=replication__pb2.AckResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -138,6 +153,33 @@ class ReplicationService(object):
             '/replication.ReplicationService/RequestVote',
             replication__pb2.VoteRequest.SerializeToString,
             replication__pb2.VoteResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ConfirmConnection(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/replication.ReplicationService/ConfirmConnection',
+            replication__pb2.PeerAddress.SerializeToString,
+            replication__pb2.AckResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -10,9 +10,10 @@ service ReplicationService {
   rpc AppendEntries(EntriesRequest) returns (AckResponse) {}
 
   // RequestVote RPC is used by candidates to gather VoteRequest
-  // Will use this for leader-based replication version, time permitting
-  // (see issue: https://github.com/mirabor/cs262-chat/issues/111)
   rpc RequestVote(VoteRequest) returns (VoteResponse) {}
+
+  // ConfirmConnection RPC is used to confirm connection between peers
+  rpc ConfirmConnection(PeerAddress) returns (AckResponse) {}
 }
 
 // Request containing log entries to be replicated
@@ -51,4 +52,9 @@ message LogEntry {
   int64 term = 1;    // term when entry was received by leader
   int64 index = 2;   // index of the log entry
   bytes command = 3; // command to be applied to the state machine
+}
+
+// Message for confirming connection between peers
+message PeerAddress {
+  string peer_address = 1; // Address of the peer server
 }
