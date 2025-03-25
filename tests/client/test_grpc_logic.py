@@ -1,10 +1,27 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 import pytest
 import grpc
 from src.client.grpc_logic import ChatAppLogicGRPC
-from src.protocol.grpc import chat_pb2
+from src.protocol.grpc import chat_pb2, replication_pb2
 from src.client.utils import hash_password
 
+
+@pytest.fixture
+def mock_replication_stub():
+    # Create a mock replication stub
+    replication_stub = Mock()
+    
+    # Mock GetNetworkState
+    mock_server = Mock()
+    mock_server.server_id = "server1"
+    mock_server.address = "localhost:5555"
+    mock_server.role = "leader"
+    
+    mock_network_response = Mock()
+    mock_network_response.servers = [mock_server]
+    replication_stub.GetNetworkState.return_value = mock_network_response
+    
+    return replication_stub
 
 @pytest.fixture
 def mock_stub():
@@ -49,18 +66,28 @@ def mock_stub():
 
 
 @pytest.fixture
-def chat_logic(mock_stub):
+def chat_logic(mock_stub, mock_replication_stub):
     # Mock the gRPC channel and stub creation
     with patch('grpc.insecure_channel') as mock_channel_creator:
         # Create a mock channel that returns our mock stub
         mock_channel = Mock()
         mock_channel_creator.return_value = mock_channel
         
-        # Mock the stub class to return our mock stub
-        with patch('src.protocol.grpc.chat_pb2_grpc.ChatServiceStub') as mock_stub_class:
+        # Mock the stub classes
+        with patch('src.protocol.grpc.chat_pb2_grpc.ChatServiceStub') as mock_stub_class, \
+             patch('src.protocol.grpc.replication_pb2_grpc.ReplicationServiceStub') as mock_replication_stub_class, \
+             patch('src.client.grpc_logic.ChatAppLogicGRPC._discover_replicas'):
+            
             mock_stub_class.return_value = mock_stub
+            mock_replication_stub_class.return_value = mock_replication_stub
+            
+            # Create the chat logic instance
             chat_logic = ChatAppLogicGRPC()
             chat_logic.stub = mock_stub  # Ensure we're using our mock stub
+            chat_logic.replication_stub = mock_replication_stub
+            chat_logic.known_replicas = {"server1": "localhost:5555"}
+            chat_logic.current_replica = "server1"
+            
             return chat_logic
 
 
