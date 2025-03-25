@@ -107,7 +107,7 @@ help: # Show available make targets
 	@echo "\033[1;32minstall\033[00m: Install all project dependencies"
 	@echo "\033[1;32minstall-dev\033[00m: Install development tools, pytest, pylint, mypy"
 	@echo "\033[1;32mrun-server\033[00m: Run the chat server (e.x usage: make run-server MODE=grpc SERVER_ID=server1 PORT=5555 PEERS=127.0.0.1:5556,127.0.0.1:5557)"
-	@echo "\033[1;32mrun-client\033[00m: Run the chat client (usage: make run-client MODE={grpc|socket} PORT=5555 CLIENT_ID=your_id SERVER_IP=x.x.x.x)"
+	@echo "\033[1;32mrun-client\033[00m: Run the chat client (usage: make run-client MODE={grpc|socket} CLIENT_ID=your_id SERVER_IP=x.x.x.x) PORT=5555"
 	@echo "\033[1;32mrun-client-gui\033[00m: Run the GUI chat client"
 	@echo "\033[1;32mtest\033[00m: Run all tests"
 	@echo "\033[1;32mbenchmark\033[00m: Run protocol performance benchmarks"
