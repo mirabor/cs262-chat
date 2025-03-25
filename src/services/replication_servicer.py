@@ -3,10 +3,10 @@ ReplicationService implementation for handling replication and consensus between
 server replicas.
 """
 
+import grpc
 import logging
-from typing import Optional
 
-from src.protocol.grpc import replication_pb2
+from src.protocol.grpc import replication_pb2 as replication
 from src.protocol.grpc import replication_pb2_grpc
 
 
@@ -14,87 +14,103 @@ logger = logging.getLogger(__name__)
 
 
 class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
-    """Implementation of the ReplicationService gRPC service."""
+    """Replication service implementation for handling replication"""
 
-    def __init__(self):
-        """Initialize the replication servicer."""
-        self.current_term: int = 0
-        self.voted_for: Optional[str] = None
-        # Will be replaced with proper persistent storage in future
-        self.log_entries = []
+    def __init__(self, replica):
+        self.replica = replica
 
-    def AppendEntries(
-        self, request: replication_pb2.EntriesRequest, context
-    ) -> replication_pb2.AckResponse:
-        """
-        Handle AppendEntries RPC from leader.
-        For now, just log the operation and return success.
-        """
+    def Heartbeat(self, request, context):
+        logger.warning("Heartbeat not implemented yet")
+
+    def ReplicateOperation(self, request, context):
+        logger.warning("ReplicateOperation not implemented yet")
+
+    def JoinNetwork(self, request, context):
+        """Handle a new server joining the network."""
+        new_server_id = request.server_id
+        new_server_address = request.address
+
         logger.info(
-            "Received AppendEntries from leader %s (term: %d)",
-            request.leader_id,
-            request.term,
-        )
-        logger.info("Number of entries: %d", len(request.entries))
-
-        # Update term if leader's term is newer
-        if request.term > self.current_term:
-            self.current_term = request.term
-            self.voted_for = None
-
-        # Simple validation for now - will be enhanced in future implementation
-        if request.term < self.current_term:
-            return replication_pb2.AckResponse(term=self.current_term, success=False)
-
-        # Log entry details for debugging
-        for entry in request.entries:
-            logger.debug(
-                "Entry - term: %d, index: %d, command size: %d bytes",
-                entry.term,
-                entry.index,
-                len(entry.command),
-            )
-
-        return replication_pb2.AckResponse(term=self.current_term, success=True)
-
-    def RequestVote(
-        self, request: replication_pb2.VoteRequest, context
-    ) -> replication_pb2.VoteResponse:
-        """
-        Handle RequestVote RPC from candidate.
-        For now, implement simple voting logic without log comparison.
-        """
-        logger.info(
-            "Received RequestVote from candidate %s (term: %d)",
-            request.candidate_id,
-            request.term,
+            f"Received join request from {new_server_id} at {new_server_address}"
         )
 
-        # Update term if candidate's term is newer
-        if request.term > self.current_term:
-            self.current_term = request.term
-            self.voted_for = None
+        # Only the leader can add new servers
+        if self.replica.role != "leader":
+            if self.replica.leader_id and self.replica.leader_id in self.replica.peers:
+                # Forward to leader
+                try:
+                    leader_address = self.replica.peers[self.replica.leader_id]
+                    with grpc.insecure_channel(leader_address) as channel:
+                        stub = replication_grpc.ReplicationServiceStub(channel)
+                        return stub.JoinNetwork(request)
+                except Exception as e:
+                    logger.error(f"Error forwarding join request to leader: {str(e)}")
+                    context.set_code(grpc.StatusCode.UNAVAILABLE)
+                    context.set_details("Leader unavailable. Try again later.")
+                    return replication.JoinResponse(success=False)
+            else:
+                context.set_code(grpc.StatusCode.UNAVAILABLE)
+                context.set_details(
+                    "Cannot process join request: not the leader and no leader known"
+                )
+                return replication.JoinResponse(success=False)
 
-        # Deny vote if candidate's term is outdated
-        if request.term < self.current_term:
-            return replication_pb2.VoteResponse(
-                term=self.current_term, vote_granted=False
+        # Check if the server ID already exists but with a different address
+        if (
+            new_server_id in self.replica.peers
+            and self.replica.peers[new_server_id] != new_server_address
+        ):
+            logger.warning(
+                f"Server {new_server_id} already exists with a different address. Updating to {new_server_address}"
             )
 
-        # Grant vote if we haven't voted this term and candidate's log is up-to-date
-        # Note: Proper log comparison will be implemented in future
-        vote_granted = self.voted_for is None or self.voted_for == request.candidate_id
-
-        if vote_granted:
-            self.voted_for = request.candidate_id
-            logger.info("Granted vote to candidate %s", request.candidate_id)
-        else:
-            logger.info(
-                "Denied vote to candidate %s, already voted for %s",
-                request.candidate_id,
-                self.voted_for,
+        # Check if the address already exists with a different ID
+        address_to_id = {addr: id for id, addr in self.replica.peers.items()}
+        if (
+            new_server_address in address_to_id
+            and address_to_id[new_server_address] != new_server_id
+        ):
+            existing_id = address_to_id[new_server_address]
+            logger.warning(
+                f"Address {new_server_address} already registered with server ID {existing_id}. Removing {existing_id}."
             )
 
-        return replication_pb2.VoteResponse(
-            term=self.current_term, vote_granted=vote_granted
+            # Remove the old server ID that was using this address
+            del self.replica.peers[existing_id]
+            if existing_id in self.replica.servers_info:
+                del self.replica.servers_info[existing_id]
+
+        # Add the new server to peers
+        self.replica.peers[new_server_id] = new_server_address
+
+        # Add to servers info
+        self.replica.servers_info[new_server_id] = replication.ServerInfo(
+            server_id=new_server_id, address=new_server_address, role="follower"
+        )
+
+        logger.info(f"Added new server {new_server_id} to the network")
+
+        # Create server addresses mapping
+        server_addresses = {}
+        for server_id, address in self.replica.peers.items():
+            server_addresses[server_id] = address
+        server_addresses[self.replica.server_id] = self.replica.address
+
+        # Create response with current network state
+        return replication.JoinResponse(
+            success=True,
+            servers=list(self.replica.servers_info.values()),
+            leader_id=self.replica.server_id,
+            term=self.replica.term,
+            server_addresses=server_addresses,
+        )
+
+    def GetNetworkState(self, request, context):
+        """Return the current state of the network."""
+        logger.info(f"Received network state request from {request.server_id}")
+
+        return replication.NetworkStateResponse(
+            servers=list(self.replica.servers_info.values()),
+            leader_id=self.replica.leader_id if self.replica.leader_id else "",
+            term=self.replica.term,
         )

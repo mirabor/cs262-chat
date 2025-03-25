@@ -1,8 +1,20 @@
 from src.protocol.grpc import chat_pb2, chat_pb2_grpc
 from src.services import api
 
+
 class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
     """Implementation of the ChatService service."""
+
+    def __init__(self, replica=None):
+        """
+        Initialize the ChatServicer instance.
+
+        Args:
+            replica (ReplicaNode): The replica node instance.
+                    When running in standalone mode (no replication),
+                    this parameter is None.
+        """
+        self.replica = replica
 
     # ---------------------------- User Management ----------------------------#
     def Signup(self, request, context):

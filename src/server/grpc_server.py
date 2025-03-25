@@ -3,8 +3,11 @@ import logging
 from concurrent import futures
 
 from protocol.grpc import chat_pb2_grpc
+from protocol.grpc import replication_pb2_grpc
 from protocol.config_manager import ConfigManager
 from src.services.chatservicer import ChatServicer
+from src.services.replication_servicer import ReplicationServicer
+from src.replication.replica_node import ReplicaNode
 
 
 logger = logging.getLogger(__name__)
@@ -32,9 +35,17 @@ class GRPCServer:
         self.port = port if port > 0 else self.config.port
         self.address = f"{self.config.host}:{self.port}"
 
+        # Initialize this replica Node
+        self.replica = ReplicaNode(self.server_id, self.address, self.peers)
+        self.chat_servicer = ChatServicer(self.replica)
+        self.replication_servicer = ReplicationServicer(self.replica)
+
         # Create gRPC server
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-        chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatServicer(), self.server)
+        chat_pb2_grpc.add_ChatServiceServicer_to_server(self.chat_servicer, self.server)
+        replication_pb2_grpc.add_ReplicationServiceServicer_to_server(
+            self.replication_servicer, self.server
+        )
 
     def start(self):
         """Start the gRPC server"""
@@ -43,7 +54,10 @@ class GRPCServer:
             self.server.start()
 
             logger.info("Server %s started at %s", self.server_id, self.address)
-            logger.info("Initial peers: %s", self.peers)
+            logger.info("Initial peers: %s", self.replica.peers)
+
+            # Start background tasks for the replica node
+            self.replica.start()
 
             self.server.wait_for_termination()
         except Exception as e:
