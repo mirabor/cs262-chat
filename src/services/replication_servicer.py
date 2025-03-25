@@ -105,7 +105,7 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
                         self.replica_state.leader_id
                     ]
                     with grpc.insecure_channel(leader_address) as channel:
-                        stub = replication_grpc.ReplicationServiceStub(channel)
+                        stub = replication_pb2_grpc.ReplicationServiceStub(channel)
                         return stub.JoinNetwork(request)
                 except Exception as e:
                     logger.error(f"Error forwarding join request to leader: {str(e)}")
