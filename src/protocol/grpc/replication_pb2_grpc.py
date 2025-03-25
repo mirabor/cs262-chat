@@ -26,7 +26,7 @@ if _version_not_supported:
 
 
 class ReplicationServiceStub(object):
-    """Service for handling replication and consensus between chat servers
+    """Service for internal replication between server replicas
     """
 
     def __init__(self, channel):
@@ -35,35 +35,55 @@ class ReplicationServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.AppendEntries = channel.unary_unary(
-                '/replication.ReplicationService/AppendEntries',
-                request_serializer=replication__pb2.EntriesRequest.SerializeToString,
-                response_deserializer=replication__pb2.AckResponse.FromString,
+        self.Heartbeat = channel.unary_unary(
+                '/replication.ReplicationService/Heartbeat',
+                request_serializer=replication__pb2.HeartbeatRequest.SerializeToString,
+                response_deserializer=replication__pb2.HeartbeatResponse.FromString,
                 _registered_method=True)
-        self.RequestVote = channel.unary_unary(
-                '/replication.ReplicationService/RequestVote',
-                request_serializer=replication__pb2.VoteRequest.SerializeToString,
-                response_deserializer=replication__pb2.VoteResponse.FromString,
+        self.ReplicateOperation = channel.unary_unary(
+                '/replication.ReplicationService/ReplicateOperation',
+                request_serializer=replication__pb2.OperationRequest.SerializeToString,
+                response_deserializer=replication__pb2.OperationResponse.FromString,
+                _registered_method=True)
+        self.JoinNetwork = channel.unary_unary(
+                '/replication.ReplicationService/JoinNetwork',
+                request_serializer=replication__pb2.JoinRequest.SerializeToString,
+                response_deserializer=replication__pb2.JoinResponse.FromString,
+                _registered_method=True)
+        self.GetNetworkState = channel.unary_unary(
+                '/replication.ReplicationService/GetNetworkState',
+                request_serializer=replication__pb2.NetworkStateRequest.SerializeToString,
+                response_deserializer=replication__pb2.NetworkStateResponse.FromString,
                 _registered_method=True)
 
 
 class ReplicationServiceServicer(object):
-    """Service for handling replication and consensus between chat servers
+    """Service for internal replication between server replicas
     """
 
-    def AppendEntries(self, request, context):
-        """AppendEntries RPC is used for:
-        1. Leader heartbeat (empty entries array)
-        2. Log replication (entries array contains log entries to replicate)
+    def Heartbeat(self, request, context):
+        """Heartbeat to check if a server is alive and share state
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def RequestVote(self, request, context):
-        """RequestVote RPC is used by candidates to gather VoteRequest
-        Will use this for leader-based replication version, time permitting
-        (see issue: https://github.com/mirabor/cs262-chat/issues/111)
+    def ReplicateOperation(self, request, context):
+        """Replicate operation to followers
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def JoinNetwork(self, request, context):
+        """Join the network
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetNetworkState(self, request, context):
+        """Get the current state of the network
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -72,15 +92,25 @@ class ReplicationServiceServicer(object):
 
 def add_ReplicationServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'AppendEntries': grpc.unary_unary_rpc_method_handler(
-                    servicer.AppendEntries,
-                    request_deserializer=replication__pb2.EntriesRequest.FromString,
-                    response_serializer=replication__pb2.AckResponse.SerializeToString,
+            'Heartbeat': grpc.unary_unary_rpc_method_handler(
+                    servicer.Heartbeat,
+                    request_deserializer=replication__pb2.HeartbeatRequest.FromString,
+                    response_serializer=replication__pb2.HeartbeatResponse.SerializeToString,
             ),
-            'RequestVote': grpc.unary_unary_rpc_method_handler(
-                    servicer.RequestVote,
-                    request_deserializer=replication__pb2.VoteRequest.FromString,
-                    response_serializer=replication__pb2.VoteResponse.SerializeToString,
+            'ReplicateOperation': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReplicateOperation,
+                    request_deserializer=replication__pb2.OperationRequest.FromString,
+                    response_serializer=replication__pb2.OperationResponse.SerializeToString,
+            ),
+            'JoinNetwork': grpc.unary_unary_rpc_method_handler(
+                    servicer.JoinNetwork,
+                    request_deserializer=replication__pb2.JoinRequest.FromString,
+                    response_serializer=replication__pb2.JoinResponse.SerializeToString,
+            ),
+            'GetNetworkState': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetNetworkState,
+                    request_deserializer=replication__pb2.NetworkStateRequest.FromString,
+                    response_serializer=replication__pb2.NetworkStateResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -91,11 +121,11 @@ def add_ReplicationServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class ReplicationService(object):
-    """Service for handling replication and consensus between server replicas
+    """Service for internal replication between server replicas
     """
 
     @staticmethod
-    def AppendEntries(request,
+    def Heartbeat(request,
             target,
             options=(),
             channel_credentials=None,
@@ -108,9 +138,9 @@ class ReplicationService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/replication.ReplicationService/AppendEntries',
-            replication__pb2.EntriesRequest.SerializeToString,
-            replication__pb2.AckResponse.FromString,
+            '/replication.ReplicationService/Heartbeat',
+            replication__pb2.HeartbeatRequest.SerializeToString,
+            replication__pb2.HeartbeatResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -122,7 +152,7 @@ class ReplicationService(object):
             _registered_method=True)
 
     @staticmethod
-    def RequestVote(request,
+    def ReplicateOperation(request,
             target,
             options=(),
             channel_credentials=None,
@@ -135,9 +165,63 @@ class ReplicationService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/replication.ReplicationService/RequestVote',
-            replication__pb2.VoteRequest.SerializeToString,
-            replication__pb2.VoteResponse.FromString,
+            '/replication.ReplicationService/ReplicateOperation',
+            replication__pb2.OperationRequest.SerializeToString,
+            replication__pb2.OperationResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def JoinNetwork(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/replication.ReplicationService/JoinNetwork',
+            replication__pb2.JoinRequest.SerializeToString,
+            replication__pb2.JoinResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetNetworkState(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/replication.ReplicationService/GetNetworkState',
+            replication__pb2.NetworkStateRequest.SerializeToString,
+            replication__pb2.NetworkStateResponse.FromString,
             options,
             channel_credentials,
             insecure,
