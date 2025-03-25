@@ -37,8 +37,7 @@ class ChatAppLogicGRPC:
         replicas = []
         leader = None
         
-        # In a real implementation, this would parse actual metadata from the gRPC response
-        # For now, we're just assuming the metadata format based on the problem description
+        # TODO: fix so it parse actual metadata from the gRPC response
         for key, value in response_metadata:
             if key == 'replicas':
                 replicas = value.split(',')
@@ -49,7 +48,7 @@ class ChatAppLogicGRPC:
     
     def _update_replicas(self, response_metadata):
         """
-        Update known replicas and leader information from response metadata.
+        Update known replicas and leader information from the server metadata
         """
         replicas, leader = self._extract_metadata(response_metadata)
         
@@ -72,8 +71,7 @@ class ChatAppLogicGRPC:
         current_delay = self.retry_delay
         
         while retries <= self.max_retries:
-            # Choose server - prioritize leader if known
-        # Choose server - prioritize leader if known and not tried
+        # Choose server, prioritize leader if known and not tried
             if retries == 0:
                 server_address = self.primary_address
             elif self.current_leader and self.current_leader not in tried_addresses:
