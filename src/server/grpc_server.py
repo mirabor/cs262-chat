@@ -54,7 +54,7 @@ class GRPCServer:
             self.server.start()
 
             logger.info("Server %s started at %s", self.server_id, self.address)
-            logger.info("Initial peers: %s", self.replica.peers)
+            logger.info("Initial peers: %s", self.replica.state.peers)
 
             # Start background tasks for the replica node
             self.replica.start()
