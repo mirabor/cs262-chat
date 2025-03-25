@@ -2,6 +2,7 @@
 ReplicationService implementation for handling replication and consensus between
 server replicas.
 """
+
 import logging
 from typing import Optional
 
@@ -43,10 +44,7 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
 
         # Simple validation for now - will be enhanced in future implementation
         if request.term < self.current_term:
-            return replication_pb2.AckResponse(
-                term=self.current_term,
-                success=False
-            )
+            return replication_pb2.AckResponse(term=self.current_term, success=False)
 
         # Log entry details for debugging
         for entry in request.entries:
@@ -57,10 +55,7 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
                 len(entry.command),
             )
 
-        return replication_pb2.AckResponse(
-            term=self.current_term,
-            success=True
-        )
+        return replication_pb2.AckResponse(term=self.current_term, success=True)
 
     def RequestVote(
         self, request: replication_pb2.VoteRequest, context
@@ -83,15 +78,12 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
         # Deny vote if candidate's term is outdated
         if request.term < self.current_term:
             return replication_pb2.VoteResponse(
-                term=self.current_term,
-                vote_granted=False
+                term=self.current_term, vote_granted=False
             )
 
         # Grant vote if we haven't voted this term and candidate's log is up-to-date
         # Note: Proper log comparison will be implemented in future
-        vote_granted = (
-            self.voted_for is None or self.voted_for == request.candidate_id
-        )
+        vote_granted = self.voted_for is None or self.voted_for == request.candidate_id
 
         if vote_granted:
             self.voted_for = request.candidate_id
@@ -104,6 +96,5 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
             )
 
         return replication_pb2.VoteResponse(
-            term=self.current_term,
-            vote_granted=vote_granted
+            term=self.current_term, vote_granted=vote_granted
         )

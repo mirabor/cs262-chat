@@ -1,8 +1,9 @@
 """
 Tests for the ReplicationServicer implementation.
 """
+
 import pytest
-from src.server.replication_servicer import ReplicationServicer
+from src.services.replication_servicer import ReplicationServicer
 from src.protocol.grpc import replication_pb2
 
 
@@ -20,7 +21,7 @@ def test_append_entries_basic(servicer):
         prev_log_index=0,
         prev_log_term=0,
         entries=[],  # Empty entries for heartbeat
-        leader_commit=0
+        leader_commit=0,
     )
 
     response = servicer.AppendEntries(request, None)
@@ -31,11 +32,7 @@ def test_append_entries_basic(servicer):
 
 def test_append_entries_with_entries(servicer):
     """Test AppendEntries with actual log entries."""
-    entry = replication_pb2.LogEntry(
-        term=1,
-        index=1,
-        command=b"test command"
-    )
+    entry = replication_pb2.LogEntry(term=1, index=1, command=b"test command")
 
     request = replication_pb2.EntriesRequest(
         term=1,
@@ -43,7 +40,7 @@ def test_append_entries_with_entries(servicer):
         prev_log_index=0,
         prev_log_term=0,
         entries=[entry],
-        leader_commit=0
+        leader_commit=0,
     )
 
     response = servicer.AppendEntries(request, None)
@@ -62,7 +59,7 @@ def test_append_entries_old_term(servicer):
         prev_log_index=0,
         prev_log_term=0,
         entries=[],
-        leader_commit=0
+        leader_commit=0,
     )
 
     response = servicer.AppendEntries(request, None)
@@ -74,10 +71,7 @@ def test_append_entries_old_term(servicer):
 def test_request_vote_basic(servicer):
     """Test basic RequestVote functionality."""
     request = replication_pb2.VoteRequest(
-        term=1,
-        candidate_id="candidate1",
-        last_log_index=0,
-        last_log_term=0
+        term=1, candidate_id="candidate1", last_log_index=0, last_log_term=0
     )
 
     response = servicer.RequestVote(request, None)
@@ -94,10 +88,7 @@ def test_request_vote_already_voted(servicer):
 
     # Second vote attempt for different candidate
     request = replication_pb2.VoteRequest(
-        term=1,
-        candidate_id="candidate2",
-        last_log_index=0,
-        last_log_term=0
+        term=1, candidate_id="candidate2", last_log_index=0, last_log_term=0
     )
 
     response = servicer.RequestVote(request, None)
@@ -111,10 +102,7 @@ def test_request_vote_old_term(servicer):
     servicer.current_term = 2
 
     request = replication_pb2.VoteRequest(
-        term=1,
-        candidate_id="candidate1",
-        last_log_index=0,
-        last_log_term=0
+        term=1, candidate_id="candidate1", last_log_index=0, last_log_term=0
     )
 
     response = servicer.RequestVote(request, None)

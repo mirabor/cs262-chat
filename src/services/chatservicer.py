@@ -1,4 +1,4 @@
-from protocol.grpc import chat_pb2, chat_pb2_grpc
+from src.protocol.grpc import chat_pb2, chat_pb2_grpc
 from src.services import api
 
 class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
