@@ -136,3 +136,8 @@ class TCPServer:
 
             handler = actions.get(action, lambda: {"success": False, "error_message": "Invalid action"})
             return handler()
+
+    def shutdown(self):
+        """Stop the server"""
+        self.server_socket.close()
+        print("Server stopped")
