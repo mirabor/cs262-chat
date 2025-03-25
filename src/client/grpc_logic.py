@@ -3,6 +3,7 @@ import time
 import random
 from protocol.grpc import chat_pb2, chat_pb2_grpc
 from .utils import hash_password
+from .config import MAX_RETRIES, RETRY_DELAY
 
 
 class ChatAppLogicGRPC:
@@ -26,8 +27,8 @@ class ChatAppLogicGRPC:
         # Replica management
         self.known_replicas = [self.primary_address]  # Start with the primary server
         self.current_leader = None  # Will be updated when we get leader info
-        self.max_retries = 3
-        self.retry_delay = 1.0  # Base delay in seconds
+        self.max_retries = MAX_RETRIES
+        self.retry_delay = RETRY_DELAY
 
     def _extract_metadata(self, response_metadata):
         """
