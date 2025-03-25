@@ -103,28 +103,25 @@ class TestRetryMechanism(unittest.TestCase):
         self.assertFalse(success)
         self.assertIn("Failed to login", error_msg)
     
-    def test_leader_discovery_from_error(self):
-        """Test that leader information is extracted from error messages."""
-        # Setup mock to raise NOT_LEADER error with leader info
+    def test_error_handling(self):
+        """Test that the client properly handles errors."""
+        # Setup mock to raise error then succeed
         rpc_error = grpc.RpcError()
         rpc_error.code = lambda: grpc.StatusCode.FAILED_PRECONDITION
-        rpc_error.details = lambda: "Not the leader. The leader is 127.0.0.1:5555"
+        rpc_error.details = lambda: "Some error occurred"
         
         self.mock_stub.Login.side_effect = [
-            rpc_error,  # First call fails with leader info
+            rpc_error,  # First call fails
             self.success_response  # Second call succeeds
         ]
         
         # Call the method
         success, _ = self.client.login("testuser", "password")
         
-        # Verify the leader was updated
-        self.assertEqual(self.client.current_leader, "127.0.0.1:5555")
-        
         # Verify channels were created
         self.mock_channel_creator.assert_has_calls([
             call("localhost:50051"),  # Initial connection
-            call("127.0.0.1:5555")    # Retry with leader
+            call("localhost:50051")    # Retry with same address (first in known_replicas)
         ])
         
         # Verify success
@@ -189,34 +186,31 @@ class TestRetryMechanism(unittest.TestCase):
         """Test that replica information is extracted from response metadata."""
         # Create mock metadata
         mock_metadata = [
-            ('replicas', 'localhost:50051,127.0.0.1:5555,127.0.0.1:5556'),
-            ('leader', '127.0.0.1:5555')
+            ('replicas', 'localhost:50051,127.0.0.1:5555,127.0.0.1:5556')
         ]
         
         # Extract metadata
-        replicas, leader = self.client._extract_metadata(mock_metadata)
+        replicas = self.client._extract_metadata(mock_metadata)
         
         # Verify extraction
         self.assertEqual(replicas, ['localhost:50051', '127.0.0.1:5555', '127.0.0.1:5556'])
-        self.assertEqual(leader, '127.0.0.1:5555')
     
     def test_update_replicas(self):
         """Test that replica information is updated correctly."""
         # Create mock metadata
         mock_metadata = [
-            ('replicas', 'localhost:50051,127.0.0.1:5555,127.0.0.1:5556'),
-            ('leader', '127.0.0.1:5555')
+            ('replicas', 'localhost:50051,127.0.0.1:5555,127.0.0.1:5556')
         ]
+        
+        # Set initial known replicas
+        self.client.known_replicas = ['localhost:50051']
         
         # Update replicas
         self.client._update_replicas(mock_metadata)
         
-        # Verify known replicas were updated
-        expected_replicas = ['127.0.0.1:5555', 'localhost:50051', '127.0.0.1:5556']
-        self.assertEqual(self.client.known_replicas, expected_replicas)
-        
-        # Verify leader was updated
-        self.assertEqual(self.client.current_leader, '127.0.0.1:5555')
+        # Verify known replicas were updated (order doesn't matter since we use set)
+        expected_replicas = ['localhost:50051', '127.0.0.1:5555', '127.0.0.1:5556']
+        self.assertEqual(sorted(self.client.known_replicas), sorted(expected_replicas))
 
 
 if __name__ == '__main__':

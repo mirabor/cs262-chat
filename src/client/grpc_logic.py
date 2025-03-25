@@ -1,9 +1,13 @@
 import grpc
 import time
 import random
+import logging
 from protocol.grpc import chat_pb2, chat_pb2_grpc
 from .utils import hash_password
 from .config import MAX_RETRIES, RETRY_DELAY
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 class ChatAppLogicGRPC:
@@ -26,7 +30,6 @@ class ChatAppLogicGRPC:
         
         # Replica management
         self.known_replicas = [self.primary_address]  # Start with the primary server
-        self.current_leader = None  # Will be updated when we get leader info
         self.max_retries = MAX_RETRIES
         self.retry_delay = RETRY_DELAY
 
@@ -36,86 +39,94 @@ class ChatAppLogicGRPC:
         Assumes metadata contains replica addresses.
         """
         replicas = []
-        leader = None
+        
+        logger.debug(f"Extracting metadata from response: {response_metadata}")
         
         # TODO: fix so it parse actual metadata from the gRPC response
         for key, value in response_metadata:
             if key == 'replicas':
                 replicas = value.split(',')
-            elif key == 'leader':
-                leader = value
+                logger.debug(f"Found replicas in metadata: {replicas}")
                 
-        return replicas, leader
+        return replicas
     
     def _update_replicas(self, response_metadata):
         """
-        Update known replicas and leader information from the server metadata
+        Update known replicas information from the server metadata
         """
-        replicas, leader = self._extract_metadata(response_metadata)
+        replicas = self._extract_metadata(response_metadata)
+        
+        logger.debug(f"Extracted replicas from metadata: {replicas}")
         
         if replicas:
+            old_replicas = self.known_replicas.copy()
             # Update our list of known replicas
-            for replica in replicas:
-                if replica not in self.known_replicas:
-                    self.known_replicas.append(replica)
-        
-        if leader:
-            self.current_leader = leader
-            # If we know the leader, prioritize it by putting it first in our list
-            if leader in self.known_replicas:
-                self.known_replicas.remove(leader)
-                self.known_replicas.insert(0, leader)
+            self.known_replicas = list(set(self.known_replicas + replicas))
+            
+            # Log changes to replica list
+            new_replicas = [r for r in self.known_replicas if r not in old_replicas]
+            if new_replicas:
+                logger.info(f"Added new replicas: {new_replicas}")
+            logger.debug(f"Updated known_replicas: {self.known_replicas}")
     
     def _execute_with_retry(self, rpc_method, request):
         retries = 0
         tried_addresses = set()
         current_delay = self.retry_delay
+        method_name = rpc_method.__name__ if hasattr(rpc_method, '__name__') else 'unknown_method'
+        
+        logger.info(f"Starting RPC call to {method_name} with retry mechanism")
+        logger.debug(f"Known replicas: {self.known_replicas}")
         
         while retries <= self.max_retries:
-        # Choose server, prioritize leader if known and not tried
+            # Choose server to try
             if retries == 0:
                 server_address = self.primary_address
-            elif self.current_leader and self.current_leader not in tried_addresses:
-                server_address = self.current_leader
+                logger.info(f"Using primary server: {server_address}")
             else:
                 # Get available replicas we haven't tried yet
                 available_replicas = [r for r in self.known_replicas if r not in tried_addresses]
+                logger.debug(f"Available replicas not yet tried: {available_replicas}")
+                
                 if not available_replicas:
                     # If we've tried all, reset and try again
+                    logger.warning("All known replicas have been tried, resetting tried_addresses")
                     tried_addresses = set()
                     available_replicas = self.known_replicas
+                
                 server_address = random.choice(available_replicas)
+                logger.info(f"Selected replica for retry {retries}: {server_address}")
             
             tried_addresses.add(server_address)
+            logger.debug(f"Updated tried_addresses: {tried_addresses}")
             
             # Always create new channel when switching servers
             if not hasattr(self, 'current_server') or server_address != self.current_server:
+                logger.info(f"Creating new channel to server: {server_address}")
                 self.channel = grpc.insecure_channel(server_address)
                 self.stub = chat_pb2_grpc.ChatServiceStub(self.channel)
                 self.current_server = server_address
                 
-                
             try:
+                logger.info(f"Attempting RPC call to {method_name} on {server_address}")
                 response = rpc_method(request)
+                logger.info(f"RPC call to {method_name} successful")
                 return response
             except grpc.RpcError as e:
                 retries += 1
-                print(f"RPC failed: {e}. Retry {retries}/{self.max_retries}")
+                status_code = e.code() if hasattr(e, 'code') else 'unknown'
+                details = e.details() if hasattr(e, 'details') else str(e)
                 
-                if e.code() == grpc.StatusCode.FAILED_PRECONDITION:
-                    details = e.details()
-                    if "leader is" in details.lower():
-                        leader_info = details.split("leader is")[1].strip()
-                        self.current_leader = leader_info
-                        print(f"Discovered leader: {self.current_leader}")
-                        continue  # Skip sleep for leader discovery
+                logger.error(f"RPC failed: status={status_code}, details='{details}'. Retry {retries}/{self.max_retries}")
                 
                 if retries <= self.max_retries:  # Only sleep if we'll retry again
                     jitter = random.uniform(0, 0.1 * current_delay)
                     sleep_time = current_delay + jitter
+                    logger.debug(f"Sleeping for {sleep_time:.2f}s before retry {retries}")
                     time.sleep(sleep_time)
                     current_delay = min(current_delay * 2, 5)
         
+        logger.critical(f"Failed to complete request after {self.max_retries} retries")
         raise Exception(f"Failed to complete request after {self.max_retries} retries")
 
     def signup(self, username, nickname, password):
