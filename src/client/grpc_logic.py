@@ -1,8 +1,8 @@
 import grpc
 import logging
 import time
-from protocol.grpc import chat_pb2, chat_pb2_grpc
-from protocol.grpc import replication_pb2, replication_pb2_grpc
+from src.protocol.grpc import chat_pb2, chat_pb2_grpc
+from src.protocol.grpc import replication_pb2, replication_pb2_grpc
 from .utils import hash_password
 from functools import wraps
 

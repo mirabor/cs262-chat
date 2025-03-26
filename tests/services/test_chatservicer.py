@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from protocol.grpc import chat_pb2
+from src.protocol.grpc import chat_pb2
 from src.services.chatservicer import ChatServicer
 
 
