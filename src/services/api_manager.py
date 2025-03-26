@@ -1,0 +1,70 @@
+from src.services.db_manager import DBManager
+
+
+class APIManager:
+    def __init__(self, db_file="database.db"):
+        self.db_manager = DBManager(db_file)
+        self.db_manager.initialize_database()
+
+    def signup(self, input_data):
+        """Sign up a new user. assume password encrypted"""
+        return self.db_manager.add_user(
+            username=input_data["username"],
+            nickname=input_data["nickname"],
+            password=input_data["password"],
+        )
+
+    def login(self, login_data):
+        """Log in a user. assume password encrypted already"""
+        return self.db_manager.login(login_data)
+
+    def delete_user(self, user_id):
+        """Delete a user."""
+        return self.db_manager.delete_user(user_id)
+
+    def get_chats(self, user_id):
+        """Get all chats involving a user."""
+        return self.db_manager.get_chats(user_id)
+
+    def get_all_users(self, exclude_username=None):
+        """Get all users except the excluded one."""
+        return self.db_manager.get_all_users(exclude_username)
+
+    def update_view_limit(self, username, new_limit):
+        """Update the message view limit for a user."""
+        return self.db_manager.update_view_limit(username, new_limit)
+
+    def get_user_message_limit(self, username):
+        """Get the message limit for a user."""
+        return self.db_manager.get_user_message_limit(username)
+
+    def save_settings(self, username, message_limit):
+        """Save settings for a user."""
+        return self.db_manager.save_settings(username, message_limit)
+
+    def start_chat(self, current_user, other_user):
+        """Start a new chat between two users."""
+        return self.db_manager.start_chat(current_user, other_user)
+
+    def delete_messages(self, chat_id, message_indices, current_user):
+        """Delete messages."""
+        return self.db_manager.delete_messages(chat_id, message_indices, current_user)
+
+    def get_messages(self, payload):
+        """Get messages for a chat."""
+        if "chat_id" not in payload or "current_user" not in payload:
+            print(f"DEBUG: Get messages in api.py: payload {payload} is invalid")
+            return {"messages": [], "error_message": "Invalid payload."}
+        return self.db_manager.get_messages(payload["chat_id"], payload["current_user"])
+
+    def send_chat_message(self, chat_id, sender, content):
+        """Send a message in a chat."""
+        return self.db_manager.send_chat_message(chat_id, sender, content)
+
+    def get_users_to_display(
+        self, exclude_username, search_pattern, current_page, users_per_page
+    ):
+        """Get users to display."""
+        return self.db_manager.get_users_to_display(
+            exclude_username, search_pattern, current_page, users_per_page
+        )
