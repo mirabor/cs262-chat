@@ -61,7 +61,7 @@ For more details on features, high-level design, and implementation, see our [Hi
 1. Clone and install:
 
 ```bash
-git clone https://github.com/yourusername/cs262-chat.git
+git clone https://github.com/mirabor/cs262-chat.git
 cd cs262-chat
 make install && make install-dev
 ```
