@@ -34,6 +34,7 @@ make run-server MODE=grpc SERVER_ID=server3 PORT=5557 PEERS=10.250.10.214:5555,1
 
 # Replication System
 
+```
 ┌─────────────────────────────────────────────────────────────────┐
 │                       Replication System                         │
 │                                                                  │
@@ -65,6 +66,7 @@ make run-server MODE=grpc SERVER_ID=server3 PORT=5557 PEERS=10.250.10.214:5555,1
 │  └───────────────┘    └───────────────┘    └───────────────┘    │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
+```
 
 ### Key Components
 
