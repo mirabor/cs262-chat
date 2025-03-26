@@ -2,12 +2,57 @@ import grpc
 import time
 import random
 import logging
+import time
 from protocol.grpc import chat_pb2, chat_pb2_grpc
 from .utils import hash_password
-from .config import MAX_RETRIES, RETRY_DELAY
+from functools import wraps
+
+# Configuration parameters
+MAX_RETRIES = 3
+RETRY_DELAY = 1  # seconds
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+
+def with_retry_and_logging(method_name):
+    """
+    Decorator to standardize error handling, logging, and retries for gRPC methods.
+    
+    Args:
+        method_name (str): The name of the gRPC method being called
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            attempt = 0
+            last_exception = None
+            
+            while attempt < MAX_RETRIES:
+                try:
+                    logger.debug(f"Executing {method_name} (attempt {attempt+1}/{MAX_RETRIES})")
+                    result = func(self, *args, **kwargs)
+                    logger.debug(f"Successfully executed {method_name}")
+                    return result
+                except grpc.RpcError as e:
+                    last_exception = e
+                    logger.warning(f"{method_name} failed (attempt {attempt+1}/{MAX_RETRIES}): {e}")
+                    attempt += 1
+                    if attempt < MAX_RETRIES:
+                        logger.info(f"Retrying in {RETRY_DELAY} seconds...")
+                        time.sleep(RETRY_DELAY)
+                except Exception as e:
+                    last_exception = e
+                    logger.error(f"Unexpected error in {method_name}: {e}", exc_info=True)
+                    break
+            
+            # If we get here, all retries failed or an unexpected error occurred
+            if isinstance(last_exception, grpc.RpcError):
+                return self._handle_grpc_error(method_name, last_exception)
+            else:
+                return False, f"Failed to {method_name}: {str(last_exception)}"
+        return wrapper
+    return decorator
 
 
 class ChatAppLogicGRPC:
@@ -17,7 +62,7 @@ class ChatAppLogicGRPC:
         Replace host/port with your gRPC server address/port.
         """
 
-        print(f"INFO: grpcLogic, Using gRPC server at {host}:{port}")
+        logger.info(f"Using gRPC server at {host}:{port}")
         self.primary_address = f"{host}:{port}"
         self.channel = grpc.insecure_channel(self.primary_address)
         self.stub = chat_pb2_grpc.ChatServiceStub(self.channel)
@@ -27,108 +72,80 @@ class ChatAppLogicGRPC:
             "request_size": 0,
             "response_size": 0,
         }
-        
-        # Replica management
-        self.known_replicas = [self.primary_address]  # Start with the primary server
-        self.max_retries = MAX_RETRIES
-        self.retry_delay = RETRY_DELAY
 
-    def _extract_metadata(self, response_metadata):
-        """
-        Extract replica information from response metadata.
-        Assumes metadata contains replica addresses.
-        """
-        replicas = []
-        
-        logger.debug(f"Extracting metadata from response: {response_metadata}")
-        
-        # TODO: fix so it parse actual metadata from the gRPC response
-        for key, value in response_metadata:
-            if key == 'replicas':
-                replicas = value.split(',')
-                logger.debug(f"Found replicas in metadata: {replicas}")
-                
-        return replicas
-    
-    def _update_replicas(self, response_metadata):
-        """
-        Update known replicas information from the server metadata
-        """
-        replicas = self._extract_metadata(response_metadata)
-        
-        logger.debug(f"Extracted replicas from metadata: {replicas}")
-        
-        if replicas:
-            old_replicas = self.known_replicas.copy()
-            # Update our list of known replicas
-            self.known_replicas = list(set(self.known_replicas + replicas))
-            
-            # Log changes to replica list
-            new_replicas = [r for r in self.known_replicas if r not in old_replicas]
-            if new_replicas:
-                logger.info(f"Added new replicas: {new_replicas}")
-            logger.debug(f"Updated known_replicas: {self.known_replicas}")
-    
-    def _execute_with_retry(self, rpc_method, request):
-        retries = 0
-        tried_addresses = set()
-        current_delay = self.retry_delay
-        method_name = rpc_method.__name__ if hasattr(rpc_method, '__name__') else 'unknown_method'
-        
-        logger.info(f"Starting RPC call to {method_name} with retry mechanism")
-        logger.debug(f"Known replicas: {self.known_replicas}")
-        
-        while retries <= self.max_retries:
-            # Choose server to try
-            if retries == 0:
-                server_address = self.primary_address
-                logger.info(f"Using primary server: {server_address}")
-            else:
-                # Get available replicas we haven't tried yet
-                available_replicas = [r for r in self.known_replicas if r not in tried_addresses]
-                logger.debug(f"Available replicas not yet tried: {available_replicas}")
-                
-                if not available_replicas:
-                    # If we've tried all, reset and try again
-                    logger.warning("All known replicas have been tried, resetting tried_addresses")
-                    tried_addresses = set()
-                    available_replicas = self.known_replicas
-                
-                server_address = random.choice(available_replicas)
-                logger.info(f"Selected replica for retry {retries}: {server_address}")
-            
-            tried_addresses.add(server_address)
-            logger.debug(f"Updated tried_addresses: {tried_addresses}")
-            
-            # Always create new channel when switching servers
-            if not hasattr(self, 'current_server') or server_address != self.current_server:
-                logger.info(f"Creating new channel to server: {server_address}")
-                self.channel = grpc.insecure_channel(server_address)
-                self.stub = chat_pb2_grpc.ChatServiceStub(self.channel)
-                self.current_server = server_address
-                
-            try:
-                logger.info(f"Attempting RPC call to {method_name} on {server_address}")
-                response = rpc_method(request)
-                logger.info(f"RPC call to {method_name} successful")
-                return response
-            except grpc.RpcError as e:
-                retries += 1
-                status_code = e.code() if hasattr(e, 'code') else 'unknown'
-                details = e.details() if hasattr(e, 'details') else str(e)
-                
-                logger.error(f"RPC failed: status={status_code}, details='{details}'. Retry {retries}/{self.max_retries}")
-                
-                if retries <= self.max_retries:  # Only sleep if we'll retry again
-                    jitter = random.uniform(0, 0.1 * current_delay)
-                    sleep_time = current_delay + jitter
-                    logger.debug(f"Sleeping for {sleep_time:.2f}s before retry {retries}")
-                    time.sleep(sleep_time)
-                    current_delay = min(current_delay * 2, 5)
-        
-        logger.critical(f"Failed to complete request after {self.max_retries} retries")
-        raise Exception(f"Failed to complete request after {self.max_retries} retries")
+    def _discover_replicas(self):
+        """Discover other replicas in the network."""
+        try:
+            request = replication_pb2.NetworkStateRequest(server_id="client")
+            response = self.replication_stub.GetNetworkState(request)
 
+            # Update known replicas
+            for server in response.servers:
+                self.known_replicas[server.address] = True
+                if server.role == "leader":
+                    self.current_leader = server.address
+
+            logger.info(f"Discovered replicas: {list(self.known_replicas.keys())}")
+            logger.info(f"Current leader: {self.current_leader}")
+
+        except grpc.RpcError as e:
+            logger.warning(f"Failed to discover replicas: {e}")
+    
+    def _execute_with_failover(self, method_name, request, retry_count=MAX_RETRIES):
+        """Execute a gRPC call with failover to other replicas if the current one fails."""
+        # Try the current connection first
+        try:
+            method = getattr(self.stub, method_name)
+            return method(request)
+        except grpc.RpcError as e:
+            logger.warning(f"Request to {self.primary_address} failed: {e}")
+            
+            # Mark current server as unavailable
+            self.known_replicas[self.primary_address] = False
+            
+            # Try other known replicas
+            for address in list(self.known_replicas.keys()):
+                if address == self.primary_address or not self.known_replicas[address]:
+                    continue
+
+                logger.info(f"Trying failover to replica at {address}")
+                try:
+                    # Create a new channel and stub for this replica
+                    with grpc.insecure_channel(address) as channel:
+                        stub = chat_pb2_grpc.ChatServiceStub(channel)
+                        method = getattr(stub, method_name)
+                        response = method(request)
+
+                        # If successful, update our primary connection
+                        self.primary_address = address
+                        self.channel.close()
+                        self.channel = grpc.insecure_channel(address)
+                        self.stub = chat_pb2_grpc.ChatServiceStub(self.channel)
+                        self.replication_stub = replication_pb2_grpc.ReplicationServiceStub(self.channel)
+
+                        # Try to discover more replicas from this working node
+                        self._discover_replicas()
+
+                        return response
+                except grpc.RpcError as inner_e:
+                    logger.warning(f"Failover to {address} failed: {inner_e}")
+                    self.known_replicas[address] = False
+            
+            # If we get here, all known replicas failed
+            raise Exception(f"All known replicas are unavailable. Last error: {e}")
+
+    def _handle_grpc_error(self, operation, error):
+        """Handle gRPC errors in a standardized way."""
+        if error.code() == grpc.StatusCode.UNAVAILABLE:
+            return False, f"Service unavailable: {error.details()}"
+        elif error.code() == grpc.StatusCode.NOT_FOUND:
+            return False, f"Resource not found"
+        elif error.code() == grpc.StatusCode.PERMISSION_DENIED:
+            return False, f"Permission denied"
+        else:
+            return False, f"Failed to {operation}: {error.details() or str(error)}"
+
+    @with_retry_and_logging("signup")
     def signup(self, username, nickname, password):
         """Sign up a new user."""
         if not username or not nickname or not password:
@@ -141,12 +158,10 @@ class ChatAppLogicGRPC:
             password=hashed_password,
         )
         
-        try:
-            response = self._execute_with_retry(self.stub.Signup, request)
-            return response.success, response.error_message
-        except Exception as e:
-            return False, f"Failed to sign up: {str(e)}"
+        response = self._execute_with_failover("Signup", request)
+        return response.success, response.error_message
 
+    @with_retry_and_logging("login")
     def login(self, username, password):
         """Attempt to log the user in using gRPC."""
         if not username or not password:
@@ -155,15 +170,29 @@ class ChatAppLogicGRPC:
         hashed_password = hash_password(password)
         request = chat_pb2.LoginRequest(username=username, password=hashed_password)
 
-        try:
-            response = self._execute_with_retry(self.stub.Login, request)
-            return response.success, response.error_message or ""
-        except Exception as e:
-            return False, f"Failed to login: {str(e)}"
+        # Serialize the request to get the byte size
+        serialized_request = request.SerializeToString()
+        logger.debug(f"gRPC login request size: {len(serialized_request)} bytes")
 
-    def get_users_to_display(
-        self, current_user, search_pattern, current_page, users_per_page
-    ):
+        serialized_size = request.ByteSize()  # This gets the exact byte size when serialized
+        logger.debug(f"gRPC login request ByteSize: {serialized_size} bytes")
+
+        response = self._execute_with_failover("Login", request)
+
+        if not response.success:
+            return False, response.error_message or "Login failed"
+
+        # Serialize the response to get its size
+        serialized_response = response.SerializeToString()
+        logger.debug(f"gRPC login response size: {len(serialized_response)} bytes")
+
+        # Store current user
+        self.current_user = username
+
+        return True, ""
+
+    @with_retry_and_logging("get_users")
+    def get_users_to_display(self, current_user, search_pattern, current_page, users_per_page):
         """Retrieve a paginated list of users."""
         request = chat_pb2.GetUsersToDisplayRequest(
             exclude_username=current_user,
@@ -171,102 +200,83 @@ class ChatAppLogicGRPC:
             current_page=current_page or 1,
             users_per_page=users_per_page or 10,
         )
-        try:
-            response = self._execute_with_retry(self.stub.GetUsersToDisplay, request)
-            return response.usernames, response.error_message
-        except Exception as e:
-            return [], f"Failed to get users: {str(e)}"
+        response = self._execute_with_failover("GetUsersToDisplay", request)
+        return response.usernames, response.error_message
 
+    @with_retry_and_logging("get_chats")
     def get_chats(self, user_id):
         """Retrieve all chats for a user."""
-
-        print(f"GetChats called for user_id: {user_id} of type {type(user_id)}")
+        logger.debug(f"GetChats called for user_id: {user_id} of type {type(user_id)}")
         request = chat_pb2.GetChatsRequest(user_id=user_id)
         
-        try:
-            response = self._execute_with_retry(self.stub.GetChats, request)
-    
-            if response.error_message:
-                return [], response.error_message
-    
-            chats = []
-            for chat in response.chats:
-                chat_info = {
-                    "chat_id": chat.chat_id,
-                    "other_user": chat.other_user,
-                    "unread_count": chat.unread_count,
-                }
-                chats.append(chat_info)
-                self.chat_cache[chat.chat_id] = chat_info
-                print(f"Added chat to cache: {chat_info}")
-    
-            return chats, ""
-        except Exception as e:
-            return [], f"Failed to get chats: {str(e)}"
+        response = self._execute_with_failover("GetChats", request)
+
+        if response.error_message:
+            return [], response.error_message
+
+        chats = []
+        for chat in response.chats:
+            chat_info = {
+                "chat_id": chat.chat_id,
+                "other_user": chat.other_user,
+                "unread_count": chat.unread_count,
+            }
+            chats.append(chat_info)
+            self.chat_cache[chat.chat_id] = chat_info
+            logger.debug(f"Added chat to cache: {chat_info}")
+
+        return chats, ""
 
     def get_other_user_in_chat(self, chat_id):
         other_user = self.chat_cache.get(chat_id, {}).get("other_user")
-        print(
-            f"GetOtherUserInChat called for chat_id: {chat_id}, got other user: {other_user}"
-        )
+        logger.debug(f"GetOtherUserInChat called for chat_id: {chat_id}, got other user: {other_user}")
         return other_user
 
+    @with_retry_and_logging("get_messages")
     def get_messages(self, chat_id, current_user):
         """Retrieve messages for a given chat."""
         request = chat_pb2.GetMessagesRequest(
             chat_id=chat_id,
             current_user=current_user,
         )
-        print(
-            f"INFO: grpc_logic get message request: id {request.chat_id} and user {request.current_user}"
-        )
+        logger.debug(f"Get message request: id {request.chat_id} and user {request.current_user}")
         
-        try:
-            response = self._execute_with_retry(self.stub.GetMessages, request)
-            
-            if response.error_message:
-                return [], response.error_message
-    
-            print(f"INFO: grpc_logic got response: {response}")
-            messages_list = []
-            for msg in response.messages:
-                messages_list.append(
-                    {
-                        "sender": msg.sender,
-                        "content": msg.content,
-                        "timestamp": msg.timestamp,
-                    }
-                )
-            return messages_list, ""
-        except Exception as e:
-            return [], f"Failed to get messages: {str(e)}"
+        response = self._execute_with_failover("GetMessages", request)
+        if response.error_message:
+            return [], response.error_message
 
+        logger.debug(f"Got messages response: {response}")
+        messages_list = []
+        for msg in response.messages:
+            messages_list.append(
+                {
+                    "sender": msg.sender,
+                    "content": msg.content,
+                    "timestamp": msg.timestamp,
+                }
+            )
+        return messages_list, ""
+
+    @with_retry_and_logging("start_chat")
     def start_chat(self, current_user, other_user):
         """Initiate a new chat between two users."""
         request = chat_pb2.StartChatRequest(
             current_user=current_user,
             other_user=other_user,
         )
-        
-        try:
-            response = self._execute_with_retry(self.stub.StartChat, request)
-            
-            if not response.success:
-                return None, response.error_message
-            return response.chat.chat_id, ""
-        except Exception as e:
-            return None, f"Failed to start chat: {str(e)}"
+        response = self._execute_with_failover("StartChat", request)
+        if not response.success:
+            return None, response.error_message
+        return response.chat.chat_id, ""
 
+    @with_retry_and_logging("get_user_message_limit")
     def get_user_message_limit(self, current_user):
         """Get the user's message limit (for UI or logic checks)."""
         request = chat_pb2.GetUserMessageLimitRequest(username=current_user)
-        
-        try:
-            response = self._execute_with_retry(self.stub.GetUserMessageLimit, request)
-            return response.limit, response.error_message
-        except Exception as e:
-            return "", f"Failed to get message limit: {str(e)}"
+        response = self._execute_with_failover("GetUserMessageLimit", request)
+        return response.limit, response.error_message
 
+    @with_retry_and_logging("delete_messages")
     def delete_messages(self, chat_id, message_indices, current_user):
         """Send a request to delete specific messages in a chat."""
         request = chat_pb2.DeleteMessagesRequest(
@@ -274,13 +284,10 @@ class ChatAppLogicGRPC:
             message_indices=message_indices,
             current_user=current_user,
         )
-        
-        try:
-            response = self._execute_with_retry(self.stub.DeleteMessages, request)
-            return response.success, response.error_message
-        except Exception as e:
-            return False, f"Failed to delete messages: {str(e)}"
+        response = self._execute_with_failover("DeleteMessages", request)
+        return response.success, response.error_message
 
+    @with_retry_and_logging("send_chat_message")
     def send_chat_message(self, chat_id, sender, content):
         """Send a new message in a chat."""
         request = chat_pb2.SendMessageRequest(
@@ -288,32 +295,22 @@ class ChatAppLogicGRPC:
             sender=sender,
             content=content,
         )
-        
-        try:
-            response = self._execute_with_retry(self.stub.SendChatMessage, request)
-            return response.success, response.error_message
-        except Exception as e:
-            return False, f"Failed to send message: {str(e)}"
+        response = self._execute_with_failover("SendChatMessage", request)
+        return response.success, response.error_message
 
+    @with_retry_and_logging("save_settings")
     def save_settings(self, username, message_limit):
         """Update user settings (message limit, etc.)."""
         request = chat_pb2.SaveSettingsRequest(
             username=username,
             message_limit=message_limit,
         )
-        
-        try:
-            response = self._execute_with_retry(self.stub.SaveSettings, request)
-            return response.success, response.error_message
-        except Exception as e:
-            return False, f"Failed to save settings: {str(e)}"
+        response = self._execute_with_failover("SaveSettings", request)
+        return response.success, response.error_message
 
+    @with_retry_and_logging("delete_account")
     def delete_account(self, current_user):
         """Delete the current user's account."""
         request = chat_pb2.DeleteUserRequest(username=current_user)
-        
-        try:
-            response = self._execute_with_retry(self.stub.DeleteUser, request)
-            return response.success, response.error_message
-        except Exception as e:
-            return False, f"Failed to delete account: {str(e)}"
+        response = self._execute_with_failover("DeleteUser", request)
+        return response.success, response.error_message
