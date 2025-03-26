@@ -98,6 +98,7 @@ class ConfigManager:
             interfaces = socket.getaddrinfo(hostname, None)
             for info in interfaces:
                 addr = info[4][0]
+                self.network.host = addr
                 if not addr.startswith("fe80"):  # Skip link-local addresses
                     print(f"Interface: {addr}")
         except Exception as e:

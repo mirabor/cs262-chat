@@ -33,12 +33,6 @@ def main():
         help="Server address for socket mode (default: localhost)",
     )
     parser.add_argument(
-        "--host",
-        type=str,
-        default="localhost",
-        help="gRPC server host (default: localhost)",
-    )
-    parser.add_argument(
         "--port",
         type=int,
         default=50051,
@@ -54,8 +48,10 @@ def main():
         print(f"Connecting to server at {args.server_addr} via {args.mode} mode")
         socket_client = Client(server_addr=args.server_addr, client_id=args.client_id)
     elif args.mode == "grpc":
-        print(f"Connecting to server at {args.host}:{args.port} via {args.mode} mode")
-        rpc_logic = ChatAppLogicGRPC(host=args.host, port=args.port)
+        print(
+            f"Connecting to server at {args.server_addr}:{args.port} via {args.mode} mode"
+        )
+        rpc_logic = ChatAppLogicGRPC(host=args.server_addr, port=args.port)
     else:
         raise ValueError(f"Invalid mode: {args.mode}")
 
