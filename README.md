@@ -8,6 +8,53 @@ Our application is built with a client-server architecture, supporting multiple 
 
 [![Test Suite & Coverage Status](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml/badge.svg)](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml)
 
+<h2>Getting Started</h2>
+
+### Prerequisites
+
+- Python 3.8+
+- pip (Python package manager)
+- make (build tool)
+
+### Quick Start
+
+1. Clone and install:
+
+```bash
+git clone https://github.com/mirabor/cs262-chat.git
+cd cs262-chat
+make install && make install-dev
+```
+
+2. Start server:
+    
+    ```bash
+    # start first server in the cluster 
+    make run-server MODE=grpc SERVER_ID=server1 PORT=5555
+    ```
+
+*Note*: when you start the first server, it will log the IP address under “Network Interface” section.  Take note of your IP address so that you can reference it as a peer when you add new replica nodes.
+
+    To add replica nodes, run same command but with a list of peers' addresses (comma-separated). 
+    ```bash
+    make run-server MODE=grpc SERVER_ID=server2 PORT=5556 PEERS=FIRST_SERVER_IP:5555
+    ```
+	Also take note of your second server’s IP address here.
+
+    ```
+    make run-server MODE=grpc SERVER_ID=server3 PORT=5557 PEERS=FIRST_SERVER_IP:5555, SECOND_SERVER_IP:5556
+    ```
+Replace `FIRST_SERVER_IP` and `SECOND_SERVER_IP` with your first server’s IP address and your second server’s IP address, respectively. You can add more by following the same structure. Each sever will work on its own database (also logged). 
+
+4. Start client
+
+	```bash
+	make run-client MODE=grpc PORT=5555 CLIENT_ID=client1 SERVER_IP=LEADER_IP
+	```
+
+> [!NOTE]
+> > `LEADER_IP` will be displayed on the leader machine (most likely `server1` if you used instruction above) where the server is running, along with other server details (e.g. what wire protocol is being used, port, etc.).
+
 <details>
   <summary><h2>Features</h2></summary>
 
@@ -45,62 +92,6 @@ Our application implements the below functional requirements:
 For more details on features, high-level design, and implementation, see our [High-Level Design & Implementation Plan](/design/DESIGN_DOC.md).
 
 </details>
-
-
-<details>
-  <summary><h2>Getting Started</h2></summary>
-
-### Prerequisites
-
-- Python 3.8+
-- pip (Python package manager)
-- make (build tool)
-
-### Quick Start
-
-1. Clone and install:
-
-```bash
-git clone https://github.com/mirabor/cs262-chat.git
-cd cs262-chat
-make install && make install-dev
-```
-
-2. Start server:
-
-```bash
-# Standard mode (single server)
-make run-server
-
-# Fault-tolerant mode with gRPC replication
-# Start first server (leader)
-make run-server MODE=grpc SERVER_ID=server1 PORT=5555
-
-# Add additional replicas
-make run-server MODE=grpc SERVER_ID=server2 PORT=5556 PEERS=localhost:5555
-make run-server MODE=grpc SERVER_ID=server3 PORT=5557 PEERS=localhost:5555,localhost:5556
-```
-
-3. Start client
-
-   1. On the same machine as server (new terminal):
-
-      ```bash
-      make run-client-gui
-      ```
-
-   2. Connecting from a different machine (replace `SERVER_IP` with server's IP):
-
-      ```bash
-      make run-client-gui CLIENT_ID=YOUR_DESIRED_ID SERVER_IP=SERVER_IP
-      ```
-
-</details>
-
-> [!NOTE]
-> > `SERVER_IP` will be displayed on the machine where the server is running with other server details (e.g. what wire protocol is being used, port, etc.).
-> `YOUR_DESIRED_ID` can be any string you want to use as your client ID.
-
 
 <details>
   <summary><h2>Documentation Structure</h2></summary>
