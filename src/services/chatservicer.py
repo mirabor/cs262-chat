@@ -2,6 +2,7 @@ import grpc
 import logging
 from src.protocol.grpc import chat_pb2, chat_pb2_grpc
 from src.services.api_manager import APIManager
+from .replication_decorator import replicate_to_followers
 
 logger = logging.getLogger(__name__)
 
@@ -24,124 +25,9 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
         print(f"Using database: {db_name}")
         self.api = APIManager(db_file=db_name)
 
-    def _add_replica_metadata(self, context):
-        """
-        Add metadata about available replicas to the gRPC context.
-        This helps clients find alternative replicas if this one fails.
-        """
-        if not self.replica or not context:
-            return
-
-        try:
-            # Add leader information if available
-            if (
-                self.replica.state.leader_id
-                and self.replica.state.leader_id != self.replica.state.server_id
-            ):
-                if self.replica.state.leader_id in self.replica.state.peers:
-                    leader_address = self.replica.state.peers[
-                        self.replica.state.leader_id
-                    ]
-                    context.set_trailing_metadata(
-                        (
-                            ("leader-id", self.replica.state.leader_id),
-                            ("leader-address", leader_address),
-                        )
-                    )
-
-            # Add information about all known replicas
-            for server_id, server_info in self.replica.state.servers_info.items():
-                if server_id != self.replica.state.server_id:
-                    context.add_trailing_metadata(("replica-id", server_id))
-                    context.add_trailing_metadata(
-                        ("replica-address", server_info.address)
-                    )
-                    context.add_trailing_metadata(("replica-role", server_info.role))
-        except Exception as e:
-            logger.error(f"Error adding replica metadata: {e}")
-
-    def _forward_to_leader_if_needed(self, context, method_name, request):
-        """
-        Forward write requests to the leader if this replica is not the leader.
-        """
-        # Only forward if we're in a replicated setup and we're not the leader
-        if not self.replica or self.replica.state.role == "leader":
-            return None
-
-        # Only forward write operations (not reads)
-        write_operations = [
-            "Signup",
-            "Login",
-            "DeleteUser",
-            "SaveSettings",
-            "StartChat",
-            "SendChatMessage",
-            "DeleteMessages",
-        ]
-        if method_name not in write_operations:
-            return None
-
-        # If we know who the leader is, forward the request
-        if (
-            self.replica.state.leader_id
-            and self.replica.state.leader_id in self.replica.state.peers
-        ):
-            leader_address = self.replica.state.peers[self.replica.state.leader_id]
-            try:
-                logger.info(
-                    f"Forwarding {method_name} request to leader at {leader_address}"
-                )
-                with grpc.insecure_channel(leader_address) as channel:
-                    stub = chat_pb2_grpc.ChatServiceStub(channel)
-                    method = getattr(stub, method_name)
-                    return method(request)
-            except Exception as e:
-                logger.error(f"Error forwarding to leader: {e}")
-                context.set_code(grpc.StatusCode.UNAVAILABLE)
-                context.set_details(f"Leader unavailable: {e}")
-                self._add_replica_metadata(context)
-                return None
-
-        # If we don't know who the leader is
-        context.set_code(grpc.StatusCode.FAILED_PRECONDITION)
-        context.set_details(
-            "Operation must be performed on leader, but leader is unknown"
-        )
-        self._add_replica_metadata(context)
-        return None
-
     # ---------------------------- User Management ----------------------------#
+    @replicate_to_followers("Signup")
     def Signup(self, request, context):
-
-        if self.replica:
-            try:
-                logger.info("Request to signup is of type: %s", str(type(request)))
-                serialized_request = request.SerializeToString()
-                success = self.replica.replicate_to_followers(
-                    "ChatServicer", "Signup", serialized_request
-                )
-
-                if not success:  # this happens when we are follower replica, and we
-                    # couldn't forward this to a known leader. So client should retry
-                    context.set_code(grpc.StatusCode.FAILED_PRECONDITION)
-                    context.set_details(
-                        "Operation must be performed on leader, and we couldn't forward it to a known leader; client should retry"
-                    )
-                    return chat_pb2.UserResponse(
-                        success=False,
-                        error_message="Contacted followers but couldn't forward",
-                    )
-            except Exception as e:
-                logger.error(f"Error replicating to followers: {e}")
-                return chat_pb2.UserResponse(
-                    success=False,
-                    error_message=f"Error 500: Internal Server Error: {e}",
-                )
-
-            logger.info(
-                "ChatServicer.Signup: replication handled, now handling locally"
-            )
-
         result = self.api.signup(
             {
                 "username": request.username,
@@ -151,8 +37,6 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
         )
 
         if not result["success"]:
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
             return chat_pb2.UserResponse(
                 success=False, error_message=result["error_message"]
             )
@@ -162,13 +46,6 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
         )
 
     def Login(self, request, context):
-        # Check if we need to forward to leader
-        forwarded_response = self._forward_to_leader_if_needed(
-            context, "Login", request
-        )
-        if forwarded_response is not None:
-            return forwarded_response
-
         result = self.api.login(
             {"username": request.username, "password": request.password}
         )
@@ -176,8 +53,6 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
         print(f"ChatServicer.Login: returning results: {result}")
 
         if not result["success"]:
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
             return chat_pb2.UserResponse(
                 success=False, error_message=result["error_message"]
             )
@@ -190,20 +65,9 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             view_limit=result.get("view_limit", 0),
         )
 
+    @replicate_to_followers("DeleteUser")
     def DeleteUser(self, request, context):
-        # Check if we need to forward to leader
-        forwarded_response = self._forward_to_leader_if_needed(
-            context, "DeleteUser", request
-        )
-        if forwarded_response is not None:
-            return forwarded_response
-
         result = self.api.delete_user(request.username)
-
-        if result.get("error_message"):
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
-
         return chat_pb2.StatusResponse(
             success=True if not result.get("error_message") else False,
             error_message=result.get("error_message", ""),
@@ -216,29 +80,14 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             f"ChatServicer.GetUserMessageLimit: results from api: {result} and type of message limit: {type(result.get('message_limit', 0))}"
         )
 
-        if result.get("error_message"):
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
-
         return chat_pb2.MessageLimitResponse(
             limit=result.get("message_limit", 0),
             error_message=result.get("error_message", ""),
         )
 
+    @replicate_to_followers("SaveSettings")
     def SaveSettings(self, request, context):
-        # Check if we need to forward to leader
-        forwarded_response = self._forward_to_leader_if_needed(
-            context, "SaveSettings", request
-        )
-        if forwarded_response is not None:
-            return forwarded_response
-
         result = self.api.save_settings(request.username, request.message_limit)
-
-        if result.get("error_message"):
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
-
         return chat_pb2.StatusResponse(
             success=True if not result.get("error_message") else False,
             error_message=result.get("error_message", ""),
@@ -252,10 +101,6 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             request.current_page,
             request.users_per_page,
         )
-
-        if result.get("error_message"):
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
 
         return chat_pb2.UsersDisplayResponse(
             usernames=result.get("users", []),
@@ -278,26 +123,14 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
                 )
             )
 
-        if result.get("error_message"):
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
-
         return chat_pb2.ChatsResponse(
             chats=chats, error_message=result.get("error_message", "")
         )
 
+    @replicate_to_followers("StartChat")
     def StartChat(self, request, context):
-        # Check if we need to forward to leader
-        forwarded_response = self._forward_to_leader_if_needed(
-            context, "StartChat", request
-        )
-        if forwarded_response is not None:
-            return forwarded_response
-
         result = self.api.start_chat(request.current_user, request.other_user)
         if not result["success"]:
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
             return chat_pb2.ChatResponse(
                 success=False, error_message=result["error_message"]
             )
@@ -323,29 +156,16 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
                     timestamp=msg["timestamp"],
                 )
             )
-
-        if result.get("error_message"):
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
-
         return chat_pb2.MessagesResponse(
             messages=messages, error_message=result.get("error_message", "")
         )
 
+    @replicate_to_followers("SendChatMessage")
     def SendChatMessage(self, request, context):
-        # Check if we need to forward to leader
-        forwarded_response = self._forward_to_leader_if_needed(
-            context, "SendChatMessage", request
-        )
-        if forwarded_response is not None:
-            return forwarded_response
-
         result = self.api.send_chat_message(
             request.chat_id, request.sender, request.content
         )
         if not result["success"]:
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
             return chat_pb2.MessageResponse(
                 success=False, error_message=result["error_message"]
             )
@@ -355,22 +175,11 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             error_message=result.get("error_message", ""),
         )
 
+    @replicate_to_followers("DeleteMessages")
     def DeleteMessages(self, request, context):
-        # Check if we need to forward to leader
-        forwarded_response = self._forward_to_leader_if_needed(
-            context, "DeleteMessages", request
-        )
-        if forwarded_response is not None:
-            return forwarded_response
-
         result = self.api.delete_messages(
             request.chat_id, list(request.message_indices), request.current_user
         )
-
-        if result.get("error_message"):
-            # Add replica metadata to help client find alternatives
-            self._add_replica_metadata(context)
-
         return chat_pb2.StatusResponse(
             success=True if not result.get("error_message") else False,
             error_message=result.get("error_message", ""),
