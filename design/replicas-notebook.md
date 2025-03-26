@@ -275,7 +275,8 @@ decouple the logic for grpc_server
 
 try this for 2.0 PR usage:
 
-# Start the first server instance
+```bash
+# server instance
 make run-server MODE=grpc HOST=127.0.0.1 PORT=5555 PEERS=127.0.0.1:5556,127.0.0.1:5557
 
 # Start the second server instance
@@ -283,6 +284,7 @@ make run-server MODE=grpc HOST=127.0.0.1 PORT=5556 PEERS=127.0.0.1:5555,127.0.0.
 
 # Start the third server instance
 make run-server MODE=grpc HOST=127.0.0.1 PORT=5557 PEERS=127.0.0.1:5555,127.0.0.1:5556
+```
 
 3/24/25:
 
