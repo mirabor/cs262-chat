@@ -4,11 +4,12 @@ Welcome to our chat app, a PyQt6-based client with a dark theme UI and a Python 
 
 Our application is built with a client-server architecture, supporting multiple clients connecting to the server from different machines. We have implemented two **wire protocols**: JSON and our custom protocol (SAMIRA🔥).
 
-[![Design Documentation](https://img.shields.io/badge/Design-Documentation-blue)](/design/DESIGN_DOC.md) [![Client Documentation](https://img.shields.io/badge/Client-Documentation-blue)](src/client/README.md) [![Server Documentation](https://img.shields.io/badge/Server-Documentation-blue)](src/server/README.md) [![Protocol Documentation](https://img.shields.io/badge/Protocol-Documentation-blue)](src/protocol/README.md)
+[![Design Documentation](https://img.shields.io/badge/Design-Documentation-blue)](/design/DESIGN_DOC.md) [![Client Documentation](https://img.shields.io/badge/Client-Documentation-blue)](src/client/README.md) [![Server Documentation](https://img.shields.io/badge/Server-Documentation-blue)](src/server/README.md) [![Protocol Documentation](https://img.shields.io/badge/Protocol-Documentation-blue)](src/protocol/README.md) [![Replication Documentation](https://img.shields.io/badge/Replication-Documentation-blue)](src/replication/README.md) 
 
 [![Test Suite & Coverage Status](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml/badge.svg)](https://github.com/mirabor/cs262-chat/actions/workflows/test.yml)
 
-## Features
+<details>
+  <summary><h2>Features</h2></summary>
 
 Our application implements the below functional requirements:
 
@@ -35,10 +36,11 @@ Our application implements the below functional requirements:
 
 For more details on features, high-level design, and implementation, see our [High-Level Design & Implementation Plan](/design/DESIGN_DOC.md).
 
-## Demo
-<!-- TODO: [View Demo GIFs showing multi-machine usage](#demo-gifs) -->
+</details>
+
 <details>
-  <summary><strong><span style="font-size: 2em;"> Open Me! 🎬 </span></strong></summary>
+  <summary><h2>Demo</h2></summary>
+<!-- TODO: [View Demo GIFs showing multi-machine usage](#demo-gifs) -->
    
 https://github.com/user-attachments/assets/23159f82-a360-44ae-9f69-68630fd223f8
 
@@ -54,7 +56,8 @@ https://github.com/user-attachments/assets/cce96add-d02c-4c67-b1b2-f980f0db6108
 
 </details>
 
-## Getting Started
+<details>
+  <summary><h2>Getting Started</h2></summary>
 
 ### Prerequisites
 
@@ -96,7 +99,11 @@ make run-server
 > > `SERVER_IP` will be displayed on the machine where the server is running with other server details (e.g. what wire protocol is being used, port, etc.).
 > `YOUR_DESIRED_ID` can be any string you want to use as your client ID.
 
-## Documentation Structure
+</details>
+
+
+<details>
+  <summary><h2>Documentation Structure</h2></summary>
 
 Our documentation is organized for easy navigation:
 
@@ -123,7 +130,10 @@ Our documentation is organized for easy navigation:
 > **Engineering Notebook**
 > For our other documents, especially engineering notebooks, see the [notebook.md](./design/notebook.md) file and the [Issues Page](https://github.com/mirabor/cs262-chat/issues?q=is%3Aissue%20state%3Aclosed)
 
-## Testing Coverage
+</details>
+
+<details>
+  <summary><h2>Testing Coverage</h2></summary>
 
 Our test suite coverage report can be found by clicking on the badge below:
 
@@ -135,7 +145,10 @@ Also, you can run the test suite locally with:
 make test
 ```
 
-## Project Structure
+</details>
+
+<details>
+  <summary><h2>Project Structure</h2></summary>
 
 ![image](https://github.com/user-attachments/assets/428fda87-5ae3-4445-89f9-a48ab46efcd8)
 
@@ -155,7 +168,10 @@ make test
     └── server
 ```
 
-## Development
+</details>
+
+<details>
+  <summary><h2>Development</h2></summary>
 
 ### Code Style
 
@@ -168,3 +184,5 @@ make fix-style
 
 > [!TIP]
 > For other development `make` commands, simply run `make` to see the available options.
+
+</details>
