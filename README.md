@@ -26,31 +26,32 @@ cd cs262-chat
 make install && make install-dev
 ```
 
-2. Start server:
+2. Start first server in the cluster:
     
-    ```bash
-    # start first server in the cluster 
-    make run-server MODE=grpc SERVER_ID=server1 PORT=5555
-    ```
+```bash
+make run-server MODE=grpc SERVER_ID=server1 PORT=5555
+```
 
-*Note*: when you start the first server, it will log the IP address under “Network Interface” section.  Take note of your IP address so that you can reference it as a peer when you add new replica nodes.
+**Note**: when you start the first server, it will log the IP address under “Network Interface” section. **Take note of your IP address** so that you can reference it as a peer when you add new replica nodes.
 
-    To add replica nodes, run same command but with a list of peers' addresses (comma-separated). 
-    ```bash
-    make run-server MODE=grpc SERVER_ID=server2 PORT=5556 PEERS=FIRST_SERVER_IP:5555
-    ```
-	Also take note of your second server’s IP address here.
+To add replica nodes, run same command but with a list of peers' addresses (comma-separated). 
 
-    ```
-    make run-server MODE=grpc SERVER_ID=server3 PORT=5557 PEERS=FIRST_SERVER_IP:5555, SECOND_SERVER_IP:5556
-    ```
+```bash
+make run-server MODE=grpc SERVER_ID=server2 PORT=5556 PEERS=FIRST_SERVER_IP:5555
+```
+
+Also take note of your **second server’s IP address** here.
+
+```
+make run-server MODE=grpc SERVER_ID=server3 PORT=5557 PEERS=FIRST_SERVER_IP:5555, SECOND_SERVER_IP:5556
+```
 Replace `FIRST_SERVER_IP` and `SECOND_SERVER_IP` with your first server’s IP address and your second server’s IP address, respectively. You can add more by following the same structure. Each sever will work on its own database (also logged). 
 
 4. Start client
 
-	```bash
-	make run-client MODE=grpc PORT=5555 CLIENT_ID=client1 SERVER_IP=LEADER_IP
-	```
+```bash
+make run-client MODE=grpc PORT=5555 CLIENT_ID=client1 SERVER_IP=LEADER_IP
+```
 
 > [!NOTE]
 > > `LEADER_IP` will be displayed on the leader machine (most likely `server1` if you used instruction above) where the server is running, along with other server details (e.g. what wire protocol is being used, port, etc.).
