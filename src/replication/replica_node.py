@@ -5,10 +5,12 @@ from typing import Dict, List, Optional
 
 from src.protocol.grpc import replication_pb2 as replication
 import src.protocol.grpc.replication_pb2_grpc as replication_grpc
+from src.protocol.grpc.chat_pb2_grpc import ChatServiceServicer as ChatService
 
 from .replica_state import ReplicaState
 from .election_manager import ElectionManager
 from .heartbeat_manager import HeartbeatManager
+from .replication_manager import ReplicationManager
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,7 @@ class ReplicaNode:
         # Initialize specialized managers
         self.election_manager = ElectionManager(self.state)
         self.heartbeat_manager = HeartbeatManager(self.state)
+        self.replication_manager = ReplicationManager(self.state)
 
         # Set up cross-references between managers
         self.heartbeat_manager.set_election_manager(self.election_manager)
@@ -73,16 +76,56 @@ class ReplicaNode:
         """Check if the current leader is still available."""
         return self.heartbeat_manager.check_leader_status()
 
-    def replicate_to_followers(
-        self, service_name, method_name, serialized_request, operation_id
-    ):
-        logger.warning("TODO:  replicate_to_followers not implemented yet")
+    def replicate_to_followers(self, service_name, method_name, serialized_request):
+        """Replicate an operation to all followers."""
+        operation_id = self.get_next_operation_id()
+
+        # -------------------
+        logger.info("Replicating %s.%s", service_name, method_name)
+
+        # If we're the leader, replicate to followers
+        if self.state.role == "leader":
+            self.state.last_operation_id += 1
+            operation_id = self.state.last_operation_id
+
+            self.replication_manager.replicate_to_followers(
+                service_name,
+                method_name,
+                serialized_request,
+                operation_id,
+            )
+
+            return True
+
+        # If we're a follower, forward to leader
+        elif (
+            self.state.role == "follower"
+            and self.state.leader_id
+            and self.state.leader_id in self.state.peers
+        ):
+            logger.warning(
+                "TODO: Forwarding replication to leader from a follower NOT IMPLEMENTED yet. For now, client should retry other peers."
+            )
+            return False
+
+        # No known leader or couldn't contact leader, process locally
+        logger.info(
+            f"No known leader or leader unavailable. We'll let caller process this locally as: {self.role}"
+        )
+        logger.info("Also, we'll take on leader from now on.")
+        # set ourselves as the leader
+        self.election_manager.become_leader()
+        return True
 
     def log_operation(self, service, method, parameters, result, operation_id):
-        logger.warning("TODO:  log_operation not implemented yet")
+        """Log an operation to the operation log."""
+        self.replication_manager.log_operation(
+            service, method, parameters, result, operation_id
+        )
 
     def get_next_operation_id(self):
-        logger.warning("TODO:  get_next_operation_id not implemented yet")
+        """Get the next operation ID."""
+        return self.replication_manager.get_next_operation_id()
 
     def join_network(self):
         """Join the existing network by contacting a peer."""
