@@ -38,7 +38,9 @@ class GRPCServer:
         # Initialize this replica Node
         self.replica = ReplicaNode(self.server_id, self.address, self.peers)
         self.chat_servicer = ChatServicer(self.replica)
-        self.replication_servicer = ReplicationServicer(self.replica)
+        self.replication_servicer = ReplicationServicer(
+            self.replica, self.chat_servicer
+        )
 
         # Create gRPC server
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))

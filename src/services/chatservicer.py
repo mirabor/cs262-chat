@@ -1,7 +1,6 @@
 import grpc
 import logging
 from src.protocol.grpc import chat_pb2, chat_pb2_grpc
-from src.protocol.grpc import replication_pb2
 from src.services.api_manager import APIManager
 
 logger = logging.getLogger(__name__)
@@ -113,12 +112,35 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
 
     # ---------------------------- User Management ----------------------------#
     def Signup(self, request, context):
-        # Check if we need to forward to leader
-        forwarded_response = self._forward_to_leader_if_needed(
-            context, "Signup", request
-        )
-        if forwarded_response is not None:
-            return forwarded_response
+
+        if self.replica:
+            try:
+                logger.info("Request to signup is of type: %s", str(type(request)))
+                serialized_request = request.SerializeToString()
+                success = self.replica.replicate_to_followers(
+                    "ChatServicer", "Signup", serialized_request
+                )
+
+                if not success:  # this happens when we are follower replica, and we
+                    # couldn't forward this to a known leader. So client should retry
+                    context.set_code(grpc.StatusCode.FAILED_PRECONDITION)
+                    context.set_details(
+                        "Operation must be performed on leader, and we couldn't forward it to a known leader; client should retry"
+                    )
+                    return chat_pb2.UserResponse(
+                        success=False,
+                        error_message="Contacted followers but couldn't forward",
+                    )
+            except Exception as e:
+                logger.error(f"Error replicating to followers: {e}")
+                return chat_pb2.UserResponse(
+                    success=False,
+                    error_message=f"Error 500: Internal Server Error: {e}",
+                )
+
+            logger.info(
+                "ChatServicer.Signup: replication handled, now handling locally"
+            )
 
         result = self.api.signup(
             {

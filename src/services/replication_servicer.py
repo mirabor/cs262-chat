@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
     """Replication service implementation for handling replication"""
 
-    def __init__(self, replica):
+    def __init__(self, replica, chat_servicer=None):
         self.replica = replica
         self.replica_state = replica.state
+        self.chat_servicer = chat_servicer
 
     def Heartbeat(self, request, context):
         """Process heartbeat from another server."""
@@ -80,9 +81,6 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
             term=self.replica_state.term,
             role=self.replica_state.role,
         )
-
-    def ReplicateOperation(self, request, context):
-        logger.warning("ReplicateOperation not implemented yet")
 
     def JoinNetwork(self, request, context):
         """Handle a new server joining the network."""
@@ -180,3 +178,118 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
             ),
             term=self.replica_state.term,
         )
+
+    def ReplicateOperation(self, request, context):
+        """Handle replicated operations from the leader"""
+        try:
+            service_name = request.service_name
+            method_name = request.method_name
+            serialized_request = request.serialized_request
+            operation_id = request.operation_id
+
+            logger.info(
+                f"Received replicated operation: {service_name}.{method_name} (ID: {operation_id})"
+            )
+
+            # Create a dummy context
+            class DummyContext:
+                def set_code(self, code):
+                    pass
+
+                def set_details(self, details):
+                    pass
+
+            dummy_context = DummyContext()
+
+            # Get the appropriate service
+            service = None
+            if service_name == "ChatServicer":
+                service = self.chat_servicer
+            else:
+                logger.error(f"Unknown service: {service_name}")
+                return replication.OperationResponse(
+                    success=False, server_id=self.replica_state.server_id
+                )
+
+            # Deserialize the request based on service and method
+            request_obj = self._deserialize_request(
+                service_name, method_name, serialized_request
+            )
+            if not request_obj:
+                logger.error(
+                    f"Failed to deserialize request for {service_name}.{method_name}"
+                )
+                return replication.OperationResponse(
+                    success=False, server_id=self.replica_state.server_id
+                )
+
+            # Call the method without triggering replication
+            success = self._execute_without_replication(
+                service, method_name, request_obj, dummy_context
+            )
+
+            logger.info(
+                f"Successfully processed replicated operation: {service_name}.{method_name} (ID: {operation_id})"
+            )
+
+            return replication.OperationResponse(
+                success=success, server_id=self.replica_state.server_id
+            )
+
+        except Exception as e:
+            logger.error(f"Error processing replicated operation: {str(e)}")
+            return replication.OperationResponse(
+                success=False, server_id=self.replica_state.server_id
+            )
+
+    def _deserialize_request(self, service_name, method_name, serialized_request):
+        """Deserialize request based on service and method name"""
+        from src.protocol.grpc import chat_pb2
+
+        # Map for ChatServicer methods
+        if service_name == "ChatServicer":
+            request_classes = {
+                "Signup": chat_pb2.SignupRequest,
+                "Login": chat_pb2.LoginRequest,
+                "DeleteUser": chat_pb2.DeleteUserRequest,
+                "GetUserMessageLimit": chat_pb2.GetUserMessageLimitRequest,
+                "SaveSettings": chat_pb2.SaveSettingsRequest,
+                "GetUsersToDisplay": chat_pb2.GetUsersToDisplayRequest,
+                "GetChats": chat_pb2.GetChatsRequest,
+                "StartChat": chat_pb2.StartChatRequest,
+                "GetMessages": chat_pb2.GetMessagesRequest,
+                "SendChatMessage": chat_pb2.SendMessageRequest,
+                "DeleteMessages": chat_pb2.DeleteMessagesRequest,
+            }
+
+            if method_name in request_classes:
+                request_class = request_classes[method_name]
+                request_obj = request_class()
+                request_obj.ParseFromString(serialized_request)
+                return request_obj
+
+        return None
+
+    def _execute_without_replication(self, service, method_name, request_obj, context):
+        """Execute a method without triggering replication"""
+        try:
+            # Check if the method exists
+            if not hasattr(service, method_name):
+                logger.error(f"Method {method_name} not found on service")
+                return False
+
+            method = getattr(service, method_name)
+
+            # Temporarily disable replication
+            original_replica = service.replica
+            try:
+                # the evil move lol
+                service.replica = None
+                method(request_obj, context)
+                return True
+            finally:
+                # Rerestore the replica
+                service.replica = original_replica
+        except Exception as e:
+            logger.error(f"Error executing method {method_name}: {str(e)}")
+            return False
