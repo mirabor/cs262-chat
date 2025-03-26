@@ -1,91 +1,119 @@
 import grpc
 import logging
-from typing import Dict, List, Tuple
+import threading
+from typing import Dict, List, Optional
 
 from src.protocol.grpc import replication_pb2 as replication
-from src.protocol.grpc import replication_pb2_grpc as replication_grpc
+import src.protocol.grpc.replication_pb2_grpc as replication_grpc
+
+from .replica_state import ReplicaState
+from .election_manager import ElectionManager
+from .heartbeat_manager import HeartbeatManager
 
 logger = logging.getLogger(__name__)
 
 
 class ReplicaNode:
     """
-    Implementation of the replica state and operations
+    Main Implementation of the replica state and operations
     """
 
     def __init__(self, server_id: str, address: str, peers: List[str] = None):
-        self.server_id = server_id
-        self.address = address
+        # Initialize the node state
+        self.state = ReplicaState(server_id, address, peers)
 
-        # Initialize server state
-        self.term = 0
-        self.role = "follower"  # Start as follower
-        self.leader_id = None
-        self.peers: Dict[str, str] = {}  # server_id -> address mapping
-        self.servers_info: Dict[str, replication.ServerInfo] = {}  # All server info
+        # Initialize specialized managers
+        self.election_manager = ElectionManager(self.state)
+        self.heartbeat_manager = HeartbeatManager(self.state)
 
-        if peers:
-            for peer in peers:
-                # peer format is "server_id:address"
-                if ":" in peer and peer.count(":") == 2:
-                    peer_id, peer_address = peer.split(":", 1)
-                    self.peers[peer_id] = peer_address
-                else:
-                    # direct address format
-                    self.peers[f"peer_{len(self.peers)}"] = peer
+        # Set up cross-references between managers
+        self.heartbeat_manager.set_election_manager(self.election_manager)
 
-        # Initialize own server info
-        self.servers_info[self.server_id] = replication.ServerInfo(
-            server_id=self.server_id, address=self.address, role="follower"
-        )
+        # Thread control
+        self.is_running = False
+        self.heartbeat_thread = None
 
     def start(self):
-        logger.info(f"Initializing replica node {self.server_id}...")
-        if self.peers:
+        """Start this replica operations."""
+        self.is_running = True
+        self.state.is_running = True
+
+        # Start election timer
+        self.election_manager.reset_election_timer()
+
+        # Start heartbeat thread
+        self.heartbeat_thread = threading.Thread(
+            target=self.heartbeat_manager.heartbeat_loop
+        )
+        self.heartbeat_thread.daemon = True
+        self.heartbeat_thread.start()
+
+        # If we have peers, try to join the network
+        if self.state.peers:
             self.join_network()
         else:
-            self.become_leader()
-            logger.info(f"No peers provided. {self.server_id} is the initial leader.")
-            self.servers_info[self.server_id] = replication.ServerInfo(
-                server_id=self.server_id, address=self.address, role="leader"
+            # If no peers, become the initial leader
+            self.election_manager.become_leader()
+            logger.info(
+                f"No peers provided. {self.state.server_id} is the initial leader."
+            )
+            self.state.servers_info[self.state.server_id] = replication.ServerInfo(
+                server_id=self.state.server_id,
+                address=self.state.address,
+                role="leader",
             )
 
     def shutdown(self):
-        logger.warning("TODO: shutdown not implemented yet")
+        """Shutdown this replica."""
+        self.is_running = False
+        self.state.is_running = False
+        self.election_manager.cancel_election_timer()
 
-    def become_leader(self):
-        logger.warning("TODO: become_leader not implemented yet")
+    def check_leader_status(self):
+        """Check if the current leader is still available."""
+        return self.heartbeat_manager.check_leader_status()
+
+    def replicate_to_followers(
+        self, service_name, method_name, serialized_request, operation_id
+    ):
+        logger.warning("TODO:  replicate_to_followers not implemented yet")
+
+    def log_operation(self, service, method, parameters, result, operation_id):
+        logger.warning("TODO:  log_operation not implemented yet")
+
+    def get_next_operation_id(self):
+        logger.warning("TODO:  get_next_operation_id not implemented yet")
 
     def join_network(self):
         """Join the existing network by contacting a peer."""
         joined = False
 
-        for peer_id, peer_address in self.peers.items():
+        for peer_id, peer_address in self.state.peers.items():
             try:
                 with grpc.insecure_channel(peer_address) as channel:
                     stub = replication_grpc.ReplicationServiceStub(channel)
 
                     request = replication.JoinRequest(
-                        server_id=self.server_id, address=self.address
+                        server_id=self.state.server_id, address=self.state.address
                     )
 
                     response = stub.JoinNetwork(request, timeout=5)
 
                     if response.success:
                         joined = True
-                        self.term = response.term
-                        self.leader_id = response.leader_id
+                        self.state.term = response.term
+                        self.state.leader_id = response.leader_id
 
                         # Clear existing peers to avoid duplicates
-                        self.peers = {}
-                        self.servers_info = {}
+                        self.state.peers = {}
+                        self.state.servers_info = {}
 
                         # Track addresses to avoid adding duplicates
                         address_to_id = {}
 
                         # Update peers list with all servers in the network
                         for server in response.servers:
-                            if server.server_id != self.server_id:
+                            if server.server_id != self.state.server_id:
                                 # Skip duplicate addresses
                                 if server.address in address_to_id:
                                     logger.warning(
@@ -93,13 +121,13 @@ class ReplicaNode:
                                     )
                                     continue
 
-                                self.peers[server.server_id] = server.address
-                                self.servers_info[server.server_id] = server
+                                self.state.peers[server.server_id] = server.address
+                                self.state.servers_info[server.server_id] = server
                                 address_to_id[server.address] = server.server_id
 
                         # Update server addresses from the map
                         for server_id, address in response.server_addresses.items():
-                            if server_id != self.server_id:
+                            if server_id != self.state.server_id:
                                 # Skip duplicate addresses
                                 if (
                                     address in address_to_id
@@ -110,26 +138,29 @@ class ReplicaNode:
                                     )
                                     continue
 
-                                self.peers[server_id] = address
+                                self.state.peers[server_id] = address
                                 address_to_id[address] = server_id
 
                         logger.info(
                             f"Successfully joined the network through {peer_id}"
                         )
                         logger.info(
-                            f"Current leader is {self.leader_id} with term {self.term}"
+                            f"Current leader is {self.state.leader_id} with term {self.state.term}"
                         )
-                        logger.info(f"Network peers: {self.peers}")
+                        logger.info(f"Network peers: {self.state.peers}")
 
                         # Add self to servers info
-                        self.servers_info[self.server_id] = replication.ServerInfo(
-                            server_id=self.server_id,
-                            address=self.address,
-                            role="follower",
+                        self.state.servers_info[self.state.server_id] = (
+                            replication.ServerInfo(
+                                server_id=self.state.server_id,
+                                address=self.state.address,
+                                role="follower",
+                            )
                         )
 
                         # Reset election timer
-                        self.reset_election_timer()
+                        if self.election_manager:
+                            self.election_manager.reset_election_timer()
                         break
             except Exception as e:
                 logger.error(f"Failed to join network through {peer_id}: {str(e)}")
@@ -138,4 +169,5 @@ class ReplicaNode:
             logger.warning(
                 "Failed to join network through any peer. Starting as leader."
             )
-            self.become_leader()
+            if self.election_manager:
+                self.election_manager.become_leader()

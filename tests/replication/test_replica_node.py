@@ -28,14 +28,14 @@ def test_init_basic():
     """Test basic initialization of ReplicaNode."""
     node = ReplicaNode(server_id="test_server", address="localhost:50051")
     
-    assert node.server_id == "test_server"
-    assert node.address == "localhost:50051"
-    assert node.term == 0
-    assert node.role == "follower"
-    assert node.leader_id is None
-    assert len(node.peers) == 0
-    assert node.server_id in node.servers_info
-    assert node.servers_info[node.server_id].role == "follower"
+    assert node.state.server_id == "test_server"
+    assert node.state.address == "localhost:50051"
+    assert node.state.term == 0
+    assert node.state.role == "follower"
+    assert node.state.leader_id is None
+    assert len(node.state.peers) == 0
+    assert node.state.server_id in node.state.servers_info
+    assert node.state.servers_info[node.state.server_id].role == "follower"
 
 
 def test_init_with_peers():
@@ -46,11 +46,11 @@ def test_init_with_peers():
         peers=["peer1:localhost:50052", "peer2:localhost:50053"]
     )
     
-    assert len(node.peers) == 2
-    assert "peer1" in node.peers
-    assert node.peers["peer1"] == "localhost:50052"
-    assert "peer2" in node.peers
-    assert node.peers["peer2"] == "localhost:50053"
+    assert len(node.state.peers) == 2
+    assert "peer1" in node.state.peers
+    assert node.state.peers["peer1"] == "localhost:50052"
+    assert "peer2" in node.state.peers
+    assert node.state.peers["peer2"] == "localhost:50053"
 
 
 def test_init_with_direct_address_peers():
@@ -61,11 +61,11 @@ def test_init_with_direct_address_peers():
         peers=["localhost:50052", "localhost:50053"]
     )
     
-    assert len(node.peers) == 2
-    assert "peer_0" in node.peers
-    assert node.peers["peer_0"] == "localhost:50052"
-    assert "peer_1" in node.peers
-    assert node.peers["peer_1"] == "localhost:50053"
+    assert len(node.state.peers) == 2
+    assert "peer_0" in node.state.peers
+    assert node.state.peers["peer_0"] == "localhost:50052"
+    assert "peer_1" in node.state.peers
+    assert node.state.peers["peer_1"] == "localhost:50053"
 
 
 @patch("src.replication.replica_node.ReplicaNode.join_network")
@@ -74,10 +74,10 @@ def test_start_with_peers(mock_join_network, replica_node_with_peers):
     replica_node_with_peers.start()
     
     mock_join_network.assert_called_once()
-    assert replica_node_with_peers.role == "follower"
+    assert replica_node_with_peers.state.role == "follower"
 
 
-@patch("src.replication.replica_node.ReplicaNode.become_leader")
+@patch("src.replication.replica_node.ElectionManager.become_leader")
 def test_start_without_peers(mock_become_leader, replica_node):
     """Test start method without peers."""
     replica_node.start()
@@ -89,7 +89,7 @@ def test_start_without_peers(mock_become_leader, replica_node):
 def test_join_network_success(mock_channel, replica_node_with_peers):
     """Test successful join network."""
     # Add the missing reset_election_timer method to the replica node
-    replica_node_with_peers.reset_election_timer = MagicMock()
+    replica_node_with_peers.election_manager.reset_election_timer = MagicMock()
     
     # Setup mock response
     mock_stub = MagicMock()
@@ -122,12 +122,12 @@ def test_join_network_success(mock_channel, replica_node_with_peers):
         replica_node_with_peers.join_network()
     
     # Assertions
-    assert replica_node_with_peers.term == 5
-    assert replica_node_with_peers.leader_id == "leader1"
-    assert "server1" in replica_node_with_peers.peers
-    assert "server2" in replica_node_with_peers.peers
-    assert replica_node_with_peers.peers["server1"] == "localhost:50052"
-    assert replica_node_with_peers.peers["server2"] == "localhost:50053"
+    assert replica_node_with_peers.state.term == 5
+    assert replica_node_with_peers.state.leader_id == "leader1"
+    assert "server1" in replica_node_with_peers.state.peers
+    assert "server2" in replica_node_with_peers.state.peers
+    assert replica_node_with_peers.state.peers["server1"] == "localhost:50052"
+    assert replica_node_with_peers.state.peers["server2"] == "localhost:50053"
 
 
 @patch("src.replication.replica_node.grpc.insecure_channel")
@@ -137,7 +137,7 @@ def test_join_network_failure(mock_channel, replica_node_with_peers):
     mock_channel.return_value.__enter__.side_effect = Exception("Connection failed")
     
     # Mock become_leader to verify it's called on failure
-    with patch.object(replica_node_with_peers, "become_leader") as mock_become_leader:
+    with patch.object(replica_node_with_peers.election_manager, "become_leader") as mock_become_leader:
         replica_node_with_peers.join_network()
         
         # Verify become_leader was called after all join attempts failed
@@ -153,6 +153,6 @@ def test_shutdown(replica_node):
 
 def test_become_leader(replica_node):
     """Test become_leader method."""
-    # This is just a placeholder test since the method is not implemented yet
-    replica_node.become_leader()
+    # Test the election_manager's become_leader method
+    replica_node.election_manager.become_leader()
     # No assertions needed, just verifying it doesn't raise exceptions
