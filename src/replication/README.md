@@ -1,4 +1,4 @@
-## System Architecture
+# Replication System
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -9,21 +9,22 @@
 │  │   (Leader)    │◄───┤  (Follower)   │◄───┤  (Follower)   │    │
 │  └───────┬───────┘    └───────┬───────┘    └───────┬───────┘    │
 │          │                    │                    │            │
+│          │    creates         │    creates         │    creates │
 │          ▼                    ▼                    ▼            │
+│                                                                  │
 │  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐    │
 │  │ ReplicaState  │    │ ReplicaState  │    │ ReplicaState  │    │
-│  └───────────────┘    └───────────────┘    └───────────────┘    │
+│  └───────┬───────┘    └───────┬───────┘    └───────┬───────┘    │
 │          │                    │                    │            │
-│          ├────────────────────┼────────────────────┤            │
+│          │                    │                    │            │
 │          ▼                    ▼                    ▼            │
+│                                                                  │
 │  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐    │
 │  │ElectionManager│    │ElectionManager│    │ElectionManager│    │
 │  └───────────────┘    └───────────────┘    └───────────────┘    │
-│          │                    │                    │            │
-│          ├────────────────────┼────────────────────┤            │
-│          ▼                    ▼                    ▼            │
+│                                                                  │
 │  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐    │
-│  │HeartbeatManager    │HeartbeatManager    │HeartbeatManager    │
+│  │HeartbeatManager│   │HeartbeatManager│   │HeartbeatManager│   │
 │  └───────────────┘    └───────────────┘    └───────────────┘    │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -31,27 +32,29 @@
 
 ### Key Components
 
-1. **ReplicaNode**: Main entry point that manages:
-   - Server state transitions
-   - Communication between replicas
-   - Election process
-   - Data replication
+1. **ReplicaNode**: Main entry point that:
+   - Creates and initializes the ReplicaState
+   - Creates ElectionManager and HeartbeatManager
+   - Establishes cross-references between managers
+   - Handles network joining and communication
 
-2. **ReplicaState**: Maintains state information:
-   - Server ID and address
-   - Current term number
-   - Current role (leader/follower/candidate)
-   - Peer tracking
+2. **ReplicaState**: Central state container that:
+   - Stores server identification (ID, address)
+   - Tracks current term and role (leader/follower/candidate)
+   - Maintains peer information and voting state
+   - Is shared with both managers
 
-3. **ElectionManager**: Handles leader election:
-   - Election timers
-   - Vote solicitation
-   - Leader transitions
+3. **ElectionManager**: Election coordinator that:
+   - Manages election timers
+   - Handles vote solicitation and collection
+   - Triggers state transitions based on election results
+   - Uses the ReplicaState for decision making
 
-4. **HeartbeatManager**: Manages heartbeats:
-   - Sending periodic signals (as leader)
-   - Monitoring leader activity (as follower)
-   - Triggering elections when needed
+4. **HeartbeatManager**: Communication handler that:
+   - Sends heartbeats to followers (when leader)
+   - Monitors leader liveness (when follower)
+   - References the ElectionManager to trigger elections
+   - Uses the ReplicaState to track peer status
 
 ## State Transition Diagram
 
@@ -109,7 +112,7 @@
 - Continues with remaining followers
 - Rejoining followers catch up
 
-## Configuration Parameters
+## Config Parameters
 
 - **ELECTION_TIMEOUT_MIN/MAX**: Random election timeout range
 - **HEARTBEAT_INTERVAL**: Time between heartbeats
