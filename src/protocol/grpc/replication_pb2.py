@@ -24,23 +24,35 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11replication.proto\x12\x0breplication\"\x9f\x01\n\x0e\x45ntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x11\n\tleader_id\x18\x02 \x01(\t\x12\x16\n\x0eprev_log_index\x18\x03 \x01(\x03\x12\x15\n\rprev_log_term\x18\x04 \x01(\x03\x12&\n\x07\x65ntries\x18\x05 \x03(\x0b\x32\x15.replication.LogEntry\x12\x15\n\rleader_commit\x18\x06 \x01(\x03\",\n\x0b\x41\x63kResponse\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x0f\n\x07success\x18\x02 \x01(\x08\"`\n\x0bVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x14\n\x0c\x63\x61ndidate_id\x18\x02 \x01(\t\x12\x16\n\x0elast_log_index\x18\x03 \x01(\x03\x12\x15\n\rlast_log_term\x18\x04 \x01(\x03\"2\n\x0cVoteResponse\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\x14\n\x0cvote_granted\x18\x02 \x01(\x08\"8\n\x08LogEntry\x12\x0c\n\x04term\x18\x01 \x01(\x03\x12\r\n\x05index\x18\x02 \x01(\x03\x12\x0f\n\x07\x63ommand\x18\x03 \x01(\x0c\x32\xa4\x01\n\x12ReplicationService\x12H\n\rAppendEntries\x12\x1b.replication.EntriesRequest\x1a\x18.replication.AckResponse\"\x00\x12\x44\n\x0bRequestVote\x12\x18.replication.VoteRequest\x1a\x19.replication.VoteResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11replication.proto\x12\x0breplication\">\n\nServerInfo\x12\x11\n\tserver_id\x18\x01 \x01(\t\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x01(\t\x12\x0c\n\x04role\x18\x03 \x01(\t\"T\n\x10HeartbeatRequest\x12\x11\n\tserver_id\x18\x01 \x01(\t\x12\x0c\n\x04term\x18\x02 \x01(\x03\x12\x0c\n\x04role\x18\x03 \x01(\t\x12\x11\n\ttimestamp\x18\x04 \x01(\x03\"S\n\x11HeartbeatResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x11\n\tserver_id\x18\x02 \x01(\t\x12\x0c\n\x04term\x18\x03 \x01(\x03\x12\x0c\n\x04role\x18\x04 \x01(\t\"\x90\x01\n\x10OperationRequest\x12\x14\n\x0cservice_name\x18\x01 \x01(\t\x12\x13\n\x0bmethod_name\x18\x02 \x01(\t\x12\x1a\n\x12serialized_request\x18\x03 \x01(\x0c\x12\x14\n\x0coperation_id\x18\x04 \x01(\x03\x12\x11\n\tserver_id\x18\x05 \x01(\t\x12\x0c\n\x04term\x18\x06 \x01(\x03\"7\n\x11OperationResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x11\n\tserver_id\x18\x02 \x01(\t\"1\n\x0bJoinRequest\x12\x11\n\tserver_id\x18\x01 \x01(\t\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x01(\t\"\xec\x01\n\x0cJoinResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12(\n\x07servers\x18\x02 \x03(\x0b\x32\x17.replication.ServerInfo\x12\x11\n\tleader_id\x18\x03 \x01(\t\x12\x0c\n\x04term\x18\x04 \x01(\x03\x12H\n\x10server_addresses\x18\x05 \x03(\x0b\x32..replication.JoinResponse.ServerAddressesEntry\x1a\x36\n\x14ServerAddressesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"(\n\x13NetworkStateRequest\x12\x11\n\tserver_id\x18\x01 \x01(\t\"a\n\x14NetworkStateResponse\x12(\n\x07servers\x18\x01 \x03(\x0b\x32\x17.replication.ServerInfo\x12\x11\n\tleader_id\x18\x02 \x01(\t\x12\x0c\n\x04term\x18\x03 \x01(\x03\x32\xd9\x02\n\x12ReplicationService\x12L\n\tHeartbeat\x12\x1d.replication.HeartbeatRequest\x1a\x1e.replication.HeartbeatResponse\"\x00\x12U\n\x12ReplicateOperation\x12\x1d.replication.OperationRequest\x1a\x1e.replication.OperationResponse\"\x00\x12\x44\n\x0bJoinNetwork\x12\x18.replication.JoinRequest\x1a\x19.replication.JoinResponse\"\x00\x12X\n\x0fGetNetworkState\x12 .replication.NetworkStateRequest\x1a!.replication.NetworkStateResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'replication_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_ENTRIESREQUEST']._serialized_start=35
-  _globals['_ENTRIESREQUEST']._serialized_end=194
-  _globals['_ACKRESPONSE']._serialized_start=196
-  _globals['_ACKRESPONSE']._serialized_end=240
-  _globals['_VOTEREQUEST']._serialized_start=242
-  _globals['_VOTEREQUEST']._serialized_end=338
-  _globals['_VOTERESPONSE']._serialized_start=340
-  _globals['_VOTERESPONSE']._serialized_end=390
-  _globals['_LOGENTRY']._serialized_start=392
-  _globals['_LOGENTRY']._serialized_end=448
-  _globals['_REPLICATIONSERVICE']._serialized_start=451
-  _globals['_REPLICATIONSERVICE']._serialized_end=615
+  _globals['_JOINRESPONSE_SERVERADDRESSESENTRY']._loaded_options = None
+  _globals['_JOINRESPONSE_SERVERADDRESSESENTRY']._serialized_options = b'8\001'
+  _globals['_SERVERINFO']._serialized_start=34
+  _globals['_SERVERINFO']._serialized_end=96
+  _globals['_HEARTBEATREQUEST']._serialized_start=98
+  _globals['_HEARTBEATREQUEST']._serialized_end=182
+  _globals['_HEARTBEATRESPONSE']._serialized_start=184
+  _globals['_HEARTBEATRESPONSE']._serialized_end=267
+  _globals['_OPERATIONREQUEST']._serialized_start=270
+  _globals['_OPERATIONREQUEST']._serialized_end=414
+  _globals['_OPERATIONRESPONSE']._serialized_start=416
+  _globals['_OPERATIONRESPONSE']._serialized_end=471
+  _globals['_JOINREQUEST']._serialized_start=473
+  _globals['_JOINREQUEST']._serialized_end=522
+  _globals['_JOINRESPONSE']._serialized_start=525
+  _globals['_JOINRESPONSE']._serialized_end=761
+  _globals['_JOINRESPONSE_SERVERADDRESSESENTRY']._serialized_start=707
+  _globals['_JOINRESPONSE_SERVERADDRESSESENTRY']._serialized_end=761
+  _globals['_NETWORKSTATEREQUEST']._serialized_start=763
+  _globals['_NETWORKSTATEREQUEST']._serialized_end=803
+  _globals['_NETWORKSTATERESPONSE']._serialized_start=805
+  _globals['_NETWORKSTATERESPONSE']._serialized_end=902
+  _globals['_REPLICATIONSERVICE']._serialized_start=905
+  _globals['_REPLICATIONSERVICE']._serialized_end=1250
 # @@protoc_insertion_point(module_scope)
