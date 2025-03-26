@@ -1,6 +1,39 @@
+# Checklist
+- [x] Multiple processes, multiple machines
+- [x] Can fail any two servers and continue to function
+- [x] Clear explanation as to how fail-over works in the code
+- [x] Solid test suite
+- [x] Documentation clear
+- [x] Bonus: Can add a new server into its set of replicas (using make run-server, see test instructions below)
+
+## How To Test
+
+After installing all the requirements (e.x. `make install && make install-dev`) and loading the new environment (as detailed in root README.md), you can start the first replica by running: 
+
+```bash
+make run-server MODE=grpc SERVER_ID=server1 PORT=5555
+```
+This will start first server in the network/cluster. To add more server replicas (say 2), run: 
+
+```bash
+make run-server MODE=grpc SERVER_ID=server2 PORT=5556 PEERS=x.x.x.x:5555
+```
+where `x.x.x.x` is the address of the first server (e.x. "localhost" if on the same machine, the actual address if on separate machine). 
+and
+ 
+```bash
+make run-server MODE=grpc SERVER_ID=server3 PORT=5557 PEERS=x.x.x.x:5555,y.y.y.y:5556
+```
+where `y.y.y.y` is address of second replica. 
+
+An example of last command can be something like: 
+
+```bash
+make run-server MODE=grpc SERVER_ID=server3 PORT=5557 PEERS=10.250.10.214:5555,10.250.10.214:5556
+```
+
 # Replication System
 
-```
 ┌─────────────────────────────────────────────────────────────────┐
 │                       Replication System                         │
 │                                                                  │
@@ -27,8 +60,11 @@
 │  │HeartbeatManager│   │HeartbeatManager│   │HeartbeatManager│   │
 │  └───────────────┘    └───────────────┘    └───────────────┘    │
 │                                                                  │
+│  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐    │
+│  │ReplicationManager│ │ReplicationManager│ │ReplicationManager│ │
+│  └───────────────┘    └───────────────┘    └───────────────┘    │
+│                                                                  │
 └─────────────────────────────────────────────────────────────────┘
-```
 
 ### Key Components
 
