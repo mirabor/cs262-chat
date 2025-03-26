@@ -2,6 +2,7 @@ import grpc
 import logging
 from src.protocol.grpc import chat_pb2, chat_pb2_grpc
 from src.services.api_manager import APIManager
+from .replication_decorator import replicate_to_followers
 
 logger = logging.getLogger(__name__)
 
@@ -25,37 +26,8 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
         self.api = APIManager(db_file=db_name)
 
     # ---------------------------- User Management ----------------------------#
+    @replicate_to_followers("Signup")
     def Signup(self, request, context):
-
-        if self.replica:
-            try:
-                logger.info("Request to signup is of type: %s", str(type(request)))
-                serialized_request = request.SerializeToString()
-                success = self.replica.replicate_to_followers(
-                    "ChatServicer", "Signup", serialized_request
-                )
-
-                if not success:  # this happens when we are follower replica, and we
-                    # couldn't forward this to a known leader. So client should retry
-                    context.set_code(grpc.StatusCode.FAILED_PRECONDITION)
-                    context.set_details(
-                        "Operation must be performed on leader, and we couldn't forward it to a known leader; client should retry"
-                    )
-                    return chat_pb2.UserResponse(
-                        success=False,
-                        error_message="Contacted followers but couldn't forward",
-                    )
-            except Exception as e:
-                logger.error(f"Error replicating to followers: {e}")
-                return chat_pb2.UserResponse(
-                    success=False,
-                    error_message=f"Error 500: Internal Server Error: {e}",
-                )
-
-            logger.info(
-                "ChatServicer.Signup: replication handled, now handling locally"
-            )
-
         result = self.api.signup(
             {
                 "username": request.username,
@@ -93,6 +65,7 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             view_limit=result.get("view_limit", 0),
         )
 
+    @replicate_to_followers("DeleteUser")
     def DeleteUser(self, request, context):
         result = self.api.delete_user(request.username)
         return chat_pb2.StatusResponse(
@@ -112,6 +85,7 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             error_message=result.get("error_message", ""),
         )
 
+    @replicate_to_followers("SaveSettings")
     def SaveSettings(self, request, context):
         result = self.api.save_settings(request.username, request.message_limit)
         return chat_pb2.StatusResponse(
@@ -153,6 +127,7 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             chats=chats, error_message=result.get("error_message", "")
         )
 
+    @replicate_to_followers("StartChat")
     def StartChat(self, request, context):
         result = self.api.start_chat(request.current_user, request.other_user)
         if not result["success"]:
@@ -185,6 +160,7 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             messages=messages, error_message=result.get("error_message", "")
         )
 
+    @replicate_to_followers("SendChatMessage")
     def SendChatMessage(self, request, context):
         result = self.api.send_chat_message(
             request.chat_id, request.sender, request.content
@@ -199,6 +175,7 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             error_message=result.get("error_message", ""),
         )
 
+    @replicate_to_followers("DeleteMessages")
     def DeleteMessages(self, request, context):
         result = self.api.delete_messages(
             request.chat_id, list(request.message_indices), request.current_user
