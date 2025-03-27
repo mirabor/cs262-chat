@@ -49,6 +49,11 @@ class ElectionManager:
             self.reset_election_timer()
             return
 
+        if len(self.state.peers) == len(self.state.down_peers):
+            logger.info("All peers are down. No election started.")
+            self.become_leader()
+            self.reset_election_timer()
+            return
         # Increment term and vote for self
         self.state.term += 1
         self.state.role = "candidate"
@@ -61,6 +66,9 @@ class ElectionManager:
 
         # Track unique addresses to avoid duplicate requests
         contacted_addresses = set()
+        logger.info(f"Contacted addresses: {contacted_addresses}")
+        logger.info(f"Peers: {self.state.peers}")
+        logger.info(f"Down peers: {self.state.down_peers}")
 
         # Request votes from all peers that aren't marked as down
         for peer_id, peer_address in self.state.peers.items():
@@ -76,11 +84,13 @@ class ElectionManager:
                 continue
 
             contacted_addresses.add(peer_address)
+            logger.info(f"Contacting peer {peer_id} at {peer_address}")
             threading.Thread(
                 target=self.request_vote, args=(peer_id, peer_address)
             ).start()
 
         # Reset the election timer for next round if needed
+        logger.info(f"Number of votes received: {len(self.state.votes_received)}")
         self.reset_election_timer()
 
     def request_vote(self, peer_id: str, peer_address: str):
@@ -89,7 +99,7 @@ class ElectionManager:
             with grpc.insecure_channel(peer_address) as channel:
                 stub = replication_grpc.ReplicationServiceStub(channel)
 
-                # Using heartbeat for vote request (simplified protocol)
+                # Using heartbeat for vote request
                 request = replication.HeartbeatRequest(
                     server_id=self.state.server_id,
                     term=self.state.term,
@@ -126,6 +136,8 @@ class ElectionManager:
                     logger.info(
                         f"Discovered higher term {response.term}, reverting to follower"
                     )
+
+                logger.info(f"response: {response}")
         except grpc.RpcError as e:
             # Check the status code to determine if the peer is down
             status_code = e.code()

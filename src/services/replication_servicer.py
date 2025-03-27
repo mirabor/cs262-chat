@@ -104,6 +104,7 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
                     ]
                     with grpc.insecure_channel(leader_address) as channel:
                         stub = replication_pb2_grpc.ReplicationServiceStub(channel)
+                        self.replica_state.peers[new_server_id] = new_server_address
                         return stub.JoinNetwork(request)
                 except Exception as e:
                     logger.error(f"Error forwarding join request to leader: {str(e)}")
@@ -116,6 +117,13 @@ class ReplicationServicer(replication_pb2_grpc.ReplicationServiceServicer):
                     "Cannot process join request: not the leader and no leader known"
                 )
                 return replication.JoinResponse(success=False)
+
+        # If server ID already exists, ignore the request
+        if (
+            new_server_id in self.replica_state.peers
+            and self.replica_state.peers[new_server_id] == new_server_address
+        ):
+            return replication.JoinResponse(success=True)
 
         # Check if the server ID already exists but with a different address
         if (

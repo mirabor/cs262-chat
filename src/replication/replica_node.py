@@ -204,7 +204,7 @@ class ReplicaNode:
                         # Reset election timer
                         if self.election_manager:
                             self.election_manager.reset_election_timer()
-                        break
+                        # break
             except Exception as e:
                 logger.error(f"Failed to join network through {peer_id}: {str(e)}")
 
